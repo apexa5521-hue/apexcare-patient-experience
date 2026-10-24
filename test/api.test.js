@@ -370,7 +370,7 @@ test('health reports a database problem with a 503 and only an error code', asyn
   const r = await broken.call('GET', '/api/health');
   await broken.close();
   assert.equal(r.status, 503);
-  assert.equal(r.body.db, 'error:PGRST205');
+  assert.equal(r.body.db, 'error:categories:PGRST205');
   assert.equal(JSON.stringify(r.body).includes('secret detail'), false);
 });
 

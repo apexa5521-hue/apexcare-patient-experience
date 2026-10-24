@@ -41,14 +41,20 @@ async function countOf(promise) {
   return count;
 }
 
-/** Cheap read used by the health check; returns null when the database answers, else an error code. */
+// One table per schema step, so a migration that was not run shows up in /api/health.
+const HEALTH_TABLES = { categories: 'id', call_queue: 'id', google_reviews: 'id', app_settings: 'key' };
+
+/** Cheap reads used by the health check; null when all answer, else "<table>:<error code>". */
 async function dbProblem(db) {
-  try {
-    const { error } = await db.from('categories').select('id').limit(1);
-    return error ? error.code || 'error' : null;
-  } catch (e) {
-    return e.code || 'unreachable';
+  for (const [table, col] of Object.entries(HEALTH_TABLES)) {
+    try {
+      const { error } = await db.from(table).select(col).limit(1);
+      if (error) return `${table}:${error.code || 'error'}`;
+    } catch (e) {
+      return `${table}:${e.code || 'unreachable'}`;
+    }
   }
+  return null;
 }
 
 const PAGE = 1000;
