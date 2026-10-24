@@ -85,14 +85,23 @@ function complaintRoutes() {
     const c = await must(db.from('complaints').select('id,status,closed_at').eq('id', req.params.id).maybeSingle());
     if (!c) throw new UserError('الشكوى غير موجودة', 404);
     const closing = d.status === 'مغلقة';
-    await must(db.from('complaints').update({
+    const patch = {
       status: d.status,
       assigned_to: d.assignedTo,
       resolution: d.resolution,
       // Keep the original close time if it was already closed; clear it on reopen.
       closed_at: closing ? c.closed_at || new Date().toISOString() : null,
       updated_by: req.user.username
-    }).eq('id', c.id));
+    };
+    if (d.branch !== undefined) patch.branch = d.branch;
+    if (d.doctorId !== undefined) {
+      if (d.doctorId) {
+        const doc = await must(db.from('doctors').select('id').eq('id', d.doctorId).maybeSingle());
+        if (!doc) throw new UserError('الطبيب غير موجود في القائمة');
+      }
+      patch.doctor_id = d.doctorId;
+    }
+    await must(db.from('complaints').update(patch).eq('id', c.id));
     await audit(db, req.user.username, 'update_complaint', `${c.id} -> ${d.status}`);
     res.json({ ok: true });
   });

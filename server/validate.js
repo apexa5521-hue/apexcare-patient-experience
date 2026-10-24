@@ -117,7 +117,10 @@ const complaintSchema = z.object({
 const complaintUpdateSchema = z.object({
   status: oneOf(STATUSES, 'الحالة'),
   assignedTo: optText(80),
-  resolution: optText(1000)
+  resolution: optText(1000),
+  // Optional: lets admins complete sheet complaints that arrived without a branch or doctor.
+  branch: z.preprocess(v => (v === '' ? null : v), oneOf(BRANCHES, 'الفرع').nullable().optional()),
+  doctorId: z.preprocess(v => (v === '' ? null : v), z.string().regex(UUID_RE, 'الطبيب غير موجود في القائمة').nullable().optional())
 });
 
 const followUpSchema = z.object({ followUp: oneOf(STATUSES, 'الحالة') });

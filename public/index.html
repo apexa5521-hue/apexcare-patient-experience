@@ -1070,11 +1070,21 @@ function complaintModal(c) {
     <div class="quote">${esc(c.description)}</div>
     <form id="coEdit" class="grid" novalidate>
       <div class="field"><span class="label" id="cosL">الحالة</span><div class="seg" id="coStatus" role="radiogroup" aria-labelledby="cosL"></div></div>
+      <div class="grid g2">
+        <div class="field"><label for="coBr">الفرع</label><select id="coBr" name="branch">${opt(S.lk.branches, 'غير محدد', c.branch)}</select></div>
+        <div class="field"><label for="coDoc">الطبيب</label><select id="coDoc" name="doctorId"></select></div>
+      </div>
       <div class="field"><label for="coAs">المسؤول عن المتابعة</label><input type="text" id="coAs" name="assignedTo" maxlength="80" value="${esc(c.assignedTo)}"></div>
       <div class="field"><label for="coRes">الإجراء المتخذ / الحل</label><textarea id="coRes" name="resolution" maxlength="1000">${esc(c.resolution)}</textarea></div>
       <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
     </form>`);
   seg($('#coStatus'), 'status', S.lk.statuses, c.status);
+  const fillCoDoc = () => {
+    const list = doctorsFor($('#coBr').value);
+    const keep = c.doctorId && !list.some(d => d.id === c.doctorId) ? S.lk.doctors.filter(d => d.id === c.doctorId) : [];
+    $('#coDoc').innerHTML = opt([...keep, ...list].map(d => [d.id, d.name]), c.doctorId ? 'غير محدد' : (c.doctor ? `غير مطابق: ${c.doctor}` : 'غير محدد'), c.doctorId || '');
+  };
+  fillCoDoc(); $('#coBr').onchange = fillCoDoc;
   $('#coEdit').onsubmit = e => {
     e.preventDefault();
     busy(e.submitter, async () => { await api('PATCH', `/complaints/${c.id}`, Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم حفظ المعالجة'); loadComplaints(); });

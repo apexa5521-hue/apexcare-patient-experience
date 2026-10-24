@@ -294,3 +294,21 @@ test('google: the first sync pages through the whole history, not just one page'
   assert.equal(r.body.fetched, 1234);
   assert.equal(stored, 1234);
 });
+
+test('admins can set the branch and doctor of a sheet complaint that arrived without them', async () => {
+  const headers = { 'x-webhook-secret': 'hook-secret' };
+  await t.call('POST', '/api/webhooks/complaints', { headers, body: { rows: [{ source_key: 'nobranch:1', description: 'بدون فرع' }] } });
+  const c = t.db._store.tables.complaints.find(x => x.source_key === 'nobranch:1');
+  assert.equal(c.branch, null);
+  assert.equal((await t.call('PATCH', `/api/complaints/${c.id}`, { token: staffToken, body: { status: 'جديدة', branch: 'بريدة' } })).status, 403);
+  const r = await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'قيد المعالجة', branch: 'بريدة', doctorId: doc.id } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(c.branch, 'بريدة');
+  assert.equal(c.doctor_id, doc.id);
+  await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'قيد المعالجة' } });
+  assert.equal(c.branch, 'بريدة', 'omitted fields are left alone');
+  assert.equal((await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'جديدة', branch: 'جدة' } })).status, 400);
+  await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'جديدة', branch: '', doctorId: '' } });
+  assert.equal(c.branch, null);
+  assert.equal(c.doctor_id, null);
+});
