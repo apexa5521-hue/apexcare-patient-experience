@@ -2,21 +2,22 @@
  * Apex Care — ربط شيت الشكاوى بنظام تجربة المريض
  *
  * يُلصق هذا الملف في شيت الشكاوى: الإضافات ← Apps Script.
- * ثم شغّل setup() مرة واحدة وأدخل:
+ * افتح ورقة الشكاوى ثم شغّل setup() وأدخل:
  *   1) رابط الـ webhook:  https://<render-app>.onrender.com/api/webhooks/complaints
  *   2) قيمة WEBHOOK_SECRET من إعدادات الخدمة في Render
+ *   3) فرع الورقة (اختياري)
+ * لربط ورقة ثانية (مثلاً ورقة لكل فرع): افتحها وشغّل setup() مرة أخرى.
  *
  * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ والوقت.
- * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا الفرع الافتراضي
- * للورقة من الإعداد، وإلا يستنتجه النظام من فرع الطبيب.
+ * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا فرع الورقة من الإعداد،
+ * وإلا يستنتجه النظام من فرع الطبيب.
  * أي عمود آخر — وخاصة اسم المريض — لا يُقرأ ولا يُرسل أبداً.
  */
 
 var BATCH_SIZE = 50;
 var PROP_URL = 'WEBHOOK_URL';
 var PROP_SECRET = 'WEBHOOK_SECRET';
-var PROP_SHEET = 'SHEET_NAME';
-var PROP_BRANCH = 'DEFAULT_BRANCH';
+var PROP_SHEETS = 'SHEETS'; // JSON [{ id, name, branch }]
 
 // Only these fields ever leave the sheet. A header matches when it CONTAINS one of the
 // keywords (headers like "DATE OF EVENT\nتاريخ الحدث" or "Please provide your phone number…"
@@ -38,35 +39,62 @@ var NAME_COLUMN = /(اسم المريض|اسم المراجع|الاسم|اسم�
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('ربط نظام تجربة المريض')
-    .addItem('الإعداد (مرة واحدة)', 'setup')
+    .addItem('ربط هذه الورقة (الإعداد)', 'setup')
     .addItem('إرسال الشكاوى الجديدة الآن', 'pushNewMenu')
+    .addItem('إلغاء ربط هذه الورقة', 'unlinkSheet')
     .addToUi();
+}
+
+/** Linked sheets; upgrades the single-sheet settings of the first version. */
+function linkedSheets_(props) {
+  var raw = props.getProperty(PROP_SHEETS);
+  if (raw) { try { return JSON.parse(raw); } catch (e) { return []; } }
+  var oldName = props.getProperty('SHEET_NAME');
+  if (!oldName) return [];
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(oldName);
+  return sh ? [{ id: sh.getSheetId(), name: oldName, branch: props.getProperty('DEFAULT_BRANCH') || '' }] : [];
+}
+
+function sheetById_(ss, id) {
+  var all = ss.getSheets();
+  for (var i = 0; i < all.length; i++) if (all[i].getSheetId() === id) return all[i];
+  return null;
 }
 
 function setup() {
   var ui = SpreadsheetApp.getUi();
   var props = PropertiesService.getScriptProperties();
-  var url = ui.prompt('رابط الـ webhook', 'مثال: https://apexcare-patient-experience.onrender.com/api/webhooks/complaints', ui.ButtonSet.OK_CANCEL);
+  var savedUrl = props.getProperty(PROP_URL), savedSecret = props.getProperty(PROP_SECRET);
+  var keep = '\n(اتركه فارغاً لاستخدام القيمة المحفوظة)';
+
+  var url = ui.prompt('رابط الـ webhook', 'مثال: https://apexcare-patient-experience.onrender.com/api/webhooks/complaints' + (savedUrl ? keep : ''), ui.ButtonSet.OK_CANCEL);
   if (url.getSelectedButton() !== ui.Button.OK) return;
-  var secret = ui.prompt('السر المشترك', 'انسخ قيمة WEBHOOK_SECRET من Render ← Environment', ui.ButtonSet.OK_CANCEL);
-  if (secret.getSelectedButton() !== ui.Button.OK) return;
-  var u = url.getResponseText().trim();
-  var s = secret.getResponseText().trim();
+  var u = url.getResponseText().trim() || savedUrl || '';
   if (!/^https:\/\/.+\/api\/webhooks\/complaints$/.test(u)) { ui.alert('الرابط يجب أن يبدأ بـ https:// وينتهي بـ /api/webhooks/complaints'); return; }
+
+  var secret = ui.prompt('السر المشترك', 'انسخ قيمة WEBHOOK_SECRET من Render ← Environment' + (savedSecret ? keep : ''), ui.ButtonSet.OK_CANCEL);
+  if (secret.getSelectedButton() !== ui.Button.OK) return;
+  var s = secret.getResponseText().trim() || savedSecret || '';
   if (!s) { ui.alert('السر مطلوب'); return; }
-  var b = ui.prompt('فرع هذه الورقة (اختياري)',
-    'إذا كانت كل شكاوى هذه الورقة لفرع واحد اكتب: بريدة أو عنيزة.\nاتركه فارغاً إذا كان في الورقة عمود للفرع أو فيها الفرعان.\n(إذا لم يُذكر الفرع يأخذه النظام من فرع الطبيب.)', ui.ButtonSet.OK_CANCEL);
-  if (b.getSelectedButton() !== ui.Button.OK) return;
-  var branch = b.getResponseText().trim();
-  if (branch && ['بريدة', 'عنيزة'].indexOf(branch) < 0) { ui.alert('الفرع يكون «بريدة» أو «عنيزة» أو فارغاً'); return; }
 
   var sheet = SpreadsheetApp.getActiveSheet();
-  props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEET_NAME: sheet.getName(), DEFAULT_BRANCH: branch });
   var cols = headerMap_(sheet);
   if (cols.description === undefined) {
     ui.alert('لم أجد عمود نص الشكوى في الورقة «' + sheet.getName() + '».\nافتح ورقة الشكاوى ثم شغّل الإعداد مرة أخرى.\n\nما وجدته:\n' + describeMapping_(sheet, cols));
     return;
   }
+
+  var b = ui.prompt('فرع الورقة «' + sheet.getName() + '» (اختياري)',
+    'إذا كانت كل شكاوى هذه الورقة لفرع واحد اكتب: بريدة أو عنيزة.\nاتركه فارغاً إذا كان في الورقة عمود للفرع أو فيها الفرعان.\n(إذا لم يُذكر الفرع يأخذه النظام من فرع الطبيب.)', ui.ButtonSet.OK_CANCEL);
+  if (b.getSelectedButton() !== ui.Button.OK) return;
+  var branch = b.getResponseText().trim();
+  if (branch && ['بريدة', 'عنيزة'].indexOf(branch) < 0) { ui.alert('الفرع يكون «بريدة» أو «عنيزة» أو فارغاً'); return; }
+
+  var sheets = linkedSheets_(props).filter(function (x) { return x.id !== sheet.getSheetId(); });
+  sheets.push({ id: sheet.getSheetId(), name: sheet.getName(), branch: branch });
+  props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEETS: JSON.stringify(sheets) });
+  props.deleteProperty('SHEET_NAME');
+  props.deleteProperty('DEFAULT_BRANCH');
 
   // Replace any earlier triggers created by this script.
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -84,7 +112,21 @@ function setup() {
   ScriptApp.newTrigger('pushNew').timeBased().everyMinutes(15).create();
 
   var r = pushNew();
-  ui.alert('الأعمدة المستخدمة:\n' + describeMapping_(sheet, cols) + '\n\nتم الإعداد على الورقة «' + sheet.getName() + '»' + (branch ? '\n• الفرع الافتراضي: ' + branch : '') + formNote + '\n• إرسال احتياطي كل 15 دقيقة\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')');
+  ui.alert('الأعمدة المستخدمة في «' + sheet.getName() + '»:\n' + describeMapping_(sheet, cols) +
+    '\n\nالأوراق المربوطة:\n' + sheets.map(function (x) { return '• ' + x.name + (x.branch ? ' — ' + x.branch : ''); }).join('\n') +
+    formNote + '\n• إرسال احتياطي كل 15 دقيقة' +
+    '\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')' + (r.error ? '\nخطأ: ' + r.error : ''));
+}
+
+function unlinkSheet() {
+  var ui = SpreadsheetApp.getUi();
+  var props = PropertiesService.getScriptProperties();
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var sheets = linkedSheets_(props);
+  var rest = sheets.filter(function (x) { return x.id !== sheet.getSheetId(); });
+  if (rest.length === sheets.length) { ui.alert('الورقة «' + sheet.getName() + '» غير مربوطة'); return; }
+  props.setProperty(PROP_SHEETS, JSON.stringify(rest));
+  ui.alert('أُلغي ربط «' + sheet.getName() + '». الشكاوى المرسلة سابقاً تبقى في النظام.');
 }
 
 function onFormSubmitPush() { pushNew(); }
@@ -94,11 +136,7 @@ function pushNewMenu() {
   SpreadsheetApp.getUi().alert('أُرسل: ' + r.sent + ' صف · جديد في النظام: ' + r.inserted + (r.error ? '\nخطأ: ' + r.error : ''));
 }
 
-/**
- * Sends every row after the last successfully sent one, in batches.
- * The pointer only advances after the server confirms a batch, so a failed
- * request is retried next time and the server's upsert drops duplicates.
- */
+/** Pushes new rows from every linked sheet. */
 function pushNew() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) return { sent: 0, inserted: 0, error: 'تشغيل آخر قيد التنفيذ' };
@@ -107,60 +145,76 @@ function pushNew() {
     var url = props.getProperty(PROP_URL), secret = props.getProperty(PROP_SECRET);
     if (!url || !secret) return { sent: 0, inserted: 0, error: 'شغّل الإعداد أولاً' };
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(props.getProperty(PROP_SHEET)) || ss.getSheets()[0];
-    var cols = headerMap_(sheet);
-    if (cols.description === undefined) return { sent: 0, inserted: 0, error: 'لا يوجد عمود نص الشكوى' };
-
-    var key = 'LAST_ROW:' + sheet.getSheetId();
-    var lastSent = Number(props.getProperty(key) || 1); // row 1 = headers
-    var lastRow = sheet.getLastRow();
-    if (lastRow <= lastSent) return { sent: 0, inserted: 0 };
-
-    var width = sheet.getLastColumn();
-    var range = sheet.getRange(lastSent + 1, 1, lastRow - lastSent, width);
-    var values = range.getValues();
-    var shown = range.getDisplayValues();
-    var tz = ss.getSpreadsheetTimeZone();
-    var defaultBranch = props.getProperty(PROP_BRANCH) || '';
-    var sent = 0, inserted = 0;
-
-    for (var start = 0; start < values.length; start += BATCH_SIZE) {
-      var chunk = values.slice(start, start + BATCH_SIZE);
-      var rows = [];
-      chunk.forEach(function (row, i) {
-        var rowNumber = lastSent + 1 + start + i;
-        var out = { source_key: ss.getId() + ':' + sheet.getName() + ':' + rowNumber };
-        Object.keys(cols).forEach(function (field) {
-          if (field !== 'date' && field !== 'time') out[field] = cell_(row[cols[field]], tz);
-        });
-        if (cols.date !== undefined) out.date = when_(row[cols.date], cols.time !== undefined ? shown[start + i][cols.time] : '', tz);
-        if (!out.branch && defaultBranch) out.branch = defaultBranch;
-        if (out.description) rows.push(out);
-      });
-      if (rows.length) {
-        var res = UrlFetchApp.fetch(url, {
-          method: 'post',
-          contentType: 'application/json',
-          headers: { 'X-Webhook-Secret': secret },
-          payload: JSON.stringify({ rows: rows }),
-          muteHttpExceptions: true
-        });
-        var code = res.getResponseCode();
-        var body = {};
-        try { body = JSON.parse(res.getContentText()); } catch (e) { /* non-JSON */ }
-        if (code !== 200 || !body.ok) {
-          // Stop without advancing: the next run retries from here.
-          return { sent: sent, inserted: inserted, error: 'HTTP ' + code + ' ' + (body.error || '') };
-        }
-        inserted += body.inserted || 0;
-        sent += rows.length;
-      }
-      props.setProperty(key, String(lastSent + start + chunk.length));
-    }
-    return { sent: sent, inserted: inserted };
+    var total = { sent: 0, inserted: 0 }, errors = [];
+    linkedSheets_(props).forEach(function (cfg) {
+      var sheet = sheetById_(ss, cfg.id);
+      if (!sheet) { errors.push('ورقة محذوفة: ' + cfg.name); return; }
+      var r = pushSheet_(ss, sheet, cfg.branch || '', url, secret, props);
+      total.sent += r.sent; total.inserted += r.inserted;
+      if (r.error) errors.push(sheet.getName() + ': ' + r.error);
+    });
+    if (errors.length) total.error = errors.join(' | ');
+    return total;
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Sends every row after the last successfully sent one, in batches.
+ * The pointer only advances after the server confirms a batch, so a failed
+ * request is retried next time and the server's upsert drops duplicates.
+ */
+function pushSheet_(ss, sheet, defaultBranch, url, secret, props) {
+  var cols = headerMap_(sheet);
+  if (cols.description === undefined) return { sent: 0, inserted: 0, error: 'لا يوجد عمود نص الشكوى' };
+
+  var key = 'LAST_ROW:' + sheet.getSheetId();
+  var lastSent = Number(props.getProperty(key) || 1); // row 1 = headers
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= lastSent) return { sent: 0, inserted: 0 };
+
+  var width = sheet.getLastColumn();
+  var range = sheet.getRange(lastSent + 1, 1, lastRow - lastSent, width);
+  var values = range.getValues();
+  var shown = range.getDisplayValues();
+  var tz = ss.getSpreadsheetTimeZone();
+  var sent = 0, inserted = 0;
+
+  for (var start = 0; start < values.length; start += BATCH_SIZE) {
+    var chunk = values.slice(start, start + BATCH_SIZE);
+    var rows = [];
+    chunk.forEach(function (row, i) {
+      var rowNumber = lastSent + 1 + start + i;
+      var out = { source_key: ss.getId() + ':' + sheet.getName() + ':' + rowNumber };
+      Object.keys(cols).forEach(function (field) {
+        if (field !== 'date' && field !== 'time') out[field] = cell_(row[cols[field]], tz);
+      });
+      if (cols.date !== undefined) out.date = when_(row[cols.date], cols.time !== undefined ? shown[start + i][cols.time] : '', tz);
+      if (!out.branch && defaultBranch) out.branch = defaultBranch;
+      if (out.description) rows.push(out);
+    });
+    if (rows.length) {
+      var res = UrlFetchApp.fetch(url, {
+        method: 'post',
+        contentType: 'application/json',
+        headers: { 'X-Webhook-Secret': secret },
+        payload: JSON.stringify({ rows: rows }),
+        muteHttpExceptions: true
+      });
+      var code = res.getResponseCode();
+      var body = {};
+      try { body = JSON.parse(res.getContentText()); } catch (e) { /* non-JSON */ }
+      if (code !== 200 || !body.ok) {
+        // Stop without advancing: the next run retries from here.
+        return { sent: sent, inserted: inserted, error: 'HTTP ' + code + ' ' + (body.error || '') };
+      }
+      inserted += body.inserted || 0;
+      sent += rows.length;
+    }
+    props.setProperty(key, String(lastSent + start + chunk.length));
+  }
+  return { sent: sent, inserted: inserted };
 }
 
 function norm_(s) { return String(s || '').toLowerCase().replace(/[\u064B-\u0652]/g, '').replace(/\s+/g, ' ').trim(); }

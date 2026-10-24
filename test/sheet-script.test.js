@@ -55,3 +55,43 @@ test('displayed times become 24h', () => {
   assert.equal(time24_('08:05'), '08:05:00');
   assert.equal(time24_(''), '');
 });
+
+test('linked sheets: upgrades the old single-sheet settings and pushes each sheet with its own branch', () => {
+  const store = { WEBHOOK_URL: 'https://x/api/webhooks/complaints', WEBHOOK_SECRET: 's', SHEET_NAME: 'Form Responses 1', DEFAULT_BRANCH: 'بريدة' };
+  const props = {
+    getProperty: k => (k in store ? store[k] : null),
+    setProperty: (k, v) => { store[k] = v; },
+    setProperties: o => Object.assign(store, o),
+    deleteProperty: k => { delete store[k]; }
+  };
+  const sheet = (id, name, headers, rows) => ({
+    getSheetId: () => id, getName: () => name, getLastRow: () => rows.length + 1, getLastColumn: () => headers.length,
+    getRange: (r, c, nr, nc) => ({
+      getDisplayValues: () => (r === 1 ? [headers] : rows.slice(r - 2, r - 2 + nr)),
+      getValues: () => rows.slice(r - 2, r - 2 + nr)
+    })
+  });
+  const headers = ['Timestamp', 'Describe the complaint\nاكتب الشكوى', 'Patient name\nاسم المريض'];
+  const s1 = sheet(11, 'Form Responses 1', headers, [['t', 'تأخير الموعد', 'Ahmad']]);
+  const s2 = sheet(22, 'Form Responses 2', headers, [['t', 'انتظار طويل', 'Sara'], ['t', '', 'x']]);
+  const posted = [];
+  const sb = {
+    PropertiesService: { getScriptProperties: () => props },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getId: () => 'SS', getSheets: () => [s1, s2], getSheetByName: n => [s1, s2].find(x => x.getName() === n), getSpreadsheetTimeZone: () => 'Asia/Riyadh' }) },
+    Utilities: { formatDate: () => '' },
+    UrlFetchApp: { fetch: (u, o) => { const rows = JSON.parse(o.payload).rows; posted.push(...rows); return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ ok: true, inserted: rows.length }) }; } }
+  };
+  vm.runInNewContext(src, sb);
+  assert.deepEqual(JSON.parse(JSON.stringify(sb.linkedSheets_(props))), [{ id: 11, name: 'Form Responses 1', branch: 'بريدة' }]);
+  store.SHEETS = JSON.stringify([{ id: 11, name: 'Form Responses 1', branch: 'بريدة' }, { id: 22, name: 'Form Responses 2', branch: 'عنيزة' }]);
+  const r = sb.pushNew();
+  assert.equal(r.sent, 2);
+  assert.deepEqual(posted.map(p => [p.source_key, p.branch, p.description]), [
+    ['SS:Form Responses 1:2', 'بريدة', 'تأخير الموعد'],
+    ['SS:Form Responses 2:2', 'عنيزة', 'انتظار طويل']
+  ]);
+  assert.equal(JSON.stringify(posted).includes('Ahmad'), false, 'patient name never sent');
+  assert.equal(store['LAST_ROW:22'], '3', 'pointer advances past the empty row too');
+  assert.equal(sb.pushNew().sent, 0, 'nothing re-sent');
+});
