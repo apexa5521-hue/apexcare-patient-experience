@@ -151,3 +151,10 @@ test('the system URL is accepted as the base or with /complaints or /ratings, an
   for (const u of [b, b + '/', b + '/complaints', b + '/ratings']) assert.equal(sandbox.webhookBase_(u), b, u);
   for (const u of ['http://x/api/webhooks', 'https://x/api/other', '']) assert.equal(sandbox.webhookBase_(u), '', u);
 });
+
+test('the real complaints sheet (QR) is detected as complaints with the right columns', () => {
+  const h = ['Timestamp', 'Please state the complaint:\nيرجى توضيح الشكوى\n', 'DATE OF EVENT\nتاريخ الحدث\n', 'TIME  OF EVENT\nوقت الحدث\n',
+    'Please provide your phone number to update you with any action plan made for your complaint.\nيرجى تزويدنا برقم هاتفك لنطلعك على أي خطة عمل يتم وضعها بشأن شكواك.\n'];
+  assert.equal(sandbox.sheetType_(h), 'complaints');
+  assert.deepEqual(JSON.parse(JSON.stringify(sandbox.matchHeaders_(h))), { date: 2, time: 3, phone: 4, description: 1 });
+});
