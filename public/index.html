@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f6b63">
+<title>تجربة المريض | Apex Care</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5f2;--surface:#fff;--surface-2:#fbfaf8;
+  --ink:#17201e;--ink-2:#45524e;--muted:#6b7773;--line:#e4e1da;--line-2:#efede8;
+  --brand:#0f6b63;--brand-ink:#0b524c;--brand-soft:#e3f1ee;--focus:#0f6b63;
+  --pos:#1f7a4d;--pos-soft:#e5f3ea;--neg:#c2410c;--neg-soft:#fbeae1;--neu:#56655f;--neu-soft:#eef0ee;
+  --warn:#94560a;--warn-soft:#fbf0dc;--info:#1d4ed8;--info-soft:#e6edfd;--danger:#b42318;--danger-soft:#fde8e6;
+  --star:#d99a00;--star-off:#dcd8cf;
+  /* charts: one colour for negative, neutral for everything else */
+  --c-neg:#c2410c;--c-rest:#a9b8b4;--c-single:#6f817c;--c-grid:#ece9e3;
+  --h0:#f1efea;--h1:#fbe3d4;--h2:#f4bf9e;--h3:#e8925f;--h4:#d4672f;--h5:#a83c0e;
+  --r-sm:8px;--r:12px;--r-lg:16px;
+  --sh:0 1px 2px rgba(23,32,30,.04),0 2px 8px rgba(23,32,30,.04);
+  --sh-lg:0 12px 40px rgba(23,32,30,.18);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+.ltr{direction:ltr;unicode-bidi:isolate}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:13px}.tiny{font-size:12px}
+h1,h2,h3{margin:0;line-height:1.3}
+h2{font-size:19px;font-weight:700}
+h3{font-size:15px;font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grow{flex:1}
+
+/* ---------- surfaces ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh)}
+.pad{padding:20px}
+@media(max-width:560px){.pad{padding:16px}}
+.stack>*+*{margin-top:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:860px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.g2,.g3{grid-template-columns:minmax(0,1fr)}}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.section-head p{margin:2px 0 0}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid transparent;
+  background:var(--brand);color:#fff;font-weight:600;transition:background .15s,box-shadow .15s,transform .05s;white-space:nowrap}
+.btn:hover{background:var(--brand-ink)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.65;cursor:progress}
+.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--surface-2);border-color:#d6d2c9}
+.btn.quiet{background:transparent;color:var(--brand);padding:0 10px}
+.btn.quiet:hover{background:var(--brand-soft)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:8px}
+.btn.block{width:100%}
+.btn[aria-busy=true]::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-inline-end-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- fields ---------- */
+.field{min-width:0}
+.field>label,.field>.label{display:block;font-size:13.5px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.req{color:var(--neg);margin-inline-start:2px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.err{font-size:12.5px;color:var(--danger);margin-top:6px;font-weight:500}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+.field.invalid .seg,.field.invalid .stars{box-shadow:0 0 0 2px var(--danger)}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=tel],input[type=search],select,textarea{
+  width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236b7773' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 12px center;padding-inline-end:34px}
+textarea{min-height:96px;resize:vertical;line-height:1.6}
+input[type=date],input[type=time]{text-align:right}
+input::placeholder,textarea::placeholder{color:#9aa39f}
+
+/* ---------- segmented control (sliding thumb) ---------- */
+.seg{--n:3;--i:-1;position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:0;padding:3px;border-radius:12px;
+  background:#f1efea;border:1px solid var(--line);box-shadow:inset 0 1px 2px rgba(23,32,30,.06)}
+.seg::before{content:"";position:absolute;top:3px;bottom:3px;width:calc((100% - 6px) / var(--n));inset-inline-start:calc(3px + (100% - 6px) / var(--n) * var(--i));
+  border-radius:9px;background:var(--surface);box-shadow:0 1px 2px rgba(23,32,30,.12),0 0 0 1px rgba(23,32,30,.04);
+  opacity:calc(var(--i) + 1);transition:inset-inline-start .28s var(--ease),background-color .2s,opacity .15s}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.seg label{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:42px;padding:4px 8px;border-radius:9px;
+  text-align:center;font-weight:500;font-size:14.5px;color:var(--ink-2);cursor:pointer;transition:color .2s;line-height:1.25}
+.seg label:hover{color:var(--ink)}
+.seg input:checked+label{color:var(--ink);font-weight:600}
+.seg input:focus-visible+label{outline:2px solid var(--focus);outline-offset:-2px}
+.seg[data-tone=sent][data-v="إيجابية"]::before{background:var(--pos-soft);box-shadow:inset 0 0 0 1.5px var(--pos)}
+.seg[data-tone=sent][data-v="سلبية"]::before{background:var(--neg-soft);box-shadow:inset 0 0 0 1.5px var(--neg)}
+.seg[data-tone=sent][data-v="محايدة"]::before{background:var(--neu-soft);box-shadow:inset 0 0 0 1.5px var(--neu)}
+.seg[data-tone=sent][data-v="إيجابية"] input:checked+label{color:var(--pos)}
+.seg[data-tone=sent][data-v="سلبية"] input:checked+label{color:var(--neg)}
+.seg[data-tone=sev][data-v="عالية"]::before{background:var(--danger-soft);box-shadow:inset 0 0 0 1.5px var(--danger)}
+.seg[data-tone=sev][data-v="عالية"] input:checked+label{color:var(--danger)}
+.seg[data-tone=sev][data-v="متوسطة"]::before{background:var(--warn-soft);box-shadow:inset 0 0 0 1.5px var(--warn)}
+@media(prefers-reduced-motion:reduce){.seg::before{transition:none}}
+
+/* ---------- star rating ---------- */
+.q{padding:14px 0;border-top:1px solid var(--line-2)}
+.q:first-of-type{border-top:0;padding-top:4px}
+.q-title{font-weight:600;font-size:15px;margin-bottom:8px;color:var(--ink)}
+.stars-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.stars{display:inline-flex;gap:2px;border-radius:12px;padding:2px}
+.stars input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.stars label{width:46px;height:46px;display:grid;place-items:center;border-radius:10px;cursor:pointer;transition:transform .12s var(--ease),background-color .15s}
+.stars label:hover{background:#faf6ea}
+.stars label:active{transform:scale(.92)}
+.stars svg{width:32px;height:32px;fill:var(--star-off);transition:fill .12s,transform .18s var(--ease)}
+.stars label.on svg{fill:var(--star)}
+.stars label.on.pop svg{transform:scale(1.12)}
+.stars input:focus-visible+label{outline:2px solid var(--focus);outline-offset:-2px}
+.stars-cap{min-width:84px;font-size:14px;font-weight:600;color:var(--muted)}
+.stars-cap.set{color:var(--ink)}
+@media(max-width:400px){.stars label{width:44px;height:44px}.stars svg{width:30px;height:30px}}
+@media(prefers-reduced-motion:reduce){.stars label,.stars svg{transition:none}}
+
+/* read-only stars with fractional fill */
+.ro-stars{position:relative;display:inline-block;line-height:0;vertical-align:-2px}
+.ro-stars svg{width:var(--s,14px);height:var(--s,14px);fill:var(--star-off)}
+.ro-stars .fill{position:absolute;inset-block:0;inset-inline-start:0;overflow:hidden;white-space:nowrap}
+.ro-stars .fill svg{fill:var(--star)}
+
+/* ---------- login ---------- */
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;
+  background:radial-gradient(1200px 500px at 85% -10%,#e3f1ee 0,transparent 60%),var(--bg)}
+.login .card{width:100%;max-width:400px;padding:28px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;flex:none}
+.mark svg{width:24px;height:24px}
+.brand b{display:block;font-size:17px;line-height:1.25}
+.brand small{display:block;color:var(--muted);font-size:12.5px}
+.login h1{font-size:22px;margin:26px 0 4px}
+.login p.lead{margin:0 0 20px;color:var(--muted);font-size:14px}
+.alert{padding:10px 12px;border-radius:10px;font-size:14px;background:var(--warn-soft);color:var(--warn);margin-bottom:14px}
+
+/* ---------- app chrome ---------- */
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+header.top .bar{display:flex;align-items:center;gap:12px;padding-top:12px;padding-bottom:6px}
+.who{margin-inline-start:auto;display:flex;align-items:center;gap:6px}
+.who-name{font-size:13.5px;text-align:left;line-height:1.3;margin-inline-end:6px}
+.who-name b{display:block;font-weight:600}
+.who-name span{color:var(--muted);font-size:12px}
+@media(max-width:560px){.who-name{display:none}}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:0}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{position:relative;border:0;background:none;padding:12px 14px;color:var(--muted);white-space:nowrap;font-weight:500;font-size:14.5px;min-height:44px}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-selected=true]{color:var(--brand);font-weight:600}
+nav.tabs button[aria-selected=true]::after{content:"";position:absolute;inset-inline:10px;bottom:0;height:2.5px;border-radius:2px 2px 0 0;background:var(--brand)}
+.badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--neg);color:#fff;font-size:11.5px;font-weight:700;margin-inline-start:6px;font-variant-numeric:tabular-nums}
+main.wrap{padding-top:20px;padding-bottom:60px}
+
+/* ---------- experience form ---------- */
+.form-shell{max-width:860px;margin:0 auto}
+.step{display:flex;gap:14px}
+.step+.step{margin-top:6px}
+.step-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:700;font-size:13.5px;margin-top:2px}
+.step-body{flex:1;min-width:0;padding-bottom:22px;border-bottom:1px solid var(--line-2)}
+.step:last-of-type .step-body{border-bottom:0;padding-bottom:4px}
+.step-title{font-weight:700;font-size:16px;margin:3px 0 14px}
+@media(max-width:560px){.step{gap:10px}.step-n{width:24px;height:24px;font-size:12.5px}}
+.reveal{animation:reveal .22s var(--ease)}
+@keyframes reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.note-meta{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:12.5px}
+.note-meta .warn{color:var(--warn);font-weight:500}
+.savebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+@media(max-width:560px){.savebar .btn{width:100%}}
+
+/* ---------- filters ---------- */
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-items:end}
+.filters .field>label{font-size:12.5px;margin-bottom:4px;font-weight:500;color:var(--muted)}
+.filters input,.filters select{min-height:40px;padding-top:7px;padding-bottom:7px;font-size:14px}
+.filters .actions{display:flex;gap:8px}
+.filters .actions .btn{min-height:40px;flex:1}
+details.more-filters>summary{list-style:none;cursor:pointer;color:var(--brand);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;min-height:36px}
+details.more-filters>summary::-webkit-details-marker{display:none}
+
+/* ---------- tables ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line-2);text-align:right;white-space:nowrap;vertical-align:middle}
+thead th{background:var(--surface-2);color:var(--muted);font-weight:600;font-size:12.5px;position:sticky;top:0;z-index:1}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#fcfbf9}
+td.num,th.num{text-align:left;font-variant-numeric:tabular-nums}
+td.wrap-t{white-space:normal;min-width:220px;max-width:420px;line-height:1.5}
+tr.overdue td{background:#fff8f4}
+tr.overdue td:first-child{box-shadow:inset -3px 0 0 var(--neg)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink-2);font-size:15px;margin-bottom:4px}
+.count-line{margin:12px 2px 10px;color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.6}
+.p-pos{background:var(--pos-soft);color:var(--pos)}.p-neg{background:var(--neg-soft);color:var(--neg)}.p-neu{background:var(--neu-soft);color:var(--neu)}
+.p-high{background:var(--danger-soft);color:var(--danger)}.p-mid{background:var(--warn-soft);color:var(--warn)}.p-low{background:var(--neu-soft);color:var(--neu)}
+.p-open{background:var(--info-soft);color:var(--info)}.p-prog{background:var(--warn-soft);color:var(--warn)}.p-closed{background:var(--pos-soft);color:var(--pos)}
+.p-off{background:var(--neu-soft);color:var(--muted)}
+.r-chip{display:inline-flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums;font-weight:600}
+.r-chip svg{width:13px;height:13px;fill:var(--star)}
+.r-chip.low{color:var(--neg)}
+.tag{display:inline-block;font-size:11px;color:var(--muted);background:var(--neu-soft);padding:0 6px;border-radius:6px;margin-inline-start:6px;font-weight:500}
+td select{min-height:34px;padding:4px 30px 4px 10px;font-size:13px;width:auto}
+
+/* ---------- stat tiles ---------- */
+.tile{padding:16px 18px}
+.tile .l{font-size:13px;color:var(--muted);font-weight:500}
+.tile .v{font-size:30px;font-weight:700;line-height:1.15;margin-top:6px;letter-spacing:-.01em}
+.tile .v small{font-size:15px;font-weight:600;color:var(--muted);margin-inline-start:2px}
+.tile .s{font-size:12.5px;color:var(--muted);margin-top:4px}
+.tile.hero .v{font-size:48px}
+.tile.alert-t .v{color:var(--neg)}
+.split{display:flex;gap:2px;height:8px;margin-top:12px}
+.split i{display:block;height:100%}
+.split i:first-child{border-start-start-radius:4px;border-end-start-radius:4px}
+.split i:last-child{border-start-end-radius:4px;border-end-end-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-2);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ---------- charts ---------- */
+.chart-card{padding:18px 18px 14px}
+.chart-card h3{margin-bottom:2px}
+.chart-card .sub{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+.hbars{display:grid;gap:10px}
+.hbar{display:grid;grid-template-columns:minmax(80px,170px) minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13.5px}
+.hbar .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .track{display:flex;gap:2px;height:12px;min-width:0}
+.hbar .track i{display:block;height:100%;min-width:0}
+.hbar .track i:last-child{border-start-end-radius:4px;border-end-end-radius:4px}
+.hbar .n{text-align:left;font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:600}
+@media(max-width:560px){.hbar{grid-template-columns:minmax(70px,110px) minmax(0,1fr) 36px}}
+.cols{position:relative;display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:8px;border-bottom:1px solid var(--c-grid);
+  background:linear-gradient(to top,transparent calc(50% - .5px),var(--c-grid) calc(50% - .5px),var(--c-grid) calc(50% + .5px),transparent calc(50% + .5px))}
+.cols .c{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;cursor:default}
+.cols .stk{width:100%;max-width:24px;display:flex;flex-direction:column-reverse;gap:2px}
+.cols .stk i{display:block;width:100%;min-height:0}
+.cols .stk i:last-child{border-radius:4px 4px 0 0}
+.cols .c:hover .stk,.cols .c:focus .stk{filter:brightness(.92)}
+.axis{display:flex;gap:4px;margin-top:6px}
+.axis span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap}
+.heat-wrap{overflow-x:auto}
+.heat{border-collapse:separate;border-spacing:2px;font-size:11px;width:auto}
+.heat th,.heat td{padding:0;border:0;background:none!important;position:static;text-align:center;font-weight:500;color:var(--muted)}
+.heat td i{display:block;width:24px;height:24px;border-radius:5px}
+.heat th.d{padding-inline-end:8px;text-align:right;white-space:nowrap}
+.scale{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);margin-top:10px}
+.scale i{width:18px;height:10px;border-radius:3px;display:inline-block}
+details.tv{margin-top:12px}
+details.tv>summary{cursor:pointer;font-size:12.5px;color:var(--brand);font-weight:600;width:max-content}
+details.tv table{margin-top:8px;font-size:13px}
+details.tv th,details.tv td{padding:6px 10px}
+.rating-card .big{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.rating-card .big b{font-size:40px;line-height:1;font-weight:700}
+.dist{display:grid;gap:6px}
+.dist .r{display:grid;grid-template-columns:34px minmax(0,1fr) 36px;gap:8px;align-items:center;font-size:12.5px}
+.dist .r .k{display:inline-flex;align-items:center;gap:2px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.dist .r .k svg{width:11px;height:11px;fill:var(--star)}
+.dist .r .t{height:8px;background:var(--h0);border-radius:4px;overflow:hidden}
+.dist .r .t i{display:block;height:100%;background:var(--c-single);border-radius:4px}
+.dist .r .n{text-align:left;color:var(--muted);font-variant-numeric:tabular-nums}
+.spark{width:100%;height:120px;display:block;overflow:visible}
+.spark .grid-l{stroke:var(--c-grid);stroke-width:1}
+.spark .ln{fill:none;stroke:var(--c-single);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.spark .dot{fill:var(--c-single);stroke:var(--surface);stroke-width:2}
+.spark .hit{fill:transparent}
+.spark text{font-size:10.5px;fill:var(--muted);font-family:inherit}
+.spark .end{font-size:12px;font-weight:700;fill:var(--ink)}
+.net{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-variant-numeric:tabular-nums}
+.net .nb{position:relative;width:56px;height:6px;background:var(--line-2);border-radius:3px}
+.net .nb i{position:absolute;top:0;bottom:0;border-radius:3px}
+.net .nb::after{content:"";position:absolute;top:-2px;bottom:-2px;inset-inline-start:50%;width:1px;background:#b9b4aa}
+
+/* ---------- tooltip / toast / modal ---------- */
+#tip{position:fixed;z-index:80;pointer-events:none;background:var(--ink);color:#fff;font-size:12.5px;line-height:1.5;padding:7px 10px;border-radius:8px;
+  box-shadow:var(--sh-lg);max-width:240px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:pre-line}
+#tip.on{opacity:1;transform:none}
+#toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,10px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;z-index:90;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:calc(100vw - 32px);box-shadow:var(--sh-lg);display:flex;align-items:center;gap:8px}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--danger)}
+#toast svg{width:18px;height:18px;flex:none}
+.modal{position:fixed;inset:0;background:rgba(23,32,30,.42);display:grid;place-items:center;padding:16px;z-index:60;animation:fade .15s}
+.modal .dialog{width:100%;max-width:560px;max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);animation:rise .2s var(--ease)}
+.modal .dialog h2{margin-bottom:14px}
+.modal .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+@media(max-width:560px){.modal{place-items:end center;padding:0}.modal .dialog{border-radius:18px 18px 0 0;max-height:92dvh}.modal .actions .btn{flex:1}}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+.secret{font-size:26px;font-weight:700;letter-spacing:.06em;background:var(--brand-soft);color:var(--brand-ink);padding:14px;border-radius:12px;text-align:center;margin:12px 0}
+.quote{background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;margin:0 0 14px;white-space:pre-wrap;line-height:1.6}
+.check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,#efede8 0,#f7f6f3 50%,#efede8 100%);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.84 5.76 6.36.92-4.6 4.49 1.08 6.33L12 17.1l-5.68 3 1.08-6.33-4.6-4.49 6.36-.92z"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5L12 4.5l7.5 15M8 13h8"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 7v6m0 4h.01"/></symbol>
+</svg>
+
+<!-- ===== Login ===== -->
+<section id="loginView" class="login">
+  <div class="card">
+    <div class="brand"><div class="mark"><svg><use href="#i-mark"/></svg></div><div><b>نظام تجربة المريض</b><small>مجمع Apex Care · بريدة وعنيزة</small></div></div>
+    <h1>تسجيل الدخول</h1>
+    <p class="lead">استخدم اسم المستخدم الذي سلّمته لك الإدارة.</p>
+    <div id="loginMsg" class="alert hidden" role="alert"></div>
+    <form id="loginForm" class="grid" novalidate>
+      <div class="field"><label for="lgUser">اسم المستخدم</label><input type="text" id="lgUser" class="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+      <div class="field"><label for="lgPass">كلمة المرور</label><input type="password" id="lgPass" class="ltr" autocomplete="current-password" required></div>
+      <button class="btn block" type="submit">دخول</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===== App ===== -->
+<section id="appView" class="hidden">
+  <header class="top">
+    <div class="wrap bar">
+      <div class="brand"><div class="mark"><svg><use href="#i-mark"/></svg></div><div><b>تجربة المريض</b><small>Apex Care</small></div></div>
+      <div class="who">
+        <div class="who-name"><b id="whoName"></b><span id="whoRole"></span></div>
+        <button class="btn ghost sm" id="btnPw" type="button">كلمة المرور</button>
+        <button class="btn ghost sm" id="btnOut" type="button">خروج</button>
+      </div>
+    </div>
+    <div class="wrap" style="padding-top:0;padding-bottom:0">
+      <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام النظام">
+        <button role="tab" data-tab="add" aria-selected="true">تسجيل تجربة</button>
+        <button role="tab" data-tab="log" aria-selected="false">السجل</button>
+        <button role="tab" data-tab="complaints" aria-selected="false">الشكاوى<span class="badge hidden" id="openBadge"></span></button>
+        <button role="tab" data-tab="kpi" aria-selected="false" data-admin>مؤشرات الأداء</button>
+        <button role="tab" data-tab="admin" aria-selected="false" data-admin>الإدارة</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- Record experience -->
+    <section data-pane="add" role="tabpanel">
+      <div class="form-shell">
+        <div class="section-head"><div><h2>تسجيل تجربة مريض</h2><p class="muted small">الحقول المعلّمة بـ <span class="req">*</span> إلزامية. لا تكتب اسم المريض في أي حقل.</p></div></div>
+        <form id="exForm" class="card pad" novalidate>
+          <div class="step">
+            <div class="step-n">1</div>
+            <div class="step-body">
+              <div class="step-title">بيانات الزيارة</div>
+              <div class="grid g3">
+                <div class="field" data-f="fileNo"><label for="exFile">رقم الملف<span class="req">*</span></label><input type="text" id="exFile" name="fileNo" class="ltr" inputmode="text" autocomplete="off" maxlength="20" spellcheck="false"></div>
+                <div class="field" data-f="phone"><label for="exPhone">رقم الجوال</label><input type="tel" id="exPhone" name="phone" class="ltr" placeholder="05XXXXXXXX" maxlength="16" autocomplete="off"></div>
+                <div class="field" data-f="branch"><label for="exBranch">الفرع<span class="req">*</span></label><select id="exBranch" name="branch"></select></div>
+              </div>
+              <div class="grid g3" style="margin-top:14px">
+                <div class="field" data-f="doctorId"><label for="exDoctor">الطبيب<span class="req">*</span></label><select id="exDoctor" name="doctorId"></select></div>
+                <div class="field" data-f="visitDate"><label for="exDate">تاريخ الزيارة<span class="req">*</span></label><input type="date" id="exDate" name="visitDate"></div>
+                <div class="field" data-f="visitTime"><label for="exTime">الوقت<span class="req">*</span></label><input type="time" id="exTime" name="visitTime"></div>
+              </div>
+              <div class="field" data-f="visitType" style="margin-top:14px"><span class="label" id="vtL">نوع الزيارة<span class="req">*</span></span><div class="seg" id="vtSeg" role="radiogroup" aria-labelledby="vtL"></div></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-n">2</div>
+            <div class="step-body">
+              <div class="step-title">تقييم الزيارة</div>
+              <div class="q field" data-f="bookingRating"><div class="q-title" id="qB">كيف كان أداء موظف الحجز؟<span class="req">*</span></div><div class="stars-wrap" data-stars="bookingRating" data-label="qB"></div></div>
+              <div class="q field" data-f="receptionRating"><div class="q-title" id="qR">كيف كان أداء موظف الاستقبال؟<span class="req">*</span></div><div class="stars-wrap" data-stars="receptionRating" data-label="qR"></div></div>
+              <div class="q field" data-f="planExplained"><div class="q-title" id="qP">هل شُرحت لك الخطة العلاجية بوضوح؟<span class="req">*</span></div><div class="seg" id="planSeg" role="radiogroup" aria-labelledby="qP"></div></div>
+              <div class="q field" data-f="doctorRating"><div class="q-title" id="qD">كيف كان أداء الطبيب معك؟<span class="req">*</span></div><div class="stars-wrap" data-stars="doctorRating" data-label="qD"></div></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-n">3</div>
+            <div class="step-body">
+              <div class="step-title">التجربة العامة</div>
+              <div class="field" data-f="sentiment"><span class="label sr" id="sentL">التجربة العامة</span><div class="seg" id="sentSeg" data-tone="sent" role="radiogroup" aria-labelledby="sentL"></div></div>
+              <div id="negBox" class="grid g2 hidden reveal" style="margin-top:14px">
+                <div class="field" data-f="category"><label for="exCat" id="catLabel">تصنيف المشكلة<span class="req">*</span></label><select id="exCat" name="category"></select></div>
+                <div class="field" data-f="severity" id="sevBox"><span class="label" id="sevL">درجة الخطورة<span class="req">*</span></span><div class="seg" id="sevSeg" data-tone="sev" role="radiogroup" aria-labelledby="sevL"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-n">4</div>
+            <div class="step-body">
+              <div class="step-title">هل لديك ملاحظة عامة؟</div>
+              <div class="field" data-f="generalNote">
+                <label for="exNote" class="sr">ملاحظة عامة</label>
+                <textarea id="exNote" name="generalNote" maxlength="1000" placeholder="اكتب ما ذكره المريض بإيجاز (اختياري)"></textarea>
+                <div class="note-meta"><span class="warn">بدون اسم المريض — يكفي رقم الملف</span><span class="muted num" id="noteCount">0 / 1000</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="savebar"><button class="btn" type="submit" id="exSave">حفظ التجربة</button><span class="muted small" id="exHint"></span></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Log -->
+    <section data-pane="log" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>سجل التجارب</h2><p class="muted small" id="logScope"></p></div><button class="btn ghost sm" id="exportEx" type="button">تصدير CSV</button></div>
+      <div class="card pad"><form class="filters" id="logFilters"></form></div>
+      <div class="count-line" id="logCount" aria-live="polite"></div>
+      <div class="tbl-wrap"><table id="logTable"></table></div>
+    </section>
+
+    <!-- Complaints -->
+    <section data-pane="complaints" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>الشكاوى</h2><p class="muted small">من الإدخال اليدوي وشيت الشكاوى</p></div>
+        <div class="row"><button class="btn ghost sm" id="exportCo" type="button">تصدير CSV</button><button class="btn sm" id="newCo" type="button">شكوى جديدة</button></div></div>
+      <div class="grid g3" style="margin-bottom:14px">
+        <div class="card tile"><div class="l">إجمالي الشكاوى</div><div class="v" id="cTotal">–</div></div>
+        <div class="card tile"><div class="l">مفتوحة</div><div class="v" id="cOpen">–</div><div class="s">جديدة أو قيد المعالجة</div></div>
+        <div class="card tile alert-t"><div class="l">متأخرة</div><div class="v" id="cOver">–</div><div class="s" id="cOverS"></div></div>
+      </div>
+      <div class="card pad"><form class="filters" id="coFilters"></form></div>
+      <div class="count-line" id="coCount" aria-live="polite"></div>
+      <div class="tbl-wrap"><table id="coTable"></table></div>
+    </section>
+
+    <!-- KPIs -->
+    <section data-pane="kpi" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>مؤشرات الأداء</h2><p class="muted small">كل الأوقات بتوقيت الرياض</p></div></div>
+      <div class="card pad"><form class="filters" id="kpiFilters"></form></div>
+      <div id="kpiBody" class="stack" style="margin-top:16px"></div>
+    </section>
+
+    <!-- Admin -->
+    <section data-pane="admin" role="tabpanel" class="hidden">
+      <div class="stack">
+        <div>
+          <div class="section-head"><div><h2>المستخدمون</h2><p class="muted small">كلمة المرور المؤقتة تظهر مرة واحدة فقط</p></div><button class="btn sm" id="newUser" type="button">مستخدم جديد</button></div>
+          <div class="tbl-wrap"><table id="userTable"></table></div>
+        </div>
+        <div class="grid g2">
+          <div>
+            <div class="section-head"><h2>الأطباء</h2><button class="btn sm ghost" id="newDoc" type="button">إضافة طبيب</button></div>
+            <div class="tbl-wrap"><table id="docTable"></table></div>
+          </div>
+          <div>
+            <div class="section-head"><h2>التصنيفات</h2><button class="btn sm ghost" id="newCat" type="button">إضافة تصنيف</button></div>
+            <div class="tbl-wrap"><table id="catTable"></table></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>
+
+<div class="modal hidden" id="modal"><div class="dialog" id="modalBody" role="dialog" aria-modal="true" aria-labelledby="modalTitle"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="tip" role="tooltip"></div>
+
+<script nonce="__CSP_NONCE__">
+'use strict';
+const TZ = 'Asia/Riyadh';
+const S = { token: null, user: null, lk: null, overdueDays: 3, ex: [], co: [], adm: {} };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isAdmin = () => S.user && S.user.role === 'admin';
+const STAR = '<svg aria-hidden="true"><use href="#i-star"/></svg>';
+const RATING_TEXT = ['', 'ضعيف جداً', 'ضعيف', 'مقبول', 'جيد', 'ممتاز'];
+const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+/* ---------- formatting ---------- */
+const nf = new Intl.NumberFormat('en-US');
+const n0 = v => (v === null || v === undefined ? '–' : nf.format(v));
+const n1 = v => (v === null || v === undefined ? '–' : (Math.round(v * 10) / 10).toFixed(1));
+// Percent signs and signs (+/−) flip in RTL text; isolate them as LTR.
+const pc = v => (v === null || v === undefined ? '–' : `<span dir="ltr">${Math.round(v)}%</span>`);
+function riyadhNow() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date()).map(x => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}`, y: +p.year, m: +p.month, d: +p.day };
+}
+const ymd = (y, m, d) => { const t = new Date(Date.UTC(y, m - 1, d)); return t.toISOString().slice(0, 10); };
+
+/* ---------- feedback ---------- */
+function toast(msg, err) {
+  const t = $('#toast');
+  t.innerHTML = `<svg><use href="#${err ? 'i-x' : 'i-ok'}"/></svg><span>${esc(msg)}</span>`;
+  t.className = 'on' + (err ? ' err' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = ''; }, err ? 4200 : 2800);
+}
+async function busy(btn, fn) {
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+  try { return await fn(); }
+  catch (e) { if (!e.silent) toast(e.message || 'حدث خطأ', true); }
+  finally { if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); } }
+}
+
+/* ---------- API ---------- */
+async function api(method, path, body) {
+  let res;
+  try {
+    res = await fetch(`/api${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: `Bearer ${S.token}` } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+  } catch { throw new Error('تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً'); }
+  const j = await res.json().catch(() => ({ ok: false, error: 'استجابة غير متوقعة من الخادم' }));
+  if (res.status === 401 && S.token && !path.startsWith('/auth/login')) {
+    logoutLocal('انتهت الجلسة، سجّل الدخول من جديد');
+    const e = new Error(j.error); e.silent = true; throw e;
+  }
+  if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+  return j;
+}
+const qs = o => { const p = new URLSearchParams(); Object.entries(o).forEach(([k, v]) => v && p.set(k, v)); const s = p.toString(); return s ? `?${s}` : ''; };
+function store(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch { /* storage unavailable */ } }
+function load(k) { try { return sessionStorage.getItem(k); } catch { return null; } }
+
+/* ---------- tooltip (charts) ---------- */
+(() => {
+  const tip = $('#tip');
+  const show = el => {
+    tip.textContent = el.dataset.tip; tip.classList.add('on');
+    const r = el.getBoundingClientRect(), t = tip.getBoundingClientRect();
+    let x = r.left + r.width / 2 - t.width / 2, y = r.top - t.height - 8;
+    if (y < 8) y = r.bottom + 8;
+    x = Math.max(8, Math.min(x, innerWidth - t.width - 8));
+    tip.style.left = `${x}px`; tip.style.top = `${y}px`;
+  };
+  const hide = () => tip.classList.remove('on');
+  document.addEventListener('pointerover', e => { const el = e.target.closest('[data-tip]'); el ? show(el) : hide(); });
+  document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); el ? show(el) : hide(); });
+  document.addEventListener('scroll', hide, true);
+})();
+
+/* ---------- modal ---------- */
+let lastFocus = null;
+function openModal(html, { closable = true } = {}) {
+  lastFocus = document.activeElement;
+  const m = $('#modal');
+  $('#modalBody').innerHTML = html;
+  m.classList.remove('hidden');
+  m.dataset.closable = closable ? '1' : '';
+  const first = $('#modalBody input:not([type=hidden]):not([readonly]), #modalBody select, #modalBody textarea, #modalBody button');
+  // Focus synchronously: a deferred focus can steal the caret from a field the user already started typing in.
+  if (first) first.focus();
+}
+function closeModal() {
+  $('#modal').classList.add('hidden'); $('#modalBody').innerHTML = '';
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+$('#modal').addEventListener('click', e => {
+  if (!$('#modal').dataset.closable) return;
+  if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#modal').classList.contains('hidden') && $('#modal').dataset.closable) closeModal();
+  if (e.key === 'Tab' && !$('#modal').classList.contains('hidden')) {
+    const f = $$('#modalBody input,#modalBody select,#modalBody textarea,#modalBody button').filter(x => !x.disabled && x.offsetParent);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
+/* ---------- controls ---------- */
+const opt = (items, ph, sel) => (ph !== undefined ? `<option value="">${esc(ph)}</option>` : '') +
+  items.map(i => { const [v, l] = Array.isArray(i) ? i : [i, i]; return `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
+
+let segSeq = 0;
+/** Segmented radio group with a sliding thumb. Native radios give arrow-key navigation and RTL order for free. */
+function seg(el, name, values, value) {
+  const id = `s${++segSeq}`;
+  el.style.setProperty('--n', values.length);
+  el.innerHTML = values.map((v, i) => `<input type="radio" name="${name}" id="${id}-${i}" value="${esc(v)}" ${v === value ? 'checked' : ''}><label for="${id}-${i}">${esc(v)}</label>`).join('');
+  syncSeg(el);
+  el.onchange = () => syncSeg(el);
+}
+function syncSeg(el) {
+  const inputs = $$('input', el);
+  const i = inputs.findIndex(x => x.checked);
+  el.style.setProperty('--i', i);
+  el.dataset.v = i >= 0 ? inputs[i].value : '';
+}
+function setSeg(el, value) { $$('input', el).forEach(x => { x.checked = x.value === value; }); syncSeg(el); }
+
+/** 5-star rating built from native radios (keyboard: arrows), with hover preview and a caption. */
+function stars(wrap) {
+  const name = wrap.dataset.stars;
+  const id = `st-${name}`;
+  wrap.innerHTML = `<div class="stars" role="radiogroup" aria-labelledby="${wrap.dataset.label}">` +
+    [1, 2, 3, 4, 5].map(v => `<input type="radio" name="${name}" id="${id}-${v}" value="${v}"><label for="${id}-${v}" title="${RATING_TEXT[v]}"><span class="sr">${v} — ${RATING_TEXT[v]}</span>${STAR}</label>`).join('') +
+    `</div><span class="stars-cap" aria-hidden="true">اختر من 1 إلى 5</span>`;
+  const labels = $$('label', wrap), cap = $('.stars-cap', wrap);
+  const current = () => +((($('input:checked', wrap)) || {}).value || 0);
+  const paint = (v, pop) => {
+    labels.forEach((l, i) => { l.classList.toggle('on', i < v); l.classList.toggle('pop', !!pop && i === v - 1); });
+    cap.textContent = v ? `${v} · ${RATING_TEXT[v]}` : 'اختر من 1 إلى 5';
+    cap.classList.toggle('set', !!v);
+  };
+  labels.forEach((l, i) => {
+    l.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') paint(i + 1); });
+    l.addEventListener('pointerleave', () => paint(current()));
+  });
+  wrap.addEventListener('change', () => { paint(current(), true); setTimeout(() => paint(current()), 180); });
+  wrap._reset = () => { $$('input', wrap).forEach(x => { x.checked = false; }); paint(0); };
+}
+
+function roStars(v, size = 14) {
+  if (v === null || v === undefined) return '<span class="muted">–</span>';
+  const w = Math.max(0, Math.min(100, (v / 5) * 100));
+  const row = STAR.repeat(5);
+  return `<span class="ro-stars" style="--s:${size}px" role="img" aria-label="${n1(v)} من 5"><span>${row}</span><span class="fill" style="width:${w}%">${row}</span></span>`;
+}
+const rChip = v => (v ? `<span class="r-chip ${v <= 2 ? 'low' : ''}">${v}${STAR}</span>` : '<span class="muted">–</span>');
+const sentPill = s => (s ? `<span class="pill ${s === 'إيجابية' ? 'p-pos' : s === 'سلبية' ? 'p-neg' : 'p-neu'}">${esc(s)}</span>` : '');
+const sevPill = s => (s ? `<span class="pill ${s === 'عالية' ? 'p-high' : s === 'متوسطة' ? 'p-mid' : 'p-low'}">${esc(s)}</span>` : '');
+const stPill = s => (s ? `<span class="pill ${s === 'مغلقة' ? 'p-closed' : s === 'قيد المعالجة' ? 'p-prog' : 'p-open'}">${esc(s)}</span>` : '');
+const planPill = s => (s ? `<span class="pill ${s === 'نعم' ? 'p-pos' : s === 'لا' ? 'p-neg' : s === 'جزئياً' ? 'p-mid' : 'p-off'}">${esc(s)}</span>` : '');
+const emptyRow = (title, sub) => `<tbody><tr><td class="empty"><b>${esc(title)}</b>${esc(sub || '')}</td></tr></tbody>`;
+
+/* ---------- auth ---------- */
+$('#loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const btn = e.submitter || $('#loginForm button');
+  busy(btn, async () => {
+    const username = $('#lgUser').value.trim(), password = $('#lgPass').value;
+    if (!username || !password) throw new Error('أدخل اسم المستخدم وكلمة المرور');
+    const r = await api('POST', '/auth/login', { username, password });
+    S.token = r.token; S.user = r.user; store('pe_token', r.token);
+    $('#lgPass').value = ''; $('#loginMsg').classList.add('hidden');
+    await enter();
+  });
+});
+
+function logoutLocal(msg) {
+  S.token = null; S.user = null; S.lk = null; store('pe_token', null);
+  closeModal();
+  $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
+  const m = $('#loginMsg');
+  if (msg) { m.textContent = msg; m.classList.remove('hidden'); } else m.classList.add('hidden');
+  setTimeout(() => $('#lgUser').focus(), 30);
+}
+$('#btnOut').onclick = async () => { try { await api('POST', '/auth/logout'); } catch { /* already signed out */ } logoutLocal(); };
+$('#btnPw').onclick = () => pwModal(false);
+
+async function enter() {
+  $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
+  $('#whoName').textContent = S.user.name;
+  $('#whoRole').textContent = `${isAdmin() ? 'إدارة' : 'موظف'}${S.user.branch ? ' · ' + S.user.branch : ''}`;
+  $$('[data-admin]').forEach(el => el.classList.toggle('hidden', !isAdmin()));
+  if (S.user.mustChange) return pwModal(true);
+  await reloadLookups();
+  showTab('add');
+  refreshBadge();
+}
+
+(async () => {
+  const t = load('pe_token'); if (!t) { $('#lgUser').focus(); return; }
+  S.token = t;
+  try { const r = await api('GET', '/auth/me'); S.user = r.user; await enter(); }
+  catch { logoutLocal(); }
+})();
+
+function pwModal(forced) {
+  openModal(`<h2 id="modalTitle">${forced ? 'اختر كلمة مرور جديدة' : 'تغيير كلمة المرور'}</h2>
+    ${forced ? '<p class="muted small" style="margin-top:-6px">هذه أول مرة تدخل فيها بكلمة مرور مؤقتة. اختر كلمة مرور خاصة بك للمتابعة.</p>' : ''}
+    <form id="pwForm" class="grid" novalidate>
+      <div class="field"><label for="pwOld">كلمة المرور الحالية</label><input type="password" id="pwOld" name="oldPassword" class="ltr" autocomplete="current-password"></div>
+      <div class="field"><label for="pwNew">كلمة المرور الجديدة</label><input type="password" id="pwNew" name="newPassword" class="ltr" autocomplete="new-password" minlength="8"><div class="hint">8 أحرف على الأقل، ومختلفة عن الحالية</div></div>
+      <div class="actions"><button class="btn" type="submit">حفظ</button>${forced ? '<button type="button" class="btn ghost" id="pwOut">خروج</button>' : '<button type="button" class="btn ghost" data-close>إلغاء</button>'}</div>
+    </form>`, { closable: !forced });
+  if (forced) $('#pwOut').onclick = () => $('#btnOut').click();
+  $('#pwForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => {
+      const d = Object.fromEntries(new FormData(e.target));
+      if (d.newPassword.length < 8) throw new Error('كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف');
+      await api('POST', '/auth/change-password', d);
+      closeModal(); toast('تم تغيير كلمة المرور');
+      if (forced) { S.user.mustChange = false; await enter(); }
+    });
+  };
+}
+
+/* ---------- tabs ---------- */
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); });
+$('#tabs').addEventListener('keydown', e => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const tabs = $$('#tabs button').filter(b => !b.classList.contains('hidden'));
+  const i = tabs.indexOf(document.activeElement); if (i < 0) return;
+  const next = tabs[(i + (e.key === 'ArrowLeft' ? 1 : -1) + tabs.length) % tabs.length];
+  next.focus(); showTab(next.dataset.tab);
+});
+function showTab(t) {
+  $$('#tabs button').forEach(b => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+  $$('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
+  if (t === 'log') loadLog();
+  if (t === 'complaints') loadComplaints();
+  if (t === 'kpi') loadKpi();
+  if (t === 'admin') loadAdmin();
+  if (t === 'add') setTimeout(() => $('#exFile').focus({ preventScroll: true }), 30);
+}
+
+async function reloadLookups() {
+  const r = await api('GET', '/lookups');
+  S.lk = r.lookups; S.overdueDays = r.overdueDays;
+  buildForm(); buildFilters();
+}
+
+/* ---------- experience form ---------- */
+const doctorsFor = b => S.lk.doctors.filter(d => !b || d.branch === b || d.branch === 'الكل');
+function fillDoctors() {
+  const b = $('#exBranch').value, prev = $('#exDoctor').value;
+  const list = doctorsFor(b);
+  $('#exDoctor').innerHTML = (list.length ? `<option value="">${b ? 'اختر الطبيب' : 'اختر الفرع أولاً'}</option>` : '<option value="">لا يوجد أطباء — أضفهم من الإدارة</option>') +
+    list.map(d => `<option value="${esc(d.id)}" ${d.id === prev ? 'selected' : ''}>${esc(d.name)} — ${esc(d.specialty)}</option>`).join('');
+}
+function fillPlan() {
+  const vt = ($('input[name=visitType]:checked') || {}).value;
+  const cur = ($('input[name=planExplained]:checked') || {}).value;
+  const answers = S.lk.planAnswers.filter(a => a !== S.lk.notApplicable || vt === 'كشف');
+  seg($('#planSeg'), 'planExplained', answers, answers.includes(cur) ? cur : undefined);
+}
+function fillCats() {
+  const s = ($('input[name=sentiment]:checked') || {}).value;
+  const neg = s === 'سلبية', pos = s === 'إيجابية';
+  $('#negBox').classList.toggle('hidden', !(neg || pos));
+  $('#sevBox').classList.toggle('hidden', !neg);
+  $('#catLabel').innerHTML = neg ? 'تصنيف المشكلة<span class="req">*</span>' : 'نوع الإشادة <span class="muted small">(اختياري)</span>';
+  const type = neg ? 'سلبية' : 'إيجابية', prev = $('#exCat').value;
+  const cats = S.lk.categories.filter(c => c.type === type || c.type === 'الكل');
+  $('#exCat').innerHTML = opt(cats.map(c => c.name), neg ? 'اختر التصنيف' : 'بدون', cats.some(c => c.name === prev) ? prev : '');
+}
+function setNow() { const n = riyadhNow(); $('#exDate').value = n.date; $('#exTime').value = n.time; $('#exDate').max = n.date; }
+function buildForm() {
+  const keep = $('#exBranch').value || S.user.branch || '';
+  $('#exBranch').innerHTML = opt(S.lk.branches, 'اختر الفرع', keep);
+  seg($('#vtSeg'), 'visitType', S.lk.visitTypes);
+  seg($('#sentSeg'), 'sentiment', S.lk.sentiments);
+  seg($('#sevSeg'), 'severity', S.lk.severities);
+  $$('[data-stars]').forEach(stars);
+  fillDoctors(); fillPlan(); fillCats(); setNow();
+  $('#exBranch').onchange = fillDoctors;
+  $('#vtSeg').addEventListener('change', fillPlan);
+  $('#sentSeg').addEventListener('change', fillCats);
+  $('#exHint').textContent = S.user.branch ? `الفرع يُعبّأ تلقائياً: ${S.user.branch}` : '';
+}
+$('#exNote').addEventListener('input', e => { $('#noteCount').textContent = `${e.target.value.length} / 1000`; });
+$('#exForm').addEventListener('input', e => { const f = e.target.closest('.field'); if (f) clearErr(f); });
+$('#exForm').addEventListener('change', e => { const f = e.target.closest('.field'); if (f) clearErr(f); });
+
+function clearErr(f) { f.classList.remove('invalid'); const m = $(':scope > .err', f); if (m) m.remove(); }
+function setErr(form, key, msg) {
+  const f = $(`[data-f="${key}"]`, form); if (!f) return null;
+  f.classList.add('invalid');
+  if (!$(':scope > .err', f)) f.insertAdjacentHTML('beforeend', `<div class="err">${esc(msg)}</div>`);
+  return f;
+}
+function validateExperience(form, d) {
+  const errs = [];
+  if (!d.fileNo) errs.push(['fileNo', 'أدخل رقم الملف']);
+  else if (!/^[A-Za-z0-9/-]{1,20}$/.test(d.fileNo)) errs.push(['fileNo', 'أرقام وحروف إنجليزية و / - فقط']);
+  if (d.phone && !/^(\+?966|00966|0)?5\d{8}$/.test(d.phone.replace(/[\s-]/g, ''))) errs.push(['phone', 'مثال: 05XXXXXXXX']);
+  if (!d.branch) errs.push(['branch', 'اختر الفرع']);
+  if (!d.doctorId) errs.push(['doctorId', 'اختر الطبيب']);
+  if (!d.visitDate) errs.push(['visitDate', 'أدخل التاريخ']);
+  if (!d.visitTime) errs.push(['visitTime', 'أدخل الوقت']);
+  if (!d.visitType) errs.push(['visitType', 'اختر نوع الزيارة']);
+  if (!d.bookingRating) errs.push(['bookingRating', 'قيّم أداء موظف الحجز']);
+  if (!d.receptionRating) errs.push(['receptionRating', 'قيّم أداء موظف الاستقبال']);
+  if (!d.planExplained) errs.push(['planExplained', 'اختر إجابة']);
+  if (!d.doctorRating) errs.push(['doctorRating', 'قيّم أداء الطبيب']);
+  if (!d.sentiment) errs.push(['sentiment', 'اختر التجربة العامة']);
+  if (d.sentiment === 'سلبية' && !d.category) errs.push(['category', 'اختر تصنيف المشكلة']);
+  if (d.sentiment === 'سلبية' && !d.severity) errs.push(['severity', 'اختر درجة الخطورة']);
+  $$('.field.invalid', form).forEach(clearErr);
+  const fields = errs.map(([k, m]) => setErr(form, k, m)).filter(Boolean);
+  if (fields.length) {
+    fields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = $('input:not([type=radio]),select,textarea,input[type=radio]', fields[0]);
+    if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 250);
+    throw new Error(errs.length === 1 ? errs[0][1] : `أكمل الحقول المطلوبة (${errs.length})`);
+  }
+}
+$('#exForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+  busy($('#exSave'), async () => {
+    const d = Object.fromEntries(new FormData(form));
+    d.fileNo = (d.fileNo || '').trim();
+    if (d.sentiment !== 'سلبية') delete d.severity;
+    if (d.sentiment === 'محايدة') d.category = '';
+    validateExperience(form, d);
+    await api('POST', '/experiences', d);
+    toast('تم حفظ التجربة');
+    resetExperienceForm();
+  });
+});
+function resetExperienceForm() {
+  const f = $('#exForm'), b = $('#exBranch').value;
+  f.reset(); $('#exBranch').value = b;
+  ['#vtSeg', '#sentSeg', '#sevSeg', '#planSeg'].forEach(s => setSeg($(s), null));
+  $$('[data-stars]').forEach(w => w._reset && w._reset());
+  fillDoctors(); fillPlan(); fillCats(); setNow();
+  $('#noteCount').textContent = '0 / 1000';
+  $$('.field.invalid', f).forEach(clearErr);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('#exFile').focus({ preventScroll: true });
+}
+
+/* ---------- filters ---------- */
+function periodRange(p) {
+  const n = riyadhNow();
+  if (p === 'month') return [ymd(n.y, n.m, 1), n.date];
+  if (p === 'last') return [ymd(n.y, n.m - 1, 1), ymd(n.y, n.m, 0)];
+  if (p === 'q') return [ymd(n.y, n.m - 2, 1), n.date];
+  if (p === 'year') return [`${n.y}-01-01`, n.date];
+  return ['', ''];
+}
+function filterForm(sel, fields, onApply) {
+  const docs = S.lk.doctors.map(d => [d.id, d.name]);
+  const F = {
+    period: `<div class="field"><label>فترة سريعة</label><select data-k="_period"><option value="">مخصصة</option><option value="month">هذا الشهر</option><option value="last">الشهر الماضي</option><option value="q">آخر 3 أشهر</option><option value="year">هذه السنة</option></select></div>`,
+    from: `<div class="field"><label>من تاريخ</label><input type="date" data-k="from"></div>`,
+    to: `<div class="field"><label>إلى تاريخ</label><input type="date" data-k="to"></div>`,
+    timeFrom: `<div class="field"><label>من الساعة</label><input type="time" data-k="timeFrom"></div>`,
+    timeTo: `<div class="field"><label>إلى الساعة</label><input type="time" data-k="timeTo"></div>`,
+    branch: `<div class="field"><label>الفرع</label><select data-k="branch">${opt(S.lk.branches, 'الكل')}</select></div>`,
+    doctorId: `<div class="field"><label>الطبيب</label><select data-k="doctorId">${opt(docs, 'الكل')}</select></div>`,
+    sentiment: `<div class="field"><label>التجربة</label><select data-k="sentiment">${opt(S.lk.sentiments, 'الكل')}</select></div>`,
+    visitType: `<div class="field"><label>نوع الزيارة</label><select data-k="visitType">${opt(S.lk.visitTypes, 'الكل')}</select></div>`,
+    status: `<div class="field"><label>الحالة</label><select data-k="status">${opt(S.lk.statuses, 'الكل')}</select></div>`,
+    fileNo: `<div class="field"><label>رقم الملف</label><input type="search" class="ltr" data-k="fileNo" placeholder="بحث جزئي"></div>`
+  };
+  const form = $(sel);
+  form.innerHTML = fields.map(f => F[f]).join('') +
+    `<div class="actions"><button class="btn sm" type="submit">تطبيق</button><button class="btn sm ghost" type="reset">مسح</button></div>`;
+  const per = $('[data-k=_period]', form);
+  if (per) per.onchange = () => { const [a, b] = periodRange(per.value); $('[data-k=from]', form).value = a; $('[data-k=to]', form).value = b; };
+  $$('[data-k=from],[data-k=to]', form).forEach(i => i.addEventListener('input', () => { if (per) per.value = ''; }));
+  form.onsubmit = e => { e.preventDefault(); busy(e.submitter, onApply); };
+  form.onreset = () => setTimeout(() => busy(null, onApply), 0);
+}
+function readFilters(sel) {
+  const o = {}; $$(`${sel} [data-k]`).forEach(el => { if (el.value && el.dataset.k[0] !== '_') o[el.dataset.k] = el.value.trim(); }); return o;
+}
+function buildFilters() {
+  filterForm('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'sentiment', 'visitType', 'fileNo'], loadLog);
+  filterForm('#coFilters', ['period', 'from', 'to', 'status', 'branch', 'doctorId', 'fileNo'], loadComplaints);
+  filterForm('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'visitType', 'sentiment'], loadKpi);
+}
+
+/* ---------- log ---------- */
+function loadingTable(sel, cols = 6) {
+  $(sel).innerHTML = `<tbody>${'<tr>' + `<td><div class="skeleton"></div></td>`.repeat(cols) + '</tr>'.repeat(1)}</tbody>`.repeat(1);
+}
+async function loadLog() {
+  loadingTable('#logTable');
+  try {
+    const r = await api('GET', `/experiences${qs(readFilters('#logFilters'))}`);
+    S.ex = r.rows;
+    const adm = isAdmin();
+    $('#logScope').textContent = adm ? 'كل التجارب المسجّلة' : 'التجارب التي سجّلتها أنت فقط';
+    $('#logCount').textContent = r.total ? `${n0(r.total)} تجربة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
+    $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th>
+      <th>الحجز</th><th>الاستقبال</th><th>الطبيب ★</th><th>وضوح الخطة</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}</tr></thead><tbody>` +
+      r.rows.map(x => `<tr><td class="num ltr">${esc(x.visitAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td>
+        <td>${rChip(x.bookingRating)}</td><td>${rChip(x.receptionRating)}</td><td>${rChip(x.doctorRating)}</td><td>${planPill(x.planExplained)}</td>
+        <td>${sentPill(x.sentiment)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td>
+        <td>${adm && x.sentiment === 'سلبية' ? `<select data-fu="${esc(x.id)}" aria-label="حالة المتابعة">${opt(S.lk.statuses, undefined, x.followUp)}</select>` : stPill(x.followUp)}</td>
+        <td class="wrap-t">${esc(x.generalNote)}</td>${adm ? `<td class="ltr">${esc(x.by)}</td>` : ''}</tr>`).join('') + '</tbody>'
+      : emptyRow('لا توجد تجارب', 'غيّر الفلاتر أو سجّل تجربة جديدة.');
+    $$('#logTable [data-fu]').forEach(s => s.onchange = () => busy(s, async () => {
+      await api('PATCH', `/experiences/${s.dataset.fu}/follow-up`, { followUp: s.value });
+      const row = S.ex.find(x => x.id === s.dataset.fu); if (row) row.followUp = s.value;
+      toast('تم تحديث المتابعة');
+    }));
+  } catch (e) { if (!e.silent) { $('#logTable').innerHTML = emptyRow('تعذّر تحميل السجل', e.message); } }
+}
+$('#exportEx').onclick = () => csv('experiences',
+  ['visitAt', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'followUp', 'generalNote', ...(isAdmin() ? ['by'] : [])],
+  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'نوع الزيارة', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة', ...(isAdmin() ? ['بواسطة'] : [])], S.ex);
+
+function csv(name, keys, heads, rows) {
+  if (!rows.length) return toast('لا توجد بيانات للتصدير', true);
+  // Leading = + - @ would run as a formula in Excel; prefix them.
+  const q = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
+  const body = [heads.map(q).join(','), ...rows.map(r => keys.map(k => q(r[k])).join(','))].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }));
+  a.download = `${name}-${riyadhNow().date}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- complaints ---------- */
+function setBadge(n) { const b = $('#openBadge'); b.textContent = n; b.classList.toggle('hidden', !n); b.setAttribute('aria-label', `${n} مفتوحة`); }
+async function refreshBadge() { try { const r = await api('GET', '/complaints?status=' + encodeURIComponent('جديدة')); setBadge(r.summary.open); } catch { /* ignore */ } }
+async function loadComplaints() {
+  loadingTable('#coTable');
+  try {
+    const r = await api('GET', `/complaints${qs(readFilters('#coFilters'))}`);
+    S.co = r.rows;
+    $('#cTotal').textContent = n0(r.summary.total); $('#cOpen').textContent = n0(r.summary.open); $('#cOver').textContent = n0(r.summary.overdue);
+    $('#cOverS').textContent = `مفتوحة منذ أكثر من ${S.overdueDays} أيام`;
+    setBadge(r.summary.open);
+    $('#coCount').textContent = r.total ? `${n0(r.total)} شكوى${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
+    const adm = isAdmin();
+    $('#coTable').innerHTML = r.rows.length ? `<thead><tr><th>التاريخ</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>التصنيف</th><th>الخطورة</th><th>الحالة</th><th>الشكوى</th><th>المسؤول</th><th>المصدر</th>${adm ? '<th></th>' : ''}</tr></thead><tbody>` +
+      r.rows.map(x => `<tr class="${x.overdue ? 'overdue' : ''}"><td class="num ltr">${esc(x.createdAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor || '—')}</td><td>${esc(x.branch || '—')}</td>
+        <td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td><td>${stPill(x.status)}${x.overdue ? ' <span class="pill p-high">متأخرة</span>' : ''}</td>
+        <td class="wrap-t">${esc(x.description)}</td><td>${esc(x.assignedTo)}</td><td class="small muted">${esc(x.source)}</td>
+        ${adm ? `<td><button class="btn ghost sm" type="button" data-co="${esc(x.id)}">معالجة</button></td>` : ''}</tr>`).join('') + '</tbody>'
+      : emptyRow('لا توجد شكاوى', 'لا شيء يطابق الفلاتر الحالية.');
+    $$('#coTable [data-co]').forEach(btn => btn.onclick = () => complaintModal(S.co.find(c => c.id === btn.dataset.co)));
+  } catch (e) { if (!e.silent) $('#coTable').innerHTML = emptyRow('تعذّر تحميل الشكاوى', e.message); }
+}
+function complaintModal(c) {
+  openModal(`<h2 id="modalTitle">معالجة شكوى</h2>
+    <p class="small muted" style="margin:-6px 0 10px">ملف <span class="ltr">${esc(c.fileNo || '—')}</span> · ${esc(c.doctor || 'بدون طبيب')} · ${esc(c.branch || '—')} · <span class="ltr num">${esc(c.createdAt)}</span></p>
+    <div class="quote">${esc(c.description)}</div>
+    <form id="coEdit" class="grid" novalidate>
+      <div class="field"><span class="label" id="cosL">الحالة</span><div class="seg" id="coStatus" role="radiogroup" aria-labelledby="cosL"></div></div>
+      <div class="field"><label for="coAs">المسؤول عن المتابعة</label><input type="text" id="coAs" name="assignedTo" maxlength="80" value="${esc(c.assignedTo)}"></div>
+      <div class="field"><label for="coRes">الإجراء المتخذ / الحل</label><textarea id="coRes" name="resolution" maxlength="1000">${esc(c.resolution)}</textarea></div>
+      <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  seg($('#coStatus'), 'status', S.lk.statuses, c.status);
+  $('#coEdit').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => { await api('PATCH', `/complaints/${c.id}`, Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم حفظ المعالجة'); loadComplaints(); });
+  };
+}
+$('#newCo').onclick = () => {
+  const b = S.user.branch || '';
+  openModal(`<h2 id="modalTitle">تسجيل شكوى</h2>
+    <form id="coNew" class="grid" novalidate>
+      <div class="grid g2">
+        <div class="field" data-f="fileNo"><label for="cnFile">رقم الملف<span class="req">*</span></label><input type="text" id="cnFile" name="fileNo" class="ltr" maxlength="20" autocomplete="off"></div>
+        <div class="field" data-f="phone"><label for="cnPhone">الجوال</label><input type="tel" id="cnPhone" name="phone" class="ltr" placeholder="05XXXXXXXX" maxlength="16"></div>
+        <div class="field" data-f="branch"><label for="cnBranch">الفرع<span class="req">*</span></label><select id="cnBranch" name="branch">${opt(S.lk.branches, 'اختر', b)}</select></div>
+        <div class="field"><label for="cnDoc">الطبيب</label><select id="cnDoc" name="doctorId"></select></div>
+        <div class="field"><label for="cnCat">التصنيف</label><select id="cnCat" name="category">${opt(S.lk.categories.filter(c => c.type !== 'إيجابية').map(c => c.name), 'اختر')}</select></div>
+      </div>
+      <div class="field"><span class="label" id="cnSevL">الخطورة</span><div class="seg" id="cnSev" data-tone="sev" role="radiogroup" aria-labelledby="cnSevL"></div></div>
+      <div class="field" data-f="description"><label for="cnDesc">تفاصيل الشكوى<span class="req">*</span></label><textarea id="cnDesc" name="description" maxlength="2000" placeholder="ما حدث بإيجاز"></textarea><div class="hint" style="color:var(--warn)">بدون اسم المريض</div></div>
+      <div class="actions"><button class="btn" type="submit">حفظ الشكوى</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  seg($('#cnSev'), 'severity', S.lk.severities, 'متوسطة');
+  const fillDoc = () => { $('#cnDoc').innerHTML = opt(doctorsFor($('#cnBranch').value).map(d => [d.id, d.name]), 'غير محدد'); };
+  fillDoc(); $('#cnBranch').onchange = fillDoc;
+  $('#coNew').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    busy(e.submitter, async () => {
+      const d = Object.fromEntries(new FormData(f));
+      $$('.field.invalid', f).forEach(clearErr);
+      const errs = [];
+      if (!d.fileNo.trim()) errs.push(['fileNo', 'أدخل رقم الملف']);
+      if (!d.branch) errs.push(['branch', 'اختر الفرع']);
+      if (!d.description.trim()) errs.push(['description', 'اكتب تفاصيل الشكوى']);
+      errs.forEach(([k, m]) => setErr(f, k, m));
+      if (errs.length) throw new Error(errs[0][1]);
+      await api('POST', '/complaints', d); closeModal(); toast('تم تسجيل الشكوى'); loadComplaints();
+    });
+  };
+};
+$('#exportCo').onclick = () => csv('complaints',
+  ['createdAt', 'fileNo', 'phone', 'doctor', 'branch', 'category', 'severity', 'status', 'description', 'source', 'assignedTo', 'resolution', 'closedAt'],
+  ['التاريخ', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التصنيف', 'الخطورة', 'الحالة', 'الشكوى', 'المصدر', 'المسؤول', 'الحل', 'تاريخ الإغلاق'], S.co);
+
+/* ---------- KPIs ---------- */
+function tvTable(heads, rows) {
+  return `<details class="tv"><summary>عرض كجدول</summary><div class="tbl-wrap"><table><thead><tr>${heads.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>` +
+    rows.map(r => `<tr>${r.map((c, i) => `<td class="${i ? 'num' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('') + '</tbody></table></div></details>';
+}
+/** Horizontal bars; negative share in the accent, the rest neutral. */
+function hbars(items, { name, total = i => i.total, neg = i => i.neg, tip }) {
+  const max = Math.max(1, ...items.map(total));
+  return `<div class="hbars">${items.map(i => {
+    const t = total(i), ng = neg(i), rest = t - ng;
+    return `<div class="hbar" tabindex="0" data-tip="${esc(tip(i))}"><div class="name">${esc(name(i))}</div>
+      <div class="track">${ng ? `<i style="width:${ng / max * 100}%;background:var(--c-neg)"></i>` : ''}${rest ? `<i style="width:${rest / max * 100}%;background:var(--c-rest)"></i>` : ''}</div>
+      <div class="n">${n0(t)}</div></div>`;
+  }).join('')}</div>`;
+}
+function columns(items, { label, tip }) {
+  if (!items.length || !items.some(i => i.total)) return '<div class="empty">لا توجد بيانات في هذه الفترة</div>';
+  const max = Math.max(1, ...items.map(i => i.total));
+  return `<div class="cols">${items.map(i => `<div class="c" tabindex="0" data-tip="${esc(tip(i))}"><div class="stk" style="height:${i.total / max * 100}%">
+      ${i.neg ? `<i style="flex:${i.neg};background:var(--c-neg)"></i>` : ''}${i.total - i.neg ? `<i style="flex:${i.total - i.neg};background:var(--c-rest)"></i>` : ''}</div></div>`).join('')}</div>
+    <div class="axis" aria-hidden="true">${items.map(i => `<span>${esc(label(i))}</span>`).join('')}</div>`;
+}
+const LEG_NEG = '<div class="legend"><span><i style="background:var(--c-neg)"></i>سلبية</span><span><i style="background:var(--c-rest)"></i>إيجابية ومحايدة</span></div>';
+const ptTip = (title, p) => `${title}\nالتجارب: ${n0(p.total)} · السلبية: ${n0(p.neg)}\nمتوسط تقييم الطبيب: ${n1(p.avgDoctor)}`;
+
+/** Small-multiple line on a fixed 1–5 scale; one series, so no legend. */
+function spark(points, key, title) {
+  const pts = points.filter(p => p[key] !== null);
+  if (!pts.length) return '<div class="empty" style="padding:24px 0">لا توجد بيانات</div>';
+  const W = 300, H = 120, L = 22, R = 30, T = 10, B = 22;
+  const x = i => (points.length === 1 ? (W - L - R) / 2 + L : L + (i * (W - L - R)) / (points.length - 1));
+  const y = v => T + ((5 - v) / 4) * (H - T - B);
+  const idx = p => points.indexOf(p);
+  const path = pts.map((p, k) => `${k ? 'L' : 'M'}${W - x(idx(p))},${y(p[key])}`).join(' ');
+  const last = pts[pts.length - 1];
+  // First, middle and last month only, so labels never collide.
+  const ticks = new Set([0, Math.round((points.length - 1) / 2), points.length - 1]);
+  const fmtM = k => { const [yy, mm] = k.split('-'); return `${MONTHS[+mm - 1]} ${yy}`; };
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">
+    ${[1, 3, 5].map(v => `<line class="grid-l" x1="${R - 6}" x2="${W - L}" y1="${y(v)}" y2="${y(v)}"/><text x="${W - L + 6}" y="${y(v) + 3.5}">${v}</text>`).join('')}
+    <path class="ln" d="${path}"/>
+    ${pts.map(p => `<g tabindex="0" data-tip="${esc(`${fmtM(p.key)}\n${title}: ${n1(p[key])}`)}"><circle class="hit" cx="${W - x(idx(p))}" cy="${y(p[key])}" r="12"/><circle class="dot" cx="${W - x(idx(p))}" cy="${y(p[key])}" r="4"/></g>`).join('')}
+    <text class="end" x="${W - x(idx(last)) - 8}" y="${y(last[key]) - 8}" text-anchor="end">${n1(last[key])}</text>
+    ${points.map((p, i) => ticks.has(i) ? `<text x="${W - x(i)}" y="${H - 4}" text-anchor="middle">${esc(fmtM(p.key))}</text>` : '').join('')}
+  </svg>`;
+}
+function ratingCard(title, avg, dist) {
+  const n = dist.reduce((a, b) => a + b, 0), max = Math.max(1, ...dist);
+  return `<div class="card chart-card rating-card"><h3>${esc(title)}</h3>
+    <div class="big"><b>${n1(avg)}</b><div>${roStars(avg, 18)}<div class="tiny muted">${n0(n)} تقييم</div></div></div>
+    <div class="dist">${[5, 4, 3, 2, 1].map(s => `<div class="r" tabindex="0" data-tip="${s} نجوم: ${n0(dist[s - 1])} (${n ? Math.round(dist[s - 1] / n * 100) : 0}%)"><span class="k">${s}${STAR}</span>
+      <span class="t"><i style="width:${dist[s - 1] / max * 100}%"></i></span><span class="n">${n0(dist[s - 1])}</span></div>`).join('')}</div></div>`;
+}
+function netCell(v) {
+  if (v === null) return '<span class="muted">–</span>';
+  const w = Math.abs(v) / 2, side = v >= 0 ? `inset-inline-end:50%` : `inset-inline-start:50%`;
+  return `<span class="net"><span class="nb" aria-hidden="true"><i style="${side};width:${w}%;background:${v < 0 ? 'var(--c-neg)' : 'var(--c-single)'}"></i></span><span dir="ltr">${v > 0 ? '+' : ''}${v}</span></span>`;
+}
+
+async function loadKpi() {
+  const body = $('#kpiBody');
+  body.innerHTML = '<div class="grid g4">' + '<div class="card tile"><div class="skeleton" style="width:60%"></div><div class="skeleton" style="height:30px;margin-top:12px"></div></div>'.repeat(4) + '</div>';
+  try {
+    const { kpis: k } = await api('GET', `/kpis${qs(readFilters('#kpiFilters'))}`);
+    const s = k.summary;
+    if (!s.total && !s.complaints) {
+      body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات في هذه الفترة</b>جرّب فترة أوسع أو امسح الفلاتر.</div></div>';
+      return;
+    }
+    const hours = k.byHour.filter(h => (h.hour >= 7 && h.hour <= 23) || h.total);
+    const months = k.byMonth.slice(-18);
+    const maxHeat = Math.max(0, ...k.heatmap.flat());
+    const heatHours = [...Array(24).keys()].filter(h => h >= 7 || k.heatmap.some(r => r[h]));
+    const heatStep = v => (!v ? 0 : Math.min(5, Math.ceil((v / maxHeat) * 5)));
+    const fmtM = key => { const [y, m] = key.split('-'); return `${MONTHS[+m - 1]} ${y}`; };
+
+    body.innerHTML = `
+      <div class="grid g4">
+        <div class="card tile hero"><div class="l">إجمالي التجارب</div><div class="v">${n0(s.total)}</div>
+          <div class="split" aria-hidden="true">${s.total ? `<i style="flex:${s.pos};background:var(--c-single)"></i><i style="flex:${s.neu};background:var(--c-rest)"></i><i style="flex:${s.neg};background:var(--c-neg)"></i>` : ''}</div>
+          <div class="legend"><span><i style="background:var(--c-single)"></i>إيجابية ${pc(s.posPct)}</span><span><i style="background:var(--c-rest)"></i>محايدة ${pc(s.neuPct)}</span><span><i style="background:var(--c-neg)"></i>سلبية ${pc(s.negPct)}</span></div></div>
+        <div class="card tile"><div class="l">متوسط تقييم الأطباء</div><div class="v">${n1(s.avgDoctor)}<small>من 5</small></div><div class="s">${roStars(s.avgDoctor, 15)}</div></div>
+        <div class="card tile"><div class="l">وضوح الخطة العلاجية</div><div class="v">${pc(s.planYesPct)}</div><div class="s">أجابوا «نعم» · دون «لا ينطبق»</div></div>
+        <div class="card tile ${s.overdueComplaints ? 'alert-t' : ''}"><div class="l">الشكاوى</div><div class="v">${n0(s.complaints)}</div>
+          <div class="s">${n0(s.openComplaints)} مفتوحة · ${n0(s.overdueComplaints)} متأخرة${s.avgCloseHours === null ? '' : ` · متوسط الإغلاق ${n1(s.avgCloseHours)} ساعة`}</div></div>
+      </div>
+
+      <div class="grid g3">
+        ${ratingCard('تقييم موظفي الحجز', s.avgBooking, k.ratingDistribution.booking)}
+        ${ratingCard('تقييم موظفي الاستقبال', s.avgReception, k.ratingDistribution.reception)}
+        ${ratingCard('تقييم الأطباء', s.avgDoctor, k.ratingDistribution.doctor)}
+      </div>
+
+      <div class="card chart-card"><h3>مؤشرات الأطباء</h3>
+        <p class="sub">مرتبة حسب صافي التجربة = (الإيجابي − السلبي) ÷ الإجمالي × 100. «عينة صغيرة» تعني أقل من 20 تجربة — فسّرها بحذر.</p>
+        <div class="tbl-wrap"><table><thead><tr><th>الطبيب</th><th>التجارب</th><th class="num">إيجابية</th><th class="num">محايدة</th><th class="num">سلبية</th><th>صافي التجربة</th><th>تقييم الطبيب</th><th class="num">وضوح الخطة</th><th class="num">سلبية عالية</th><th class="num">الشكاوى</th><th class="num">زمن الإغلاق (س)</th></tr></thead><tbody>
+        ${k.doctors.length ? k.doctors.map(d => `<tr><td><b>${esc(d.name)}</b> <span class="muted small">${esc(d.specialty)}</span></td>
+          <td class="num">${n0(d.total)}${d.total && d.smallSample ? '<span class="tag">عينة صغيرة</span>' : ''}</td>
+          <td class="num">${pc(d.posPct)}</td><td class="num">${pc(d.neuPct)}</td><td class="num">${pc(d.negPct)}</td>
+          <td>${netCell(d.net)}</td><td><span class="r-chip">${n1(d.avgDoctor)}</span> ${d.avgDoctor === null ? '' : roStars(d.avgDoctor, 12)}</td>
+          <td class="num">${pc(d.planYesPct)}</td><td class="num">${n0(d.highSeverity)}</td><td class="num">${n0(d.complaints)}</td><td class="num">${n1(d.avgCloseHours)}</td></tr>`).join('')
+          : '<tr><td colspan="11" class="empty">أضف الأطباء من تبويب الإدارة</td></tr>'}
+        </tbody></table></div></div>
+
+      <div class="card chart-card"><h3>الفروع</h3><p class="sub">متوسطات التقييم من 5</p>
+        <div class="tbl-wrap"><table><thead><tr><th>الفرع</th><th class="num">التجارب</th><th>الحجز</th><th>الاستقبال</th><th>الأطباء</th><th class="num">وضوح الخطة</th></tr></thead><tbody>
+        ${k.branches.length ? k.branches.map(b => `<tr><td><b>${esc(b.branch)}</b></td><td class="num">${n0(b.total)}</td>
+          ${['avgBooking', 'avgReception', 'avgDoctor'].map(key => `<td><span class="r-chip">${n1(b[key])}</span> ${b[key] === null ? '' : roStars(b[key], 12)}</td>`).join('')}
+          <td class="num">${pc(b.planYesPct)}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">لا توجد تجارب</td></tr>'}
+        </tbody></table></div></div>
+
+      <div class="grid g2">
+        <div class="card chart-card"><h3>أكثر المشاكل تكراراً — التجارب السلبية</h3><p class="sub">أعلى 10 تصنيفات</p>
+          ${k.topProblems.experiences.length ? hbars(k.topProblems.experiences, { name: p => p.name, total: p => p.count, neg: p => p.count, tip: p => `${p.name}: ${n0(p.count)}` }) : '<div class="empty">لا توجد تجارب سلبية</div>'}</div>
+        <div class="card chart-card"><h3>أكثر المشاكل تكراراً — الشكاوى</h3><p class="sub">أعلى 10 تصنيفات</p>
+          ${k.topProblems.complaints.length ? hbars(k.topProblems.complaints, { name: p => p.name, total: p => p.count, neg: p => p.count, tip: p => `${p.name}: ${n0(p.count)}` }) : '<div class="empty">لا توجد شكاوى مصنّفة</div>'}</div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card chart-card"><h3>حسب الساعة</h3><p class="sub">عدد التجارب في كل ساعة من اليوم</p>
+          ${columns(hours, { label: h => h.hour, tip: h => ptTip(`الساعة ${h.hour}:00`, h) })}${LEG_NEG}
+          ${tvTable(['الساعة', 'التجارب', 'السلبية', 'متوسط الطبيب'], hours.map(h => [`${h.hour}:00`, n0(h.total), n0(h.neg), n1(h.avgDoctor)]))}</div>
+        <div class="card chart-card"><h3>حسب الشهر</h3><p class="sub">آخر ${months.length} شهراً</p>
+          ${columns(months, { label: m => m.key.slice(5), tip: m => ptTip(fmtM(m.key), m) })}${LEG_NEG}
+          ${tvTable(['الشهر', 'التجارب', 'السلبية', 'متوسط الطبيب'], months.map(m => [fmtM(m.key), n0(m.total), n0(m.neg), n1(m.avgDoctor)]))}</div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card chart-card"><h3>حسب يوم الأسبوع</h3><p class="sub">&nbsp;</p>
+          ${hbars(k.byWeekday, { name: w => WD[w.weekday], tip: w => ptTip(WD[w.weekday], w) })}${LEG_NEG}
+          ${tvTable(['اليوم', 'التجارب', 'السلبية', 'متوسط الطبيب'], k.byWeekday.map(w => [WD[w.weekday], n0(w.total), n0(w.neg), n1(w.avgDoctor)]))}</div>
+        <div class="card chart-card"><h3>حسب السنة</h3><p class="sub">&nbsp;</p>
+          ${k.byYear.length ? hbars(k.byYear, { name: y => y.key, tip: y => ptTip(`سنة ${y.key}`, y) }) : '<div class="empty">لا توجد بيانات</div>'}${LEG_NEG}
+          ${tvTable(['السنة', 'التجارب', 'السلبية', 'متوسط الطبيب'], k.byYear.map(y => [y.key, n0(y.total), n0(y.neg), n1(y.avgDoctor)]))}</div>
+      </div>
+
+      <div class="card chart-card"><h3>الخريطة الحرارية للتجارب السلبية</h3><p class="sub">اليوم × الساعة — كلما غمق اللون زادت التجارب السلبية</p>
+        <div class="heat-wrap"><table class="heat"><thead><tr><th></th>${heatHours.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
+        ${k.heatmap.map((r, d) => `<tr><th class="d">${WD[d]}</th>${heatHours.map(h => `<td><i tabindex="0" data-tip="${esc(`${WD[d]} ${h}:00\nسلبية: ${r[h]}`)}" style="background:var(--h${heatStep(r[h])})"></i></td>`).join('')}</tr>`).join('')}
+        </tbody></table></div>
+        <div class="scale"><span>أقل</span>${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})"></i>`).join('')}<span>أكثر${maxHeat ? ` (${maxHeat})` : ''}</span></div></div>
+
+      <div class="card chart-card"><h3>الاتجاه الشهري للتقييمات</h3><p class="sub">متوسط كل شهر على مقياس من 1 إلى 5</p>
+        <div class="grid g3">
+          <div><div class="small" style="font-weight:600;margin-bottom:6px">الحجز</div>${spark(k.ratingTrend, 'booking', 'متوسط تقييم الحجز')}</div>
+          <div><div class="small" style="font-weight:600;margin-bottom:6px">الاستقبال</div>${spark(k.ratingTrend, 'reception', 'متوسط تقييم الاستقبال')}</div>
+          <div><div class="small" style="font-weight:600;margin-bottom:6px">الأطباء</div>${spark(k.ratingTrend, 'doctor', 'متوسط تقييم الأطباء')}</div>
+        </div>
+        ${tvTable(['الشهر', 'الحجز', 'الاستقبال', 'الأطباء'], k.ratingTrend.map(t => [fmtM(t.key), n1(t.booking), n1(t.reception), n1(t.doctor)]))}</div>`;
+  } catch (e) { if (!e.silent) body.innerHTML = `<div class="card"><div class="empty"><b>تعذّر تحميل المؤشرات</b>${esc(e.message)}</div></div>`; }
+}
+
+/* ---------- admin ---------- */
+async function loadAdmin() {
+  try {
+    const [u, d, c] = await Promise.all([api('GET', '/admin/users'), api('GET', '/admin/doctors'), api('GET', '/admin/categories')]);
+    S.adm = { users: u.rows, doctors: d.rows, categories: c.rows };
+    const act = a => (a ? '<span class="pill p-closed">مفعّل</span>' : '<span class="pill p-off">معطّل</span>');
+    $('#userTable').innerHTML = `<thead><tr><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الفرع</th><th>الحالة</th><th>آخر دخول</th><th></th></tr></thead><tbody>` +
+      S.adm.users.map(x => `<tr><td class="ltr">${esc(x.username)}</td><td>${esc(x.name)}${x.id === S.user.id ? '<span class="tag">أنت</span>' : ''}</td><td>${x.role === 'admin' ? 'إدارة' : 'موظف'}</td>
+        <td>${esc(x.branch || 'الكل')}</td><td>${act(x.active)}${x.mustChange ? ' <span class="pill p-prog">بانتظار تغيير كلمة المرور</span>' : ''}</td><td class="ltr num small">${esc(x.lastLogin || '—')}</td>
+        <td><button class="btn ghost sm" type="button" data-u="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>';
+    $('#docTable').innerHTML = S.adm.doctors.length ? `<thead><tr><th>الطبيب</th><th>التخصص</th><th>الفرع</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+      S.adm.doctors.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.specialty)}</td><td>${esc(x.branch)}</td><td>${act(x.active)}</td><td><button class="btn ghost sm" type="button" data-d="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>'
+      : emptyRow('لا يوجد أطباء بعد', 'أضف الأطباء ليظهروا في نموذج التسجيل.');
+    $('#catTable').innerHTML = `<thead><tr><th>التصنيف</th><th>النوع</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+      S.adm.categories.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.type)}</td><td>${act(x.active)}</td><td><button class="btn ghost sm" type="button" data-c="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>';
+    $$('#userTable [data-u]').forEach(b => b.onclick = () => userModal(S.adm.users.find(x => x.id === b.dataset.u)));
+    $$('#docTable [data-d]').forEach(b => b.onclick = () => doctorModal(S.adm.doctors.find(x => x.id === b.dataset.d)));
+    $$('#catTable [data-c]').forEach(b => b.onclick = () => categoryModal(S.adm.categories.find(x => x.id === b.dataset.c)));
+  } catch (e) { if (!e.silent) toast(e.message, true); }
+}
+$('#newUser').onclick = () => userModal(null);
+$('#newDoc').onclick = () => doctorModal(null);
+$('#newCat').onclick = () => categoryModal(null);
+
+function tempPasswordModal(name, pw) {
+  openModal(`<h2 id="modalTitle">كلمة المرور المؤقتة</h2>
+    <p>سلّمها لـ <b>${esc(name)}</b>. سيُطلب منه تغييرها عند أول دخول.</p>
+    <div class="secret ltr num" id="tempPw">${esc(pw)}</div>
+    <p class="small muted">لن تظهر مرة أخرى. إن ضاعت، أعد تعيين كلمة المرور من جديد.</p>
+    <div class="actions"><button class="btn" type="button" id="copyPw">نسخ</button><button class="btn ghost" type="button" data-close>تم</button></div>`, { closable: true });
+  $('#copyPw').onclick = async () => { try { await navigator.clipboard.writeText(pw); toast('تم النسخ'); } catch { toast('انسخها يدوياً', true); } };
+}
+function userModal(u) {
+  const self = u && u.id === S.user.id;
+  openModal(`<h2 id="modalTitle">${u ? 'تعديل مستخدم' : 'مستخدم جديد'}</h2>
+    <form id="uForm" class="grid" novalidate>
+      <div class="field"><label for="uUser">اسم المستخدم</label><input type="text" id="uUser" name="username" class="ltr" value="${esc(u?.username)}" ${u ? 'readonly' : ''} autocapitalize="none" spellcheck="false" placeholder="مثال: reem.ali">
+        ${u ? '' : '<div class="hint">3–30 حرفاً إنجليزياً صغيراً أو أرقاماً أو . _ -</div>'}</div>
+      <div class="field"><label for="uName">الاسم</label><input type="text" id="uName" name="name" maxlength="80" value="${esc(u?.name)}"></div>
+      <div class="grid g2">
+        <div class="field"><label for="uRole">الدور</label><select id="uRole" name="role" ${self ? 'disabled' : ''}>${opt([['staff', 'موظف'], ['admin', 'إدارة']], undefined, u?.role || 'staff')}</select></div>
+        <div class="field"><label for="uBranch">الفرع</label><select id="uBranch" name="branch">${opt(S.lk.branches, 'الكل', u?.branch || '')}</select></div>
+      </div>
+      ${u ? `<label class="check"><input type="checkbox" name="active" ${u.active ? 'checked' : ''} ${self ? 'disabled' : ''}> الحساب مفعّل</label>
+             <label class="check"><input type="checkbox" name="resetPassword"> إعادة تعيين كلمة المرور (تظهر كلمة مؤقتة جديدة)</label>` : ''}
+      <div class="actions"><button class="btn" type="submit">${u ? 'حفظ' : 'إنشاء المستخدم'}</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#uForm').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    busy(e.submitter, async () => {
+      const body = { name: f.name.value.trim(), branch: f.branch.value || null };
+      if (!self) body.role = f.role.value;
+      let r;
+      if (u) {
+        if (!self) body.active = f.active.checked;
+        if (f.resetPassword.checked) body.resetPassword = true;
+        r = await api('PATCH', `/admin/users/${u.id}`, body);
+      } else {
+        r = await api('POST', '/admin/users', { ...body, username: f.username.value.trim() });
+      }
+      if (r.tempPassword) tempPasswordModal(r.row.name, r.tempPassword); else { closeModal(); toast('تم الحفظ'); }
+      loadAdmin();
+    });
+  };
+}
+function doctorModal(d) {
+  openModal(`<h2 id="modalTitle">${d ? 'تعديل طبيب' : 'إضافة طبيب'}</h2>
+    <form id="dForm" class="grid" novalidate>
+      <div class="field"><label for="dName">اسم الطبيب</label><input type="text" id="dName" name="name" maxlength="80" value="${esc(d?.name)}" placeholder="مثال: د. سارة العتيبي"></div>
+      <div class="grid g2">
+        <div class="field"><label for="dSpec">التخصص</label><select id="dSpec" name="specialty">${opt(S.lk.specialties, undefined, d?.specialty)}</select></div>
+        <div class="field"><label for="dBranch">الفرع</label><select id="dBranch" name="branch">${opt([...S.lk.branches, 'الكل'], undefined, d?.branch)}</select></div>
+      </div>
+      ${d ? `<label class="check"><input type="checkbox" name="active" ${d.active ? 'checked' : ''}> يظهر في نموذج التسجيل</label>` : ''}
+      <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#dForm').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    busy(e.submitter, async () => {
+      const body = { name: f.name.value.trim(), specialty: f.specialty.value, branch: f.branch.value };
+      if (d) body.active = f.active.checked;
+      await api(d ? 'PATCH' : 'POST', d ? `/admin/doctors/${d.id}` : '/admin/doctors', body);
+      closeModal(); toast(d ? 'تم الحفظ' : 'تمت إضافة الطبيب');
+      await reloadLookups(); loadAdmin();
+    });
+  };
+}
+function categoryModal(c) {
+  openModal(`<h2 id="modalTitle">${c ? 'تعديل تصنيف' : 'إضافة تصنيف'}</h2>
+    <form id="cForm" class="grid" novalidate>
+      <div class="field"><label for="cName">اسم التصنيف</label><input type="text" id="cName" name="name" maxlength="80" value="${esc(c?.name)}"></div>
+      <div class="field"><label for="cType">النوع</label><select id="cType" name="type">${opt([['سلبية', 'مشكلة (سلبية)'], ['إيجابية', 'إشادة (إيجابية)'], ['الكل', 'الاثنان']], undefined, c?.type)}</select></div>
+      ${c ? `<label class="check"><input type="checkbox" name="active" ${c.active ? 'checked' : ''}> مفعّل</label>` : ''}
+      <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#cForm').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    busy(e.submitter, async () => {
+      const body = { name: f.name.value.trim(), type: f.type.value };
+      if (c) body.active = f.active.checked;
+      await api(c ? 'PATCH' : 'POST', c ? `/admin/categories/${c.id}` : '/admin/categories', body);
+      closeModal(); toast(c ? 'تم الحفظ' : 'تمت إضافة التصنيف');
+      await reloadLookups(); loadAdmin();
+    });
+  };
+}
+</script>
+</body>
+</html>

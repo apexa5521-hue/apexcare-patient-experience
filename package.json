@@ -1,0 +1,26 @@
+{
+  "name": "apexcare-patient-experience",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apex Care patient experience system (Express + Supabase)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "seed-admin": "node server/seed-admin.js",
+    "test": "node --test test/*.test.js",
+    "e2e": "node test/e2e.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^4.6.7"
+  }
+}
