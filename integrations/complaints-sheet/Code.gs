@@ -1,12 +1,14 @@
 /**
- * Apex Care — ربط شيت الشكاوى بنظام تجربة المريض
+ * Apex Care — ربط شيتات الباركود (الشكاوى وتقييم الخدمة) بنظام تجربة المريض
  *
  * يُلصق هذا الملف في شيت الشكاوى: الإضافات ← Apps Script.
  * افتح ورقة الشكاوى ثم شغّل setup() وأدخل:
  *   1) رابط الـ webhook:  https://<render-app>.onrender.com/api/webhooks/complaints
  *   2) قيمة WEBHOOK_SECRET من إعدادات الخدمة في Render
  *   3) فرع الورقة (اختياري)
- * لربط ورقة ثانية (مثلاً ورقة لكل فرع): افتحها وشغّل setup() مرة أخرى.
+ * لربط ورقة ثانية (ورقة لكل فرع، أو ورقة تقييم الخدمة): افتحها وشغّل setup() مرة أخرى.
+ * نوع الورقة (شكاوى أو تقييم خدمة) يُعرف تلقائياً من عناوين الأعمدة.
+ * الرابط نفسه يُستخدم للنوعين (…/api/webhooks/complaints)، والسكربت يرسل كل نوع لمساره.
  *
  * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ والوقت.
  * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا فرع الورقة من الإعداد،
@@ -35,6 +37,27 @@ var FIELDS = [
   ['description', ['تفاصيل الشكوى', 'نص الشكوى', 'وصف الشكوى', 'اكتب الشكوى', 'الشكوى', 'شكوى', 'التفاصيل', 'تفاصيل', 'الوصف', 'وصف',
     'describe', 'description', 'details', 'complaint', 'feedback', 'الملاحظات', 'ملاحظ']]
 ];
+// Service-rating QR survey. Answers are sent as written; the server scores them 1–5.
+var RATING_FIELDS = [
+  ['visit_date', ['date of visit', 'تاريخ الزيارة', 'visit date']],
+  ['visit_time', ['time of visit', 'وقت الزيارة', 'visit time']],
+  ['date', ['الطابع الزمني', 'timestamp']],
+  ['branch', ['الفرع', 'فرع', 'branch']],
+  ['q_booking', ['schedule my appointment', 'تحديد موعدي', 'حجز الموعد', 'الحجز']],
+  ['q_reception', ['greeted', 'استقبلت', 'الاستقبال', 'reception']],
+  ['q_waiting', ['waiting time', 'وقت الانتظار', 'الانتظار']],
+  ['q_explanation', ['explained my diagnosis', 'شرح لي الطبيب', 'شرح الطبيب', 'explained']],
+  ['q_overall', ['overall satisfaction', 'الرضا العام']],
+  ['q_care', ['satisfied with the care', 'راض عن الرعاية', 'الرعاية التي تلقيتها']],
+  ['q_recommend', ['recommend', 'أوصي', 'اوصي']],
+  ['comment', ['comment', 'ملاحظات', 'تعليق', 'اقتراح']]
+];
+var RATING_LABELS = { visit_date: 'تاريخ الزيارة', visit_time: 'وقت الزيارة', date: 'وقت التعبئة', branch: 'الفرع', q_booking: 'سهولة الحجز',
+  q_reception: 'الاستقبال', q_waiting: 'وقت الانتظار', q_explanation: 'شرح الطبيب', q_overall: 'الرضا العام', q_care: 'الرضا عن الرعاية',
+  q_recommend: 'التوصية بالمركز', comment: 'تعليق' };
+var COMPLAINT_LABELS = { file_no: 'رقم الملف', phone: 'الجوال', doctor: 'الطبيب', branch: 'الفرع', category: 'التصنيف', severity: 'الخطورة',
+  description: 'نص الشكوى', date: 'التاريخ', time: 'الوقت' };
+
 var NAME_COLUMN = /(اسم المريض|اسم المراجع|الاسم|اسمك|patient name|full name|your name|^name\b|\bname$)/;
 
 function onOpen() {
@@ -78,9 +101,10 @@ function setup() {
   if (!s) { ui.alert('السر مطلوب'); return; }
 
   var sheet = SpreadsheetApp.getActiveSheet();
-  var cols = headerMap_(sheet);
-  if (cols.description === undefined) {
-    ui.alert('لم أجد عمود نص الشكوى في الورقة «' + sheet.getName() + '».\nافتح ورقة الشكاوى ثم شغّل الإعداد مرة أخرى.\n\nما وجدته:\n' + describeMapping_(sheet, cols));
+  var type = sheetType_(headers_(sheet));
+  var cols = headerMap_(sheet, type);
+  if (type === 'complaints' && cols.description === undefined) {
+    ui.alert('لم أجد عمود نص الشكوى ولا أسئلة تقييم الخدمة في الورقة «' + sheet.getName() + '».\nافتح الورقة الصحيحة ثم شغّل الإعداد مرة أخرى.\n\nما وجدته:\n' + describeMapping_(sheet, cols, type));
     return;
   }
 
@@ -91,7 +115,7 @@ function setup() {
   if (branch && ['بريدة', 'عنيزة'].indexOf(branch) < 0) { ui.alert('الفرع يكون «بريدة» أو «عنيزة» أو فارغاً'); return; }
 
   var sheets = linkedSheets_(props).filter(function (x) { return x.id !== sheet.getSheetId(); });
-  sheets.push({ id: sheet.getSheetId(), name: sheet.getName(), branch: branch });
+  sheets.push({ id: sheet.getSheetId(), name: sheet.getName(), branch: branch, type: type });
   props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEETS: JSON.stringify(sheets) });
   props.deleteProperty('SHEET_NAME');
   props.deleteProperty('DEFAULT_BRANCH');
@@ -112,8 +136,8 @@ function setup() {
   ScriptApp.newTrigger('pushNew').timeBased().everyMinutes(15).create();
 
   var r = pushNew();
-  ui.alert('الأعمدة المستخدمة في «' + sheet.getName() + '»:\n' + describeMapping_(sheet, cols) +
-    '\n\nالأوراق المربوطة:\n' + sheets.map(function (x) { return '• ' + x.name + (x.branch ? ' — ' + x.branch : ''); }).join('\n') +
+  ui.alert('نوع الورقة: ' + (type === 'ratings' ? 'تقييم الخدمة' : 'شكاوى') + '\nالأعمدة المستخدمة في «' + sheet.getName() + '»:\n' + describeMapping_(sheet, cols, type) +
+    '\n\nالأوراق المربوطة:\n' + sheets.map(function (x) { return '• ' + x.name + ' (' + (x.type === 'ratings' ? 'تقييم خدمة' : 'شكاوى') + ')' + (x.branch ? ' — ' + x.branch : ''); }).join('\n') +
     formNote + '\n• إرسال احتياطي كل 15 دقيقة' +
     '\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')' + (r.error ? '\nخطأ: ' + r.error : ''));
 }
@@ -149,7 +173,7 @@ function pushNew() {
     linkedSheets_(props).forEach(function (cfg) {
       var sheet = sheetById_(ss, cfg.id);
       if (!sheet) { errors.push('ورقة محذوفة: ' + cfg.name); return; }
-      var r = pushSheet_(ss, sheet, cfg.branch || '', url, secret, props);
+      var r = pushSheet_(ss, sheet, cfg, url, secret, props);
       total.sent += r.sent; total.inserted += r.inserted;
       if (r.error) errors.push(sheet.getName() + ': ' + r.error);
     });
@@ -165,9 +189,12 @@ function pushNew() {
  * The pointer only advances after the server confirms a batch, so a failed
  * request is retried next time and the server's upsert drops duplicates.
  */
-function pushSheet_(ss, sheet, defaultBranch, url, secret, props) {
-  var cols = headerMap_(sheet);
-  if (cols.description === undefined) return { sent: 0, inserted: 0, error: 'لا يوجد عمود نص الشكوى' };
+function pushSheet_(ss, sheet, cfg, url, secret, props) {
+  var type = cfg.type || 'complaints';
+  var defaultBranch = cfg.branch || '';
+  var cols = headerMap_(sheet, type);
+  if (type === 'complaints' && cols.description === undefined) return { sent: 0, inserted: 0, error: 'لا يوجد عمود نص الشكوى' };
+  var endpoint = url.replace(/\/complaints$/, '/' + type);
 
   var key = 'LAST_ROW:' + sheet.getSheetId();
   var lastSent = Number(props.getProperty(key) || 1); // row 1 = headers
@@ -186,16 +213,13 @@ function pushSheet_(ss, sheet, defaultBranch, url, secret, props) {
     var rows = [];
     chunk.forEach(function (row, i) {
       var rowNumber = lastSent + 1 + start + i;
-      var out = { source_key: ss.getId() + ':' + sheet.getName() + ':' + rowNumber };
-      Object.keys(cols).forEach(function (field) {
-        if (field !== 'date' && field !== 'time') out[field] = cell_(row[cols[field]], tz);
-      });
-      if (cols.date !== undefined) out.date = when_(row[cols.date], cols.time !== undefined ? shown[start + i][cols.time] : '', tz);
+      var out = type === 'ratings' ? ratingRow_(row, shown[start + i], cols, tz) : complaintRow_(row, shown[start + i], cols, tz);
+      out.source_key = ss.getId() + ':' + sheet.getName() + ':' + rowNumber;
       if (!out.branch && defaultBranch) out.branch = defaultBranch;
-      if (out.description) rows.push(out);
+      if (hasContent_(out, type)) rows.push(out);
     });
     if (rows.length) {
-      var res = UrlFetchApp.fetch(url, {
+      var res = UrlFetchApp.fetch(endpoint, {
         method: 'post',
         contentType: 'application/json',
         headers: { 'X-Webhook-Secret': secret },
@@ -217,19 +241,56 @@ function pushSheet_(ss, sheet, defaultBranch, url, secret, props) {
   return { sent: sent, inserted: inserted };
 }
 
+function complaintRow_(row, shownRow, cols, tz) {
+  var out = {};
+  Object.keys(cols).forEach(function (field) {
+    if (field !== 'date' && field !== 'time') out[field] = cell_(row[cols[field]], tz);
+  });
+  if (cols.date !== undefined) out.date = when_(row[cols.date], cols.time !== undefined ? shownRow[cols.time] : '', tz);
+  return out;
+}
+
+/** Answers are sent as displayed text; dates as ISO. */
+function ratingRow_(row, shownRow, cols, tz) {
+  var out = {};
+  Object.keys(cols).forEach(function (field) {
+    if (field === 'date' || field === 'visit_date' || field === 'visit_time') return;
+    out[field] = String(shownRow[cols[field]] || '').trim();
+  });
+  if (cols.date !== undefined) out.date = when_(row[cols.date], '', tz);
+  if (cols.visit_date !== undefined) out.visit_date = when_(row[cols.visit_date], cols.visit_time !== undefined ? shownRow[cols.visit_time] : '', tz);
+  return out;
+}
+
+function hasContent_(out, type) {
+  if (type === 'complaints') return !!out.description;
+  return Object.keys(out).some(function (k) { return k.indexOf('q_') === 0 && out[k]; });
+}
+
+function headers_(sheet) {
+  return sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0];
+}
+
+/** "ratings" when at least three service-rating questions are present, else "complaints". */
+function sheetType_(headers) {
+  var m = matchHeaders_(headers, RATING_FIELDS);
+  var questions = Object.keys(m).filter(function (k) { return k.indexOf('q_') === 0; }).length;
+  return questions >= 3 ? 'ratings' : 'complaints';
+}
+
 function norm_(s) { return String(s || '').toLowerCase().replace(/[\u064B-\u0652]/g, '').replace(/\s+/g, ' ').trim(); }
 
 /** field -> column index for a header row (array of strings). Pure, so it can be tested outside Apps Script. */
-function matchHeaders_(headers) {
+function matchHeaders_(headers, fields) {
   var head = headers.map(norm_);
   var used = {}, map = {};
-  FIELDS.forEach(function (f) {
+  (fields || FIELDS).forEach(function (f) {
     var field = f[0], keys = f[1].map(norm_);
     for (var k = 0; k < keys.length && map[field] === undefined; k++) {
       for (var i = 0; i < head.length; i++) {
         if (used[i] || !head[i] || head[i].indexOf(keys[k]) < 0) continue;
         if (NAME_COLUMN.test(head[i]) && !(field === 'doctor' && /طبيب|doctor/.test(head[i]))) continue;
-        if (field === 'time' && /timestamp|الطابع الزمني/.test(head[i])) continue;
+        if ((field === 'time' || field === 'visit_time') && /timestamp|الطابع الزمني/.test(head[i])) continue;
         map[field] = i; used[i] = true; break;
       }
     }
@@ -237,8 +298,8 @@ function matchHeaders_(headers) {
   return map;
 }
 
-function headerMap_(sheet) {
-  return matchHeaders_(sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0]);
+function headerMap_(sheet, type) {
+  return matchHeaders_(headers_(sheet), type === 'ratings' ? RATING_FIELDS : FIELDS);
 }
 
 /** 24h "HH:mm:ss" from "2:00:00 PM", "14:00", "9:15 م"…; '' if none. */
@@ -268,10 +329,10 @@ function cell_(v, tz) {
 }
 
 /** Shows which sheet column feeds which field, so the mapping can be checked at a glance. */
-function describeMapping_(sheet, cols) {
-  var head = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0];
-  var label = { file_no: 'رقم الملف', phone: 'الجوال', doctor: 'الطبيب', branch: 'الفرع', category: 'التصنيف', severity: 'الخطورة', description: 'نص الشكوى', date: 'التاريخ', time: 'الوقت' };
-  return FIELDS.map(function (f) {
+function describeMapping_(sheet, cols, type) {
+  var head = headers_(sheet);
+  var label = type === 'ratings' ? RATING_LABELS : COMPLAINT_LABELS;
+  return (type === 'ratings' ? RATING_FIELDS : FIELDS).map(function (f) {
     var i = cols[f[0]];
     return '• ' + label[f[0]] + ': ' + (i === undefined ? '— غير موجود' : '«' + String(head[i]).replace(/\s+/g, ' ').slice(0, 40) + '»');
   }).join('\n');

@@ -5,6 +5,7 @@ const express = require('express');
 const { must, countOf, audit } = require('../db');
 const { can, requirePerm, branchScope, assertBranch } = require('../access');
 const { openCases, caseIdsFor } = require('../cases');
+const { QUESTIONS, score, assess } = require('../ratings');
 const { isOverdue } = require('../kpis');
 const { applyComplaintFilters, mapComplaint } = require('../queries');
 const {
@@ -211,7 +212,50 @@ function webhookRoutes() {
     await audit(db, 'sheet', 'webhook_complaints', `received=${rows.length} inserted=${inserted}`);
     res.json({ ok: true, received: rows.length, accepted: unique.size, inserted });
   });
+
+  /** Service-rating QR survey rows. Answers arrive as text and are scored here; low ones open a case. */
+  r.post('/ratings', async (req, res) => {
+    const { db, config } = req.ctx;
+    if (!sameSecret(req.get('x-webhook-secret'), config.webhookSecret)) throw new UserError('غير مصرّح', 401);
+    const rows = Array.isArray(req.body?.rows) ? req.body.rows : null;
+    if (!rows) throw new UserError('صيغة الطلب غير صالحة');
+    if (rows.length > WEBHOOK_MAX_ROWS) throw new UserError(`الحد الأقصى ${WEBHOOK_MAX_ROWS} صفاً في الطلب`);
+    const unique = new Map();
+    for (const row of rows) {
+      const r2 = row && typeof row === 'object' ? sheetRowToRating(row) : null;
+      if (r2 && !unique.has(r2.source_key)) unique.set(r2.source_key, r2);
+    }
+    let inserted = 0, flagged = 0;
+    if (unique.size) {
+      const out = await must(db.from('service_ratings')
+        .upsert([...unique.values()], { onConflict: 'source_key', ignoreDuplicates: true })
+        .select('*'));
+      inserted = out.length;
+      const items = out.map(x => ({ x, a: assess(x) })).filter(({ a }) => a).map(({ x, a }) => ({
+        source: 'تقييم خدمة', source_id: x.id, created_at: x.created_at, branch: x.branch,
+        summary: x.comment ? `${a.summary}\n${x.comment}` : a.summary, severity: a.severity
+      }));
+      flagged = (await openCases(db, items)).length;
+    }
+    await audit(db, 'sheet', 'webhook_ratings', `received=${rows.length} inserted=${inserted} flagged=${flagged}`);
+    res.json({ ok: true, received: rows.length, accepted: unique.size, inserted, flagged });
+  });
   return r;
 }
 
-module.exports = { complaintRoutes, webhookRoutes, doctorKey, sheetRowToComplaint };
+/** Only the scored answers, visit time and branch are kept; the form collects no identity. */
+function sheetRowToRating(row) {
+  const sourceKey = cleanText(row.source_key, 200);
+  if (!sourceKey) return null;
+  const out = { source_key: sourceKey, created_at: parseSheetDate(row.date), branch: normalizeBranch(row.branch), comment: cleanText(row.comment, 2000) };
+  const v = row.visit_date ? new Date(row.visit_date) : null;
+  out.visit_at = v && !Number.isNaN(v.getTime()) && v.getTime() < Date.now() + 86400000 ? v.toISOString() : null;
+  let answered = 0;
+  for (const q of QUESTIONS) {
+    out[q.key] = score(row[q.key], q.scale);
+    if (out[q.key] !== null) answered++;
+  }
+  return answered ? out : null;
+}
+
+module.exports = { complaintRoutes, webhookRoutes, doctorKey, sheetRowToComplaint, sheetRowToRating };

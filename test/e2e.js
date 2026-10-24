@@ -54,6 +54,12 @@ function seed(db) {
       general_note: null, created_by: staff.id
     });
   }
+  for (let i = 0; i < 24; i++) {
+    const lo = i % 6 === 0;
+    t.service_ratings.push({ id: crypto.randomUUID(), created_at: new Date(Date.now() - (i + 1) * 3 * 86400000).toISOString(), source_key: `seed:${i}`,
+      branch: i % 2 ? 'بريدة' : 'عنيزة', visit_at: null, q_booking: 5 - (i % 2), q_reception: lo ? 2 : 4 + (i % 2), q_waiting: lo ? 1 : 3 + (i % 3),
+      q_explanation: 5, q_care: lo ? 2 : 4, q_recommend: lo ? 2 : 5 - (i % 2), q_overall: lo ? 1 : 5 - (i % 3), comment: null });
+  }
   for (const e of t.experiences) e.visit_time_local = db._schema.experiences.compute(e).visit_time_local;
   t.complaints.push({
     id: crypto.randomUUID(), created_at: new Date(Date.now() - 6 * 86400000).toISOString(), file_no: 'C-9', phone: '0551231234',
@@ -162,6 +168,8 @@ async function run() {
 
       await page.click('#tabs button[data-tab=kpi]');
       await page.waitForSelector('#kpiBody .rating-card');
+      await page.waitForSelector('#kpiBody h3:has-text("صوت المريض من كل المصادر")');
+      await page.waitForSelector('#kpiBody h3:has-text("تقييم الخدمة (باركود)")');
       const total = await page.locator('#kpiBody .tile.hero .v').innerText();
       assert.equal(total.trim(), vp.name === 'mobile' ? '161' : '163', 'new experiences counted in KPIs (desktop also sees the mobile phone survey)');
       assert.ok(await page.locator('#kpiBody tr:has-text("د. سارة العتيبي")').count() >= 1);

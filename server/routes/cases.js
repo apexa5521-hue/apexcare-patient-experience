@@ -7,6 +7,7 @@ const { can, requirePerm, branchScope, assertBranch, ROLE_LABELS } = require('..
 const { formatLocal, localToUtc, addDays } = require('../time');
 const { UserError, UUID_RE, BRANCHES, maskPhone, parse, parseFilters } = require('../validate');
 const C = require('../cases');
+const { QUESTIONS } = require('../ratings');
 
 const LIST_LIMIT = 500;
 
@@ -179,6 +180,10 @@ function caseRoutes() {
     } else if (c.source === 'شكوى') {
       const k = await must(db.from('complaints').select('description,source,created_at').eq('id', c.source_id).maybeSingle());
       if (k) detail = { text: k.description, channel: k.source, at: formatLocal(k.created_at, config.tz) };
+    } else if (c.source === 'تقييم خدمة') {
+      const x = await must(db.from('service_ratings').select('*').eq('id', c.source_id).maybeSingle());
+      if (x) detail = { at: formatLocal(x.created_at, config.tz), visitAt: formatLocal(x.visit_at, config.tz), comment: x.comment || '',
+        answers: QUESTIONS.map(q => ({ label: q.label, score: x[q.key] })) };
     } else if (c.source === 'تقييم قوقل') {
       const g = await must(db.from('google_reviews').select('rating,comment,reply,created_at').eq('id', c.source_id).maybeSingle());
       if (g) detail = { rating: g.rating, text: g.comment || '', reply: g.reply || '', at: formatLocal(g.created_at, config.tz) };

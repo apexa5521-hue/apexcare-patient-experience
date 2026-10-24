@@ -68,6 +68,12 @@ const SCHEMA = {
     serial: true,
     defaults: () => ({ at: new Date().toISOString() })
   },
+  service_ratings: {
+    cols: ['id', 'created_at', 'source_key', 'branch', 'visit_at', 'q_booking', 'q_reception', 'q_waiting', 'q_explanation', 'q_care',
+      'q_recommend', 'q_overall', 'comment'],
+    unique: ['source_key'],
+    defaults: () => ({ created_at: new Date().toISOString() })
+  },
   app_settings: {
     cols: ['key', 'value', 'updated_at'],
     unique: ['key'],

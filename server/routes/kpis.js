@@ -2,7 +2,9 @@
 
 const express = require('express');
 const { must, fetchAll } = require('../db');
-const { computeKpis } = require('../kpis');
+const { computeKpis, computeServiceRatings } = require('../kpis');
+const { QUESTIONS } = require('../ratings');
+const { localToUtc, addDays } = require('../time');
 const { parseFilters } = require('../validate');
 const { branchScope } = require('../access');
 const { applyExperienceFilters, applyComplaintFilters } = require('../queries');
@@ -28,6 +30,29 @@ function kpiRoutes() {
       d.active && (!f.doctorId || d.id === f.doctorId) && (!f.branch || d.branch === f.branch || d.branch === 'الكل')
     ));
     const kpis = computeKpis({ experiences, complaints, doctors, tz: config.tz, overdueDays: config.overdueDays });
+
+    // Other patient-voice sources over the same dates/branch (time-of-day, doctor and visit filters don't apply to them).
+    const ranged = (q, col) => {
+      if (f.from) q = q.gte(col, localToUtc(f.from, '00:00', config.tz).toISOString());
+      if (f.to) q = q.lt(col, localToUtc(addDays(f.to, 1), '00:00', config.tz).toISOString());
+      if (f.branch) q = q.eq('branch', f.branch);
+      return q;
+    };
+    const [ratings, reviews] = await Promise.all([
+      fetchAll(() => ranged(db.from('service_ratings').select('*'), 'created_at').order('created_at').order('id')),
+      fetchAll(() => ranged(db.from('google_reviews').select('id,rating,branch,reply'), 'created_at').order('created_at').order('id'))
+    ]);
+    kpis.serviceRatings = computeServiceRatings(ratings, QUESTIONS);
+    const rated = reviews.filter(r => r.rating);
+    const byChannel = Object.fromEntries(kpis.byChannel.map(c => [c.channel, c]));
+    kpis.sources = {
+      phone: byChannel['اتصال'] ? { total: byChannel['اتصال'].total, negPct: byChannel['اتصال'].negPct, avgDoctor: byChannel['اتصال'].avgDoctor } : { total: 0 },
+      inPerson: byChannel['حضوري'] ? { total: byChannel['حضوري'].total, negPct: byChannel['حضوري'].negPct, avgDoctor: byChannel['حضوري'].avgDoctor } : { total: 0 },
+      complaints: { total: kpis.summary.complaints, open: kpis.summary.openComplaints },
+      serviceRatings: { total: ratings.length, avgOverall: kpis.serviceRatings.questions.find(q => q.key === 'q_overall').avg, low: kpis.serviceRatings.lowCount },
+      google: { total: reviews.length, avg: rated.length ? Math.round((rated.reduce((a, r) => a + r.rating, 0) / rated.length) * 100) / 100 : null,
+        unreplied: reviews.filter(r => !r.reply).length }
+    };
     res.json({ ok: true, kpis });
   });
   return r;

@@ -199,4 +199,24 @@ function computeKpis({ experiences = [], complaints = [], doctors = [], tz = 'As
   };
 }
 
-module.exports = { computeKpis, netScore, isOverdue, SMALL_SAMPLE };
+/** Service-rating QR survey: averages per question (1–5), recommendation share, overall distribution, per branch. */
+function computeServiceRatings(rows = [], questions = []) {
+  const avgOf = (list, key) => { const m = new Mean(); list.forEach(r => m.add(r[key])); return m.value; };
+  const rec = (list) => { const v = list.filter(r => r.q_recommend); return pct(v.filter(r => r.q_recommend >= 4).length, v.length); };
+  const low = (r) => questions.some(q => r[q.key] !== null && r[q.key] !== undefined && r[q.key] <= 2);
+  const branches = [...new Set(rows.map(r => r.branch || ''))].sort();
+  return {
+    total: rows.length,
+    lowCount: rows.filter(low).length,
+    recommendPct: rec(rows),
+    questions: questions.map(q => ({ key: q.key, label: q.label, avg: avgOf(rows, q.key),
+      dist: [1, 2, 3, 4, 5].map(n => rows.filter(r => r[q.key] === n).length) })),
+    byBranch: branches.map(b => {
+      const list = rows.filter(r => (r.branch || '') === b);
+      return { branch: b, total: list.length, avgOverall: avgOf(list, 'q_overall'), avgCare: avgOf(list, 'q_care'),
+        avgWaiting: avgOf(list, 'q_waiting'), recommendPct: rec(list) };
+    })
+  };
+}
+
+module.exports = { computeKpis, computeServiceRatings, netScore, isOverdue, SMALL_SAMPLE };

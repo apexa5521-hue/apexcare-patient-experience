@@ -95,3 +95,53 @@ test('linked sheets: upgrades the old single-sheet settings and pushes each shee
   assert.equal(store['LAST_ROW:22'], '3', 'pointer advances past the empty row too');
   assert.equal(sb.pushNew().sent, 0, 'nothing re-sent');
 });
+
+const RATING_HEADERS = [
+  'Timestamp',
+  'It was easy to schedule my appointment \nكان من السهل تحديد موعدي',
+  'I was greeted courteously when I arrived\nاستُقبلتُ بحفاوة عند وصولي',
+  'The waiting time before being seen was reasonable\nكان وقت الانتظار قبل الحصول على الرعاية معقولاً\n',
+  'The provider explained my diagnosis and treatment options in a way I could understand\nشرح لي الطبيب تشخيصي وخيارات العلاج بطريقة أستطيع فهمها\n',
+  'Overall, I am satisfied with the care I received\nبشكل عام، أنا راضٍ عن الرعاية التي تلقيتها',
+  'I would recommend this center to family or friends.\nأوصي بهذا المركز للعائلة أو الأصدقاء',
+  'OVERALL SATISFACTION\nالرضا العام',
+  'Date  of visit  تاريخ الزيارة\n',
+  'Time of visit  وقت الزيارة\n '
+];
+
+test('the real service-rating sheet is detected and every question maps to its own column', () => {
+  assert.equal(sandbox.sheetType_(RATING_HEADERS), 'ratings');
+  const m = sandbox.matchHeaders_(RATING_HEADERS, sandbox.RATING_FIELDS);
+  assert.deepEqual(JSON.parse(JSON.stringify(m)), {
+    visit_date: 8, visit_time: 9, date: 0, q_booking: 1, q_reception: 2, q_waiting: 3, q_explanation: 4, q_overall: 7, q_care: 5, q_recommend: 6
+  });
+  assert.equal(sandbox.sheetType_(['Timestamp', 'Please state the complaint\nيرجى توضيح الشكوى', 'DATE OF EVENT\nتاريخ الحدث']), 'complaints');
+});
+
+test('rating sheets push their answers as text to /api/webhooks/ratings with the sheet branch', () => {
+  const store = { WEBHOOK_URL: 'https://pe.example/api/webhooks/complaints', WEBHOOK_SECRET: 's',
+    SHEETS: JSON.stringify([{ id: 5, name: 'Form Responses 1', branch: 'عنيزة', type: 'ratings' }]) };
+  const props = { getProperty: k => (k in store ? store[k] : null), setProperty: (k, v) => { store[k] = v; } };
+  const row = ['ts', 'Strongly agree  أوافق بشدة', 'Agree     يوافق', 'Strongly disagree    أرفض بشدة', 'Neutral     حيادي', 'Agree يوافق', 'Probably not   ربما لا', 'Poor فقير', 'd', '3:18:00 PM'];
+  const sheet = {
+    getSheetId: () => 5, getName: () => 'Form Responses 1', getLastRow: () => 2, getLastColumn: () => RATING_HEADERS.length,
+    getRange: (r) => ({ getDisplayValues: () => (r === 1 ? [RATING_HEADERS] : [row]), getValues: () => [row] })
+  };
+  const calls = [];
+  const sb = {
+    PropertiesService: { getScriptProperties: () => props },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getId: () => 'SS', getSheets: () => [sheet], getSpreadsheetTimeZone: () => 'Asia/Riyadh' }) },
+    Utilities: { formatDate: () => '' },
+    UrlFetchApp: { fetch: (u, o) => { calls.push({ u, rows: JSON.parse(o.payload).rows }); return { getResponseCode: () => 200, getContentText: () => '{"ok":true,"inserted":1}' }; } }
+  };
+  vm.runInNewContext(src, sb);
+  const r = sb.pushNew();
+  assert.equal(r.sent, 1);
+  assert.equal(calls[0].u, 'https://pe.example/api/webhooks/ratings');
+  const sent = calls[0].rows[0];
+  assert.equal(sent.branch, 'عنيزة');
+  assert.equal(sent.q_waiting, 'Strongly disagree    أرفض بشدة');
+  assert.equal(sent.q_overall, 'Poor فقير');
+  assert.equal(sent.source_key, 'SS:Form Responses 1:2');
+});

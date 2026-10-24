@@ -391,6 +391,9 @@ a.tel:hover{text-decoration:underline}
 .timeline .h b{color:var(--ink-2);font-weight:600}
 .timeline .b{margin-top:2px;white-space:pre-wrap;line-height:1.6}
 .ratings{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.src-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1000px){.src-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.src-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.src-grid .tile .v{font-size:24px}}
 .skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,#efede8 0,#f7f6f3 50%,#efede8 100%);background-size:200% 100%;animation:sk 1.2s infinite}
 @keyframes sk{to{background-position:-200% 0}}
 </style>
@@ -1254,6 +1257,8 @@ async function caseModal(id) {
   const srcHtml = !d ? '' : c.source === 'تجربة سلبية'
     ? `<div class="ratings"><span>الزيارة: <span class="ltr num">${esc(d.visitAt)}</span> · ${esc(d.visitType)} · ${esc(d.channel)}</span>
         <span>الحجز ${rChip(d.bookingRating)}</span><span>الاستقبال ${rChip(d.receptionRating)}</span><span>الطبيب ${rChip(d.doctorRating)}</span><span>وضوح الخطة ${planPill(d.planExplained)}</span></div>`
+    : c.source === 'تقييم خدمة' ? `<div class="ratings">${d.answers.map(a => `<span>${esc(a.label)} ${rChip(a.score)}</span>`).join('')}</div>
+        <div class="ratings"><span>عُبّئ: <span class="ltr num">${esc(d.at)}</span></span>${d.visitAt ? `<span>الزيارة: <span class="ltr num">${esc(d.visitAt)}</span></span>` : ''}<span class="muted">تقييم بدون بيانات تواصل</span></div>`
     : c.source === 'تقييم قوقل' ? `<div class="ratings">${roStars(d.rating, 16)}<span class="ltr num">${esc(d.at)}</span></div>${d.reply ? `<div class="reply" style="margin-top:8px"><small>ردّ المجمع</small>${esc(d.reply)}</div>` : ''}`
     : `<div class="ratings"><span>${esc(d.channel)} · <span class="ltr num">${esc(d.at)}</span></span></div>`;
   openModal(`<h2 id="modalTitle">${esc(c.source)}${c.fileNo ? ` · ملف <span class="ltr">${esc(c.fileNo)}</span>` : ''}</h2>
@@ -1624,6 +1629,33 @@ function netCell(v) {
   return `<span class="net"><span class="nb" aria-hidden="true"><i style="${side};width:${w}%;background:${v < 0 ? 'var(--c-neg)' : 'var(--c-single)'}"></i></span><span dir="ltr">${v > 0 ? '+' : ''}${v}</span></span>`;
 }
 
+/** One tile per channel the patient's voice comes through. */
+function sourcesSection(src) {
+  const t = (label, v, sub, alert) => `<div class="card tile ${alert ? 'alert-t' : ''}"><div class="l">${label}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  return `<div class="card chart-card"><h3>صوت المريض من كل المصادر</h3><p class="sub">في الفترة والفرع المختارين</p>
+    <div class="grid src-grid">
+      ${t('استبيان حضوري', n0(src.inPerson.total), src.inPerson.total ? `${pc(src.inPerson.negPct)} سلبية · الطبيب ${n1(src.inPerson.avgDoctor)}` : 'لا يوجد')}
+      ${t('استبيان بالاتصال', n0(src.phone.total), src.phone.total ? `${pc(src.phone.negPct)} سلبية · الطبيب ${n1(src.phone.avgDoctor)}` : 'لا يوجد')}
+      ${t('شكاوى الباركود واليدوية', n0(src.complaints.total), `${n0(src.complaints.open)} مفتوحة`, src.complaints.open)}
+      ${t('تقييم الخدمة (باركود)', n0(src.serviceRatings.total), src.serviceRatings.total ? `الرضا العام ${n1(src.serviceRatings.avgOverall)} من 5 · ${n0(src.serviceRatings.low)} منخفض` : 'لا يوجد')}
+      ${t('قوقل ماب', src.google.total ? `${n1(src.google.avg)}<small>من 5</small>` : '–', src.google.total ? `${n0(src.google.total)} تقييم · ${n0(src.google.unreplied)} بدون رد` : 'غير مربوط بعد')}
+    </div></div>`;
+}
+
+/** Service-rating QR survey: one card per question, recommendation share, branches. */
+function ratingsSection(sr) {
+  const q = Object.fromEntries(sr.questions.map(x => [x.key, x]));
+  const order = ['q_overall', 'q_care', 'q_waiting', 'q_reception', 'q_booking', 'q_explanation'];
+  return `<div class="card chart-card"><h3>تقييم الخدمة (باركود)</h3>
+    <p class="sub">${n0(sr.total)} تقييم · ${n0(sr.lowCount)} فيها إجابة منخفضة (فتحت حالة متابعة) · يوصون بالمركز ${pc(sr.recommendPct)}. المقياس من 1 إلى 5.</p>
+    <div class="grid g3">${order.filter(k => q[k]).map(k => ratingCard(q[k].label, q[k].avg, q[k].dist)).join('')}</div>
+    ${sr.byBranch.length > 1 || (sr.byBranch[0] && sr.byBranch[0].branch) ? `<div class="tbl-wrap" style="margin-top:14px"><table><thead><tr><th>الفرع</th><th class="num">التقييمات</th><th>الرضا العام</th><th>الرعاية</th><th>الانتظار</th><th class="num">يوصون</th></tr></thead><tbody>
+      ${sr.byBranch.map(b => `<tr><td><b>${esc(b.branch || 'بدون فرع')}</b></td><td class="num">${n0(b.total)}</td>
+        ${['avgOverall', 'avgCare', 'avgWaiting'].map(key => `<td><span class="r-chip">${n1(b[key])}</span> ${b[key] === null ? '' : roStars(b[key], 12)}</td>`).join('')}
+        <td class="num">${pc(b.recommendPct)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+  </div>`;
+}
+
 /** Follow-up performance: volume, speed, SLA, by source/branch, workload, close reasons. */
 function casesSection(cs) {
   const hrs = v => (v === null || v === undefined ? '–' : v < 48 ? `${n1(v)} س` : `${n1(v / 24)} يوم`);
@@ -1657,7 +1689,7 @@ async function loadKpi() {
       has('viewCases') ? api('GET', `/cases/stats${qs({ from: kf.from, to: kf.to, branch: kf.branch })}`).then(x => x.stats).catch(() => null) : null
     ]);
     const s = k.summary;
-    if (!s.total && !s.complaints) {
+    if (!s.total && !s.complaints && !k.serviceRatings.total && !k.sources.google.total) {
       body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات في هذه الفترة</b>جرّب فترة أوسع أو امسح الفلاتر.</div></div>';
       return;
     }
@@ -1669,6 +1701,7 @@ async function loadKpi() {
     const fmtM = key => { const [y, m] = key.split('-'); return `${MONTHS[+m - 1]} ${y}`; };
 
     body.innerHTML = `
+      ${sourcesSection(k.sources)}
       <div class="grid g4">
         <div class="card tile hero"><div class="l">إجمالي التجارب</div><div class="v">${n0(s.total)}</div>
           <div class="split" aria-hidden="true">${s.total ? `<i style="flex:${s.pos};background:var(--c-single)"></i><i style="flex:${s.neu};background:var(--c-rest)"></i><i style="flex:${s.neg};background:var(--c-neg)"></i>` : ''}</div>
@@ -1680,6 +1713,7 @@ async function loadKpi() {
       </div>
 
       ${cs ? casesSection(cs) : ''}
+      ${k.serviceRatings.total ? ratingsSection(k.serviceRatings) : ''}
 
       <div class="grid g3">
         ${ratingCard('تقييم موظفي الحجز', s.avgBooking, k.ratingDistribution.booking)}
