@@ -14,7 +14,9 @@ const ACCOUNTS_URL = 'https://mybusinessaccountmanagement.googleapis.com/v1/acco
 const INFO_API = 'https://mybusinessbusinessinformation.googleapis.com/v1';
 const REVIEWS_API = 'https://mybusiness.googleapis.com/v4';
 const STARS = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };
-const MAX_PAGES = 20;
+// Incremental syncs stop early anyway; the first one may need the whole history.
+const MAX_PAGES_INCREMENTAL = 20;
+const MAX_PAGES_FULL = 1000; // 50 per page → up to 50,000 reviews per location
 
 const KEYS = { refresh: 'google_refresh_token', locations: 'google_locations', lastSync: 'google_last_sync' };
 
@@ -155,7 +157,7 @@ async function syncReviews(ctx) {
   let fetched = 0;
   for (const loc of locations) {
     let pageToken = '';
-    for (let page = 0; page < MAX_PAGES; page++) {
+    for (let page = 0; page < (since ? MAX_PAGES_INCREMENTAL : MAX_PAGES_FULL); page++) {
       const p = new URLSearchParams({ pageSize: '50', orderBy: 'updateTime desc', ...(pageToken ? { pageToken } : {}) });
       const r = await gapi(ctx, `${REVIEWS_API}/${loc.location}/reviews?${p}`);
       const reviews = r.reviews || [];

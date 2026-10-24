@@ -268,3 +268,29 @@ test('google: a project without API approval gets a clear Arabic message', async
     google.quotaZero = false;
   }
 });
+
+test('google: the first sync pages through the whole history, not just one page', async () => {
+  const many = Array.from({ length: 1234 }, (_, i) => ({
+    reviewId: `bulk-${i}`, starRating: 'FOUR', createTime: new Date(Date.UTC(2020, 0, 1) + i * 3600000).toISOString(),
+    updateTime: new Date(Date.UTC(2020, 0, 1) + i * 3600000).toISOString()
+  })).reverse();
+  const http = async (url, opts) => {
+    if (url.startsWith('https://mybusiness.googleapis.com/v4/')) {
+      const token = Number(new URL(url).searchParams.get('pageToken') || 0);
+      const page = many.slice(token, token + 50);
+      return json(200, { reviews: page, ...(token + 50 < many.length ? { nextPageToken: String(token + 50) } : {}) });
+    }
+    return googleHttp(url, opts);
+  };
+  const app = await startApp({ googleClientId: 'x', googleClientSecret: 'y' }, { http });
+  app.addUser({ username: 'boss3', role: 'admin' });
+  const tok = await app.login('boss3');
+  app.db._store.tables.app_settings.push({ key: 'google_refresh_token', value: 'rt', updated_at: new Date().toISOString() });
+  app.db._store.tables.app_settings.push({ key: 'google_locations', value: JSON.stringify([{ location: LOC_B, title: 'B', branch: 'بريدة' }]), updated_at: new Date().toISOString() });
+  const r = await app.call('POST', '/api/reviews/sync', { token: tok });
+  const stored = app.db._store.tables.google_reviews.length;
+  await app.close();
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.fetched, 1234);
+  assert.equal(stored, 1234);
+});
