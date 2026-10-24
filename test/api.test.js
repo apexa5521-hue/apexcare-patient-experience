@@ -72,7 +72,8 @@ test('must_change blocks everything except me / change-password / logout', async
   assert.match(wrong.body.error, /الحالية غير صحيحة/);
   const ok = await t.call('POST', '/api/auth/change-password', { token, body: { oldPassword: 'temp-pass-1', newPassword: 'brand-new-pass' } });
   assert.equal(ok.status, 200);
-  assert.equal((await t.call('GET', '/api/lookups', { token })).status, 200);
+  assert.equal((await t.call('GET', '/api/auth/me', { token })).status, 401, 'tokens from before the change stop working');
+  assert.equal((await t.call('GET', '/api/lookups', { token: ok.body.token })).status, 200);
 });
 
 test('logout revokes the token', async () => {
@@ -371,4 +372,12 @@ test('health reports a database problem with a 503 and only an error code', asyn
   assert.equal(r.status, 503);
   assert.equal(r.body.db, 'error:PGRST205');
   assert.equal(JSON.stringify(r.body).includes('secret detail'), false);
+});
+
+test('an admin password reset signs the user out everywhere', async () => {
+  const u = t.addUser({ username: 'resetme' });
+  const token = await t.login('resetme');
+  assert.equal((await t.call('GET', '/api/auth/me', { token })).status, 200);
+  await t.call('PATCH', `/api/admin/users/${u.id}`, { token: adminToken, body: { resetPassword: true } });
+  assert.equal((await t.call('GET', '/api/auth/me', { token })).status, 401);
 });

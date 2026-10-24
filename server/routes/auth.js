@@ -51,9 +51,11 @@ function authRoutes() {
     const d = parse(passwordChangeSchema, req.body);
     if (!(await checkPassword(d.oldPassword, req.user.password_hash))) throw new UserError('كلمة المرور الحالية غير صحيحة');
     if (d.oldPassword === d.newPassword) throw new UserError('اختر كلمة مرور مختلفة عن الحالية');
-    await must(db.from('app_users').update({ password_hash: await hashPassword(d.newPassword), must_change: false }).eq('id', req.user.id));
+    const password_hash = await hashPassword(d.newPassword);
+    await must(db.from('app_users').update({ password_hash, must_change: false }).eq('id', req.user.id));
     await audit(db, req.user.username, 'change_password', '');
-    res.json({ ok: true });
+    // The old token is now invalid (it carries the previous password version); hand back a fresh one.
+    res.json({ ok: true, token: signToken({ ...req.user, password_hash }, req.ctx.config.jwtSecret) });
   });
 
   r.post('/logout', authenticate, async (req, res) => {

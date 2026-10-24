@@ -697,7 +697,8 @@ function pwModal(forced) {
     busy(e.submitter, async () => {
       const d = Object.fromEntries(new FormData(e.target));
       if (d.newPassword.length < 8) throw new Error('كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف');
-      await api('POST', '/auth/change-password', d);
+      const r = await api('POST', '/auth/change-password', d);
+      S.token = r.token; store('pe_token', r.token);
       closeModal(); toast('تم تغيير كلمة المرور');
       if (forced) { S.user.mustChange = false; await enter(); }
     });

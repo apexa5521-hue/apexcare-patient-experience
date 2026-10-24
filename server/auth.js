@@ -46,8 +46,11 @@ class Revocations {
   sweep() { const now = Date.now(); for (const [k, exp] of this.ids) if (exp < now) this.ids.delete(k); }
 }
 
+/** Short fingerprint of the stored hash: changing or resetting a password invalidates older tokens. */
+const passwordVersion = (u) => crypto.createHash('sha256').update(String(u.password_hash)).digest('base64url').slice(0, 12);
+
 function signToken(user, secret) {
-  return jwt.sign({ sub: user.id, role: user.role }, secret, {
+  return jwt.sign({ sub: user.id, role: user.role, pv: passwordVersion(user) }, secret, {
     algorithm: 'HS256', expiresIn: TOKEN_TTL_SECONDS, jwtid: crypto.randomUUID()
   });
 }
@@ -70,7 +73,7 @@ function authenticate(req, _res, next) {
   if (revocations.has(claims.jti)) return next(new UserError(SESSION_EXPIRED, 401));
   must(db.from('app_users').select('*').eq('id', claims.sub).maybeSingle())
     .then(user => {
-      if (!user || !user.active) throw new UserError(SESSION_EXPIRED, 401);
+      if (!user || !user.active || claims.pv !== passwordVersion(user)) throw new UserError(SESSION_EXPIRED, 401);
       req.user = user;
       req.token = claims;
       next();
