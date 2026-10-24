@@ -20,3 +20,6 @@ create table if not exists service_ratings (
 create index if not exists service_ratings_created_idx on service_ratings(created_at);
 
 alter table service_ratings enable row level security;
+
+-- Make the new tables visible to the API right away.
+notify pgrst, 'reload schema';

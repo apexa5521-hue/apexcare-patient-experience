@@ -71,3 +71,6 @@ select e.created_at, 'تجربة سلبية', e.id::text, e.branch, e.doctor_id,
 from experiences e
 where e.sentiment = 'سلبية'
 on conflict (source, source_id) do nothing;
+
+-- Make the new tables visible to the API right away.
+notify pgrst, 'reload schema';
