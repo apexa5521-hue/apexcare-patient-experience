@@ -6,7 +6,7 @@
  *   1) رابط الـ webhook:  https://<render-app>.onrender.com/api/webhooks/complaints
  *   2) قيمة WEBHOOK_SECRET من إعدادات الخدمة في Render
  *
- * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ.
+ * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ والوقت.
  * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا الفرع الافتراضي
  * للورقة من الإعداد، وإلا يستنتجه النظام من فرع الطبيب.
  * أي عمود آخر — وخاصة اسم المريض — لا يُقرأ ولا يُرسل أبداً.
@@ -18,17 +18,23 @@ var PROP_SECRET = 'WEBHOOK_SECRET';
 var PROP_SHEET = 'SHEET_NAME';
 var PROP_BRANCH = 'DEFAULT_BRANCH';
 
-// Only these fields ever leave the sheet. Headers are matched case/space-insensitively.
-var ALIASES = {
-  file_no: ['رقم الملف', 'رقم ملف المريض', 'file', 'file no', 'mrn'],
-  phone: ['الجوال', 'رقم الجوال', 'phone', 'mobile'],
-  doctor: ['الطبيب', 'اسم الطبيب', 'doctor'],
-  branch: ['الفرع', 'branch'],
-  category: ['التصنيف', 'نوع الشكوى', 'category'],
-  severity: ['الخطورة', 'درجة الخطورة', 'severity'],
-  description: ['الشكوى', 'تفاصيل الشكوى', 'نص الشكوى', 'الوصف', 'complaint', 'description'],
-  date: ['التاريخ', 'تاريخ الشكوى', 'الطابع الزمني', 'timestamp', 'date']
-};
+// Only these fields ever leave the sheet. A header matches when it CONTAINS one of the
+// keywords (headers like "DATE OF EVENT\nتاريخ الحدث" or "Please provide your phone number…"
+// work). Fields are matched in this order and a column is used once, so the most specific
+// fields go first. Columns that look like a patient's name are never used.
+var FIELDS = [
+  ['date', ['تاريخ الحدث', 'date of event', 'event date', 'تاريخ الزيارة', 'visit date', 'تاريخ الشكوى', 'complaint date', 'التاريخ', 'تاريخ', 'date', 'الطابع الزمني', 'timestamp']],
+  ['time', ['وقت الحدث', 'time of event', 'event time', 'وقت الزيارة', 'visit time', 'الوقت', 'وقت', 'time']],
+  ['phone', ['رقم الجوال', 'الجوال', 'جوال', 'رقم الهاتف', 'هاتف', 'phone', 'mobile']],
+  ['file_no', ['رقم الملف', 'رقم ملف', 'الملف', 'medical record', 'file', 'mrn']],
+  ['doctor', ['اسم الطبيب', 'الطبيب', 'طبيب', 'doctor', 'dentist', 'physician']],
+  ['branch', ['الفرع', 'فرع', 'branch']],
+  ['severity', ['درجة الخطورة', 'الخطورة', 'severity', 'priority']],
+  ['category', ['نوع الشكوى', 'تصنيف', 'category', 'complaint type', 'type of complaint']],
+  ['description', ['تفاصيل الشكوى', 'نص الشكوى', 'وصف الشكوى', 'اكتب الشكوى', 'الشكوى', 'شكوى', 'التفاصيل', 'تفاصيل', 'الوصف', 'وصف',
+    'describe', 'description', 'details', 'complaint', 'feedback', 'الملاحظات', 'ملاحظ']]
+];
+var NAME_COLUMN = /(اسم المريض|اسم المراجع|الاسم|اسمك|patient name|full name|your name|^name\b|\bname$)/;
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('ربط نظام تجربة المريض')
@@ -56,8 +62,9 @@ function setup() {
 
   var sheet = SpreadsheetApp.getActiveSheet();
   props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEET_NAME: sheet.getName(), DEFAULT_BRANCH: branch });
-  if (headerMap_(sheet).description === undefined) {
-    ui.alert('لم أجد عمود نص الشكوى في الورقة «' + sheet.getName() + '». افتح ورقة الشكاوى ثم شغّل الإعداد مرة أخرى.');
+  var cols = headerMap_(sheet);
+  if (cols.description === undefined) {
+    ui.alert('لم أجد عمود نص الشكوى في الورقة «' + sheet.getName() + '».\nافتح ورقة الشكاوى ثم شغّل الإعداد مرة أخرى.\n\nما وجدته:\n' + describeMapping_(sheet, cols));
     return;
   }
 
@@ -77,7 +84,7 @@ function setup() {
   ScriptApp.newTrigger('pushNew').timeBased().everyMinutes(15).create();
 
   var r = pushNew();
-  ui.alert('تم الإعداد على الورقة «' + sheet.getName() + '»' + (branch ? '\n• الفرع الافتراضي: ' + branch : '') + formNote + '\n• إرسال احتياطي كل 15 دقيقة\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')');
+  ui.alert('الأعمدة المستخدمة:\n' + describeMapping_(sheet, cols) + '\n\nتم الإعداد على الورقة «' + sheet.getName() + '»' + (branch ? '\n• الفرع الافتراضي: ' + branch : '') + formNote + '\n• إرسال احتياطي كل 15 دقيقة\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')');
 }
 
 function onFormSubmitPush() { pushNew(); }
@@ -110,7 +117,9 @@ function pushNew() {
     if (lastRow <= lastSent) return { sent: 0, inserted: 0 };
 
     var width = sheet.getLastColumn();
-    var values = sheet.getRange(lastSent + 1, 1, lastRow - lastSent, width).getValues();
+    var range = sheet.getRange(lastSent + 1, 1, lastRow - lastSent, width);
+    var values = range.getValues();
+    var shown = range.getDisplayValues();
     var tz = ss.getSpreadsheetTimeZone();
     var defaultBranch = props.getProperty(PROP_BRANCH) || '';
     var sent = 0, inserted = 0;
@@ -121,7 +130,10 @@ function pushNew() {
       chunk.forEach(function (row, i) {
         var rowNumber = lastSent + 1 + start + i;
         var out = { source_key: ss.getId() + ':' + sheet.getName() + ':' + rowNumber };
-        Object.keys(cols).forEach(function (field) { out[field] = cell_(row[cols[field]], field, tz); });
+        Object.keys(cols).forEach(function (field) {
+          if (field !== 'date' && field !== 'time') out[field] = cell_(row[cols[field]], tz);
+        });
+        if (cols.date !== undefined) out.date = when_(row[cols.date], cols.time !== undefined ? shown[start + i][cols.time] : '', tz);
         if (!out.branch && defaultBranch) out.branch = defaultBranch;
         if (out.description) rows.push(out);
       });
@@ -151,25 +163,62 @@ function pushNew() {
   }
 }
 
-function norm_(s) { return String(s || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+function norm_(s) { return String(s || '').toLowerCase().replace(/[\u064B-\u0652]/g, '').replace(/\s+/g, ' ').trim(); }
 
-/** field -> column index, from the header row. Only aliased fields are mapped. */
-function headerMap_(sheet) {
-  var head = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0].map(norm_);
-  var map = {};
-  Object.keys(ALIASES).forEach(function (field) {
-    var names = ALIASES[field].map(norm_);
-    for (var i = 0; i < head.length; i++) {
-      if (names.indexOf(head[i]) > -1) { map[field] = i; break; }
+/** field -> column index for a header row (array of strings). Pure, so it can be tested outside Apps Script. */
+function matchHeaders_(headers) {
+  var head = headers.map(norm_);
+  var used = {}, map = {};
+  FIELDS.forEach(function (f) {
+    var field = f[0], keys = f[1].map(norm_);
+    for (var k = 0; k < keys.length && map[field] === undefined; k++) {
+      for (var i = 0; i < head.length; i++) {
+        if (used[i] || !head[i] || head[i].indexOf(keys[k]) < 0) continue;
+        if (NAME_COLUMN.test(head[i]) && !(field === 'doctor' && /طبيب|doctor/.test(head[i]))) continue;
+        if (field === 'time' && /timestamp|الطابع الزمني/.test(head[i])) continue;
+        map[field] = i; used[i] = true; break;
+      }
     }
   });
   return map;
 }
 
-function cell_(v, field, tz) {
+function headerMap_(sheet) {
+  return matchHeaders_(sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0]);
+}
+
+/** 24h "HH:mm:ss" from "2:00:00 PM", "14:00", "9:15 م"…; '' if none. */
+function time24_(text) {
+  var m = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm|ص|م)?/i.exec(String(text || ''));
+  if (!m) return '';
+  var h = +m[1], ap = (m[4] || '').toLowerCase();
+  if ((ap === 'pm' || ap === 'م') && h < 12) h += 12;
+  if ((ap === 'am' || ap === 'ص') && h === 12) h = 0;
+  return ('0' + h).slice(-2) + ':' + m[2] + ':' + (m[3] || '00');
+}
+
+/**
+ * When the event happened, as ISO with the sheet's offset. The time comes from its own column
+ * when there is one (read as displayed, to avoid Sheets' 1899 time-only dates).
+ */
+function when_(dateValue, timeDisplay, tz) {
+  if (!(dateValue instanceof Date)) return String(dateValue || '').trim();
+  var time = time24_(timeDisplay) || Utilities.formatDate(dateValue, tz, 'HH:mm:ss');
+  return Utilities.formatDate(dateValue, tz, 'yyyy-MM-dd') + 'T' + time + Utilities.formatDate(dateValue, tz, 'XXX');
+}
+
+function cell_(v, tz) {
   if (v === null || v === undefined || v === '') return '';
-  if (v instanceof Date) {
-    return field === 'date' ? Utilities.formatDate(v, tz, "yyyy-MM-dd'T'HH:mm:ssXXX") : Utilities.formatDate(v, tz, 'yyyy-MM-dd');
-  }
+  if (v instanceof Date) return Utilities.formatDate(v, tz, 'yyyy-MM-dd');
   return String(v).trim();
+}
+
+/** Shows which sheet column feeds which field, so the mapping can be checked at a glance. */
+function describeMapping_(sheet, cols) {
+  var head = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0];
+  var label = { file_no: 'رقم الملف', phone: 'الجوال', doctor: 'الطبيب', branch: 'الفرع', category: 'التصنيف', severity: 'الخطورة', description: 'نص الشكوى', date: 'التاريخ', time: 'الوقت' };
+  return FIELDS.map(function (f) {
+    var i = cols[f[0]];
+    return '• ' + label[f[0]] + ': ' + (i === undefined ? '— غير موجود' : '«' + String(head[i]).replace(/\s+/g, ' ').slice(0, 40) + '»');
+  }).join('\n');
 }
