@@ -160,7 +160,7 @@ async function run() {
       await page.click('#tabs button[data-tab=kpi]');
       await page.waitForSelector('#kpiBody .rating-card');
       const total = await page.locator('#kpiBody .tile.hero .v').innerText();
-      assert.equal(total.trim(), vp.name === 'mobile' ? '161' : '162', 'new experience counted in KPIs');
+      assert.equal(total.trim(), vp.name === 'mobile' ? '161' : '163', 'new experiences counted in KPIs (desktop also sees the mobile phone survey)');
       assert.ok(await page.locator('#kpiBody tr:has-text("د. سارة العتيبي")').count() >= 1);
       const col = page.locator('#kpiBody .cols .c >> nth=3');
       await col.scrollIntoViewIfNeeded();
@@ -183,6 +183,61 @@ async function run() {
       await page.click('#modalBody [data-close]');
       await shot('09-admin');
       await noHScroll('admin');
+
+      // Call list: import from Excel (with a patient-name column that must be ignored), then survey by phone.
+      const tag = vp.name === 'mobile' ? 'M' : 'D';
+      await page.click('#tabs button[data-tab=calls]');
+      await page.waitForSelector('#callTable');
+      await page.click('#importCalls');
+      const paste = [
+        'رقم الملف\tاسم المريض\tالجوال\tالطبيب\tتاريخ الزيارة\tالوقت',
+        `CALL-${tag}1\tمريض تجريبي\t0551112233\tد. سارة العتيبي\t${new Date(Date.now() - 86400000).toISOString().slice(0, 10)}\t10:15`,
+        `CALL-${tag}2\tمريض آخر\t0551112244\tد. خالد الحربي\t${new Date(Date.now() - 86400000).toISOString().slice(0, 10)}\t11:40`,
+        `BAD ROW\tx\t123\t\t\t`
+      ].join('\n');
+      await page.fill('#impText', paste);
+      await page.waitForSelector('#impGo:not([disabled])');
+      assert.match(await page.innerText('#impHint'), /3 صف/);
+      await page.click('#impGo');
+      await page.waitForSelector('#impResult .alert');
+      assert.match(await page.innerText('#impResult'), /أُضيف 2/);
+      await shot('10-import');
+      await page.click('#modalBody [data-close]');
+      await page.waitForSelector(`#callTable td:has-text("CALL-${tag}1")`);
+      await shot('11-calls');
+      await noHScroll('calls');
+      assert.equal((JSON.stringify(db._store.tables)).includes('مريض تجريبي'), false, 'patient name column ignored');
+
+      await page.click(`#callTable tr:has-text("CALL-${tag}2") select`);
+      await page.selectOption(`#callTable tr:has-text("CALL-${tag}2") select`, 'لم يرد');
+      await page.waitForSelector(`#callTable tr:has-text("CALL-${tag}2") .pill:has-text("لم يرد")`);
+
+      await page.click(`#callTable tr:has-text("CALL-${tag}1") [data-start]`);
+      await page.waitForSelector('#callBanner:not(.hidden)');
+      assert.equal(await page.inputValue('#exFile'), `CALL-${tag}1`);
+      assert.equal(await page.inputValue('#exPhone'), '0551112233');
+      assert.equal(await page.$eval('#chSeg input:checked', i => i.value), 'اتصال');
+      await page.click('#vtSeg label:has-text("إجراء") >> nth=0');
+      await page.click('[data-stars=bookingRating] label >> nth=3');
+      await page.click('[data-stars=receptionRating] label >> nth=4');
+      await page.click('#planSeg label:has-text("جزئياً")');
+      await page.click('[data-stars=doctorRating] label >> nth=4');
+      await page.click('#sentSeg label:has-text("إيجابية")');
+      await page.waitForTimeout(350);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await shot('12-call-survey');
+      await page.click('#exSave');
+      await page.waitForSelector('#toast.on:not(.err)');
+      assert.match(await page.innerText('#toast'), /إغلاق الاتصال/);
+      assert.equal(await page.isHidden('#callBanner'), true);
+      const call = db._store.tables.call_queue.find(c => c.file_no === `CALL-${tag}1`);
+      assert.equal(call.status, 'تم');
+      assert.equal(db._store.tables.experiences.find(e => e.id === call.experience_id).channel, 'اتصال');
+
+      await page.click('#tabs button[data-tab=reviews]');
+      await page.waitForSelector('#revSetup:not(.hidden) .setup');
+      await shot('13-reviews-setup');
+      await noHScroll('reviews');
 
       assert.deepEqual(problems, [], `${vp.name}: console errors`);
       console.log(`✓ ${vp.name}`);

@@ -11,9 +11,9 @@ const CONFIG = {
   overdueDays: 3
 };
 
-async function startApp(overrides = {}) {
+async function startApp(overrides = {}, { http } = {}) {
   const db = createFakeSupabase();
-  const app = createApp({ db, config: { ...CONFIG, ...overrides } });
+  const app = createApp({ db, config: { ...CONFIG, ...overrides }, ...(http ? { http } : {}) });
   const server = await new Promise(resolve => { const s = app.listen(0, () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
 

@@ -26,10 +26,10 @@ const SCHEMA = {
   experiences: {
     cols: ['id', 'created_at', 'visit_at', 'visit_time_local', 'file_no', 'phone', 'doctor_id', 'branch', 'specialty', 'visit_type',
       'sentiment', 'category', 'severity', 'follow_up', 'booking_rating', 'reception_rating', 'plan_explained', 'doctor_rating',
-      'general_note', 'created_by'],
+      'general_note', 'channel', 'created_by'],
     generated: ['visit_time_local'],
     unique: [],
-    defaults: () => ({ created_at: new Date().toISOString() }),
+    defaults: () => ({ created_at: new Date().toISOString(), channel: 'حضوري' }),
     compute: (r) => ({ visit_time_local: `${localParts(r.visit_at, 'Asia/Riyadh').time}:${String(localParts(r.visit_at, 'Asia/Riyadh').second).padStart(2, '0')}` })
   },
   complaints: {
@@ -43,6 +43,24 @@ const SCHEMA = {
     unique: [],
     serial: true,
     defaults: () => ({ at: new Date().toISOString() })
+  },
+  call_queue: {
+    cols: ['id', 'created_at', 'visit_at', 'file_no', 'phone', 'doctor_id', 'doctor_name_raw', 'branch', 'status', 'attempts',
+      'last_attempt_at', 'experience_id', 'updated_by'],
+    unique: [['file_no', 'visit_at']],
+    defaults: () => ({ created_at: new Date().toISOString(), status: 'بانتظار الاتصال', attempts: 0 })
+  },
+  google_reviews: {
+    cols: ['id', 'location', 'branch', 'rating', 'comment', 'created_at', 'updated_at', 'reply', 'replied_at', 'status', 'note',
+      'handled_by', 'fetched_at'],
+    unique: ['id'],
+    defaults: () => ({ status: 'جديد', fetched_at: new Date().toISOString() })
+  },
+  app_settings: {
+    cols: ['key', 'value', 'updated_at'],
+    unique: ['key'],
+    noId: true,
+    defaults: () => ({ updated_at: new Date().toISOString() })
   }
 };
 
@@ -134,13 +152,16 @@ class Query {
     const row = {};
     for (const c of this.spec.cols) row[c] = null;
     Object.assign(row, this.spec.defaults(), input);
-    if (!row.id) row.id = this.spec.serial ? ++this.store.serial : crypto.randomUUID();
+    if (!this.spec.noId && !row.id) row.id = this.spec.serial ? ++this.store.serial : crypto.randomUUID();
     if (this.spec.compute) Object.assign(row, this.spec.compute(row));
     return row;
   }
 
+  /** First unique key (a column, or an array of columns) that `row` would duplicate; nulls never clash. */
   _conflict(row, rows) {
-    return this.spec.unique.find(k => row[k] !== null && row[k] !== undefined && rows.some(r => r !== row && r[k] === row[k]));
+    const same = (r, k) => [].concat(k).every(c => row[c] !== null && row[c] !== undefined && r[c] === row[c]);
+    const key = this.spec.unique.find(k => rows.some(r => r !== row && same(r, k)));
+    return key === undefined ? undefined : [].concat(key).join(',');
   }
 
   _finish(rows) {
@@ -157,20 +178,29 @@ class Query {
     const rows = this.store.tables[this.table];
     try {
       if (this.action === 'insert' || this.action === 'upsert') {
-        const created = [];
+        const created = [], merged = [];
         for (const input of this.payload) {
           const bad = this._checkCols(input);
           if (bad) return err(bad, 'PGRST204');
           const row = this._materialize(input);
           const clash = this._conflict(row, [...rows, ...created]);
           if (clash) {
-            if (this.action === 'upsert' && this.upsertOpts.ignoreDuplicates && clash === this.upsertOpts.onConflict) continue;
+            const upsertKey = this.action === 'upsert' && clash === this.upsertOpts.onConflict;
+            if (upsertKey && this.upsertOpts.ignoreDuplicates) continue;
+            if (upsertKey) {
+              // ON CONFLICT DO UPDATE: only the columns sent are overwritten.
+              const cols = clash.split(',');
+              const existing = rows.find(r => cols.every(c => r[c] === row[c]));
+              Object.assign(existing, input);
+              merged.push(existing);
+              continue;
+            }
             return err(`duplicate key value violates unique constraint "${this.table}_${clash}_key"`, '23505');
           }
           created.push(row);
         }
         rows.push(...created);
-        return this.returning ? this._finish(created) : { data: null, error: null, count: null };
+        return this.returning ? this._finish([...created, ...merged]) : { data: null, error: null, count: null };
       }
       if (this.action === 'update') {
         const bad = this._checkCols(this.payload);

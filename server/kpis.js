@@ -79,6 +79,7 @@ function computeKpis({ experiences = [], complaints = [], doctors = [], tz = 'As
   };
 
   const exCats = new Map();
+  const channels = new Map();
   const hours = Array.from({ length: 24 }, timePoint);
   const weekdays = Array.from({ length: 7 }, timePoint);
   const months = new Map();
@@ -88,6 +89,11 @@ function computeKpis({ experiences = [], complaints = [], doctors = [], tz = 'As
 
   for (const e of experiences) {
     const k = sentimentKey(e.sentiment);
+    const chName = e.channel || 'حضوري';
+    if (!channels.has(chName)) channels.set(chName, { total: 0, neg: 0, booking: new Mean(), reception: new Mean(), doctor: new Mean(), plan: new PlanRate() });
+    const ch = channels.get(chName);
+    ch.total++; if (k === 'neg') ch.neg++;
+    ch.booking.add(e.booking_rating); ch.reception.add(e.reception_rating); ch.doctor.add(e.doctor_rating); ch.plan.add(e.plan_explained);
     sent[k]++;
     for (const [name, col] of Object.entries(RATING_KEYS)) {
       means[name].add(e[col]);
@@ -181,6 +187,11 @@ function computeKpis({ experiences = [], complaints = [], doctors = [], tz = 'As
     byMonth: sortedSeries(months),
     byYear: sortedSeries(years),
     heatmap: heat,
+    byChannel: ['حضوري', 'اتصال'].filter(c => channels.has(c)).map(channel => {
+      const c = channels.get(channel);
+      return { channel, total: c.total, sharePct: pct(c.total, total), negPct: pct(c.neg, c.total),
+        avgBooking: c.booking.value, avgReception: c.reception.value, avgDoctor: c.doctor.value, planYesPct: c.plan.value };
+    }),
     ratingTrend: [...trend.keys()].sort().map(key => {
       const t = trend.get(key);
       return { key, booking: t.booking.value, reception: t.reception.value, doctor: t.doctor.value };

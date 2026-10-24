@@ -12,6 +12,10 @@ const PLAN_ANSWERS = ['نعم', 'جزئياً', 'لا', 'لا ينطبق'];
 const CATEGORY_TYPES = ['سلبية', 'إيجابية', 'الكل'];
 const ROLES = ['staff', 'admin'];
 const NOT_APPLICABLE = 'لا ينطبق';
+const CHANNELS = ['حضوري', 'اتصال'];
+const CALL_STATUSES = ['بانتظار الاتصال', 'لم يرد', 'رفض', 'رقم خاطئ', 'تم'];
+// Outcomes a caller can record without a survey; "تم" is set only by saving the survey.
+const CALL_OUTCOMES = ['لم يرد', 'رفض', 'رقم خاطئ', 'بانتظار الاتصال'];
 
 class UserError extends Error {
   constructor(message, status = 400) {
@@ -48,6 +52,15 @@ function tryPhone(v) {
   try { return normalizePhone(v); } catch { return null; }
 }
 
+/** Branch from free text in Arabic or English ("فرع بريدة", "Buraydah", "UNAIZAH"…); null if unrecognised. */
+function normalizeBranch(v) {
+  const s = String(v ?? '').trim().toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه');
+  if (!s) return null;
+  if (/بريد|bura[iy]?d|buraid|braid/.test(s)) return 'بريدة';
+  if (/عنيز|[ou]na[iy]?z|[ou]nayz|anaiz/.test(s)) return 'عنيزة';
+  return null;
+}
+
 function normalizeFileNo(v) {
   const s = asciiDigits(v).trim();
   if (!FILE_NO_RE.test(s)) throw new UserError('رقم الملف غير صالح (أرقام وحروف إنجليزية و / - فقط، حتى 20 خانة)');
@@ -78,7 +91,9 @@ const experienceSchema = z.object({
   sentiment: oneOf(SENTIMENTS, 'التجربة العامة'),
   category: optText(80),
   severity: z.any().optional(),
-  generalNote: optText(1000)
+  generalNote: optText(1000),
+  channel: z.preprocess(v => v || 'حضوري', oneOf(CHANNELS, 'طريقة التقييم')),
+  callId: z.preprocess(v => v || null, z.string().regex(UUID_RE, 'سجل الاتصال غير موجود').nullable())
 }).superRefine((d, ctx) => {
   if (d.planExplained === NOT_APPLICABLE && d.visitType !== 'كشف') {
     ctx.addIssue({ code: 'custom', message: '«لا ينطبق» متاحة لزيارات الكشف فقط' });
@@ -159,7 +174,7 @@ function parseFilters(q = {}) {
     const v = pick(k);
     if (v) { if (!TIME_RE.test(v)) throw new UserError('صيغة الوقت غير صالحة'); f[k] = v; }
   }
-  const lists = { branch: BRANCHES, sentiment: SENTIMENTS, visitType: VISIT_TYPES, status: STATUSES };
+  const lists = { branch: BRANCHES, sentiment: SENTIMENTS, visitType: VISIT_TYPES, status: STATUSES, channel: CHANNELS };
   for (const [k, list] of Object.entries(lists)) {
     const v = pick(k);
     if (v) { if (!list.includes(v)) throw new UserError('قيمة فلتر غير صالحة'); f[k] = v; }
@@ -173,7 +188,8 @@ function parseFilters(q = {}) {
 
 module.exports = {
   BRANCHES, SPECIALTIES, VISIT_TYPES, SENTIMENTS, SEVERITIES, STATUSES, PLAN_ANSWERS, CATEGORY_TYPES, ROLES, NOT_APPLICABLE,
-  UUID_RE, UserError, normalizePhone, tryPhone, normalizeFileNo, maskPhone, parse, parseFilters,
+  CHANNELS, CALL_STATUSES, CALL_OUTCOMES,
+  UUID_RE, UserError, normalizePhone, tryPhone, normalizeFileNo, normalizeBranch, maskPhone, parse, parseFilters,
   experienceSchema, complaintSchema, complaintUpdateSchema, followUpSchema,
   userCreateSchema, userUpdateSchema, doctorSchema, categorySchema, passwordChangeSchema
 };

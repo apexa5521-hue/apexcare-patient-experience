@@ -35,6 +35,13 @@ function experienceRoutes() {
     const visitAt = localToUtc(d.visitDate, d.visitTime, config.tz);
     if (visitAt.getTime() > Date.now() + FUTURE_GRACE_MS) throw new UserError('وقت الزيارة لا يمكن أن يكون في المستقبل');
 
+    let call = null;
+    if (d.callId) {
+      call = await must(db.from('call_queue').select('id,status').eq('id', d.callId).maybeSingle());
+      if (!call) throw new UserError('سجل الاتصال غير موجود');
+      if (call.status === 'تم') throw new UserError('هذا الاتصال سُجّل له تقييم من قبل');
+    }
+
     const doctor = await must(db.from('doctors').select('*').eq('id', d.doctorId).maybeSingle());
     if (!doctor || !doctor.active) throw new UserError('اختر الطبيب من القائمة');
     if (doctor.branch !== 'الكل' && doctor.branch !== d.branch) throw new UserError('الطبيب المختار لا يعمل في هذا الفرع');
@@ -65,10 +72,16 @@ function experienceRoutes() {
       plan_explained: d.planExplained,
       doctor_rating: d.doctorRating,
       general_note: d.generalNote,
+      channel: call ? 'اتصال' : d.channel,
       created_by: req.user.id
     }).select('id').single());
 
-    await audit(db, req.user.username, 'add_experience', row.id);
+    if (call) {
+      await must(db.from('call_queue').update({
+        status: 'تم', experience_id: row.id, last_attempt_at: new Date().toISOString(), updated_by: req.user.username
+      }).eq('id', call.id));
+    }
+    await audit(db, req.user.username, 'add_experience', call ? `${row.id} (call ${call.id})` : row.id);
     res.status(201).json({ ok: true, id: row.id });
   });
 

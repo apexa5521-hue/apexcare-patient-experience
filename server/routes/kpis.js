@@ -6,7 +6,7 @@ const { computeKpis } = require('../kpis');
 const { parseFilters } = require('../validate');
 const { applyExperienceFilters, applyComplaintFilters } = require('../queries');
 
-const EX_COLS = 'id,visit_at,doctor_id,branch,sentiment,category,severity,booking_rating,reception_rating,plan_explained,doctor_rating';
+const EX_COLS = 'id,visit_at,doctor_id,branch,sentiment,category,severity,booking_rating,reception_rating,plan_explained,doctor_rating,channel';
 const CO_COLS = 'id,created_at,closed_at,status,doctor_id,category,branch';
 
 function kpiRoutes() {

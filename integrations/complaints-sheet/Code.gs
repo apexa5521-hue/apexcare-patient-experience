@@ -7,6 +7,8 @@
  *   2) قيمة WEBHOOK_SECRET من إعدادات الخدمة في Render
  *
  * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ.
+ * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا الفرع الافتراضي
+ * للورقة من الإعداد، وإلا يستنتجه النظام من فرع الطبيب.
  * أي عمود آخر — وخاصة اسم المريض — لا يُقرأ ولا يُرسل أبداً.
  */
 
@@ -14,6 +16,7 @@ var BATCH_SIZE = 50;
 var PROP_URL = 'WEBHOOK_URL';
 var PROP_SECRET = 'WEBHOOK_SECRET';
 var PROP_SHEET = 'SHEET_NAME';
+var PROP_BRANCH = 'DEFAULT_BRANCH';
 
 // Only these fields ever leave the sheet. Headers are matched case/space-insensitively.
 var ALIASES = {
@@ -45,9 +48,14 @@ function setup() {
   var s = secret.getResponseText().trim();
   if (!/^https:\/\/.+\/api\/webhooks\/complaints$/.test(u)) { ui.alert('الرابط يجب أن يبدأ بـ https:// وينتهي بـ /api/webhooks/complaints'); return; }
   if (!s) { ui.alert('السر مطلوب'); return; }
+  var b = ui.prompt('فرع هذه الورقة (اختياري)',
+    'إذا كانت كل شكاوى هذه الورقة لفرع واحد اكتب: بريدة أو عنيزة.\nاتركه فارغاً إذا كان في الورقة عمود للفرع أو فيها الفرعان.\n(إذا لم يُذكر الفرع يأخذه النظام من فرع الطبيب.)', ui.ButtonSet.OK_CANCEL);
+  if (b.getSelectedButton() !== ui.Button.OK) return;
+  var branch = b.getResponseText().trim();
+  if (branch && ['بريدة', 'عنيزة'].indexOf(branch) < 0) { ui.alert('الفرع يكون «بريدة» أو «عنيزة» أو فارغاً'); return; }
 
   var sheet = SpreadsheetApp.getActiveSheet();
-  props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEET_NAME: sheet.getName() });
+  props.setProperties({ WEBHOOK_URL: u, WEBHOOK_SECRET: s, SHEET_NAME: sheet.getName(), DEFAULT_BRANCH: branch });
   if (headerMap_(sheet).description === undefined) {
     ui.alert('لم أجد عمود نص الشكوى في الورقة «' + sheet.getName() + '». افتح ورقة الشكاوى ثم شغّل الإعداد مرة أخرى.');
     return;
@@ -69,7 +77,7 @@ function setup() {
   ScriptApp.newTrigger('pushNew').timeBased().everyMinutes(15).create();
 
   var r = pushNew();
-  ui.alert('تم الإعداد على الورقة «' + sheet.getName() + '»' + formNote + '\n• إرسال احتياطي كل 15 دقيقة\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')');
+  ui.alert('تم الإعداد على الورقة «' + sheet.getName() + '»' + (branch ? '\n• الفرع الافتراضي: ' + branch : '') + formNote + '\n• إرسال احتياطي كل 15 دقيقة\n\nأُرسل الآن: ' + r.sent + ' صف (جديد في النظام: ' + r.inserted + ')');
 }
 
 function onFormSubmitPush() { pushNew(); }
@@ -104,6 +112,7 @@ function pushNew() {
     var width = sheet.getLastColumn();
     var values = sheet.getRange(lastSent + 1, 1, lastRow - lastSent, width).getValues();
     var tz = ss.getSpreadsheetTimeZone();
+    var defaultBranch = props.getProperty(PROP_BRANCH) || '';
     var sent = 0, inserted = 0;
 
     for (var start = 0; start < values.length; start += BATCH_SIZE) {
@@ -113,6 +122,7 @@ function pushNew() {
         var rowNumber = lastSent + 1 + start + i;
         var out = { source_key: ss.getId() + ':' + sheet.getName() + ':' + rowNumber };
         Object.keys(cols).forEach(function (field) { out[field] = cell_(row[cols[field]], field, tz); });
+        if (!out.branch && defaultBranch) out.branch = defaultBranch;
         if (out.description) rows.push(out);
       });
       if (rows.length) {

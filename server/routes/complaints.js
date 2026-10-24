@@ -7,7 +7,7 @@ const { isAdmin, requireAdmin } = require('../auth');
 const { isOverdue } = require('../kpis');
 const { applyComplaintFilters, mapComplaint } = require('../queries');
 const {
-  UserError, UUID_RE, BRANCHES, SEVERITIES, parse, parseFilters, normalizeFileNo, normalizePhone, tryPhone,
+  UserError, UUID_RE, BRANCHES, SEVERITIES, normalizeBranch, parse, parseFilters, normalizeFileNo, normalizePhone, tryPhone,
   complaintSchema, complaintUpdateSchema
 } = require('../validate');
 
@@ -138,9 +138,11 @@ function sheetRowToComplaint(row, doctorsByKey) {
   const sourceKey = cleanText(row.source_key, 200);
   if (!description || !sourceKey) return null;
   const doctorRaw = cleanText(row.doctor, 80);
-  const doctorId = doctorRaw ? doctorsByKey.get(doctorKey(doctorRaw)) || null : null;
+  const doctor = doctorRaw ? doctorsByKey.get(doctorKey(doctorRaw)) || null : null;
+  const doctorId = doctor ? doctor.id : null;
   const fileNo = cleanText(row.file_no, 40);
-  const branch = cleanText(row.branch, 20);
+  // Sheet branch in any spelling; else the matched doctor's branch when they work in only one.
+  const branch = normalizeBranch(row.branch) || (doctor && BRANCHES.includes(doctor.branch) ? doctor.branch : null);
   const severity = cleanText(row.severity, 20);
   return {
     source_key: sourceKey,
@@ -149,7 +151,7 @@ function sheetRowToComplaint(row, doctorsByKey) {
     phone: tryPhone(row.phone),
     doctor_id: doctorId,
     doctor_name_raw: doctorId ? null : doctorRaw,
-    branch: BRANCHES.includes(branch) ? branch : null,
+    branch,
     category: cleanText(row.category, 80),
     severity: SEVERITIES.includes(severity) ? severity : 'متوسطة',
     status: 'جديدة',
@@ -168,8 +170,8 @@ function webhookRoutes() {
     if (!rows) throw new UserError('صيغة الطلب غير صالحة');
     if (rows.length > WEBHOOK_MAX_ROWS) throw new UserError(`الحد الأقصى ${WEBHOOK_MAX_ROWS} صفاً في الطلب`);
 
-    const doctors = await must(db.from('doctors').select('id,name'));
-    const doctorsByKey = new Map(doctors.map(d => [doctorKey(d.name), d.id]));
+    const doctors = await must(db.from('doctors').select('id,name,branch'));
+    const doctorsByKey = new Map(doctors.map(d => [doctorKey(d.name), d]));
     const unique = new Map();
     for (const row of rows) {
       const c = row && typeof row === 'object' ? sheetRowToComplaint(row, doctorsByKey) : null;

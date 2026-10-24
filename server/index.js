@@ -14,6 +14,8 @@ const experienceRoutes = require('./routes/experiences');
 const { complaintRoutes, webhookRoutes } = require('./routes/complaints');
 const kpiRoutes = require('./routes/kpis');
 const adminRoutes = require('./routes/admin');
+const callRoutes = require('./routes/calls');
+const { reviewRoutes, googleRoutes, googleCallback } = require('./routes/reviews');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -25,7 +27,11 @@ function loadConfig(env = process.env) {
     webhookSecret: env.WEBHOOK_SECRET,
     tz: env.TZ_NAME || 'Asia/Riyadh',
     overdueDays: Number(env.OVERDUE_DAYS || 3),
-    port: Number(env.PORT || 3000)
+    port: Number(env.PORT || 3000),
+    // Optional: Google Business Profile reviews.
+    googleClientId: env.GOOGLE_CLIENT_ID || '',
+    googleClientSecret: env.GOOGLE_CLIENT_SECRET || '',
+    publicUrl: env.PUBLIC_URL || env.RENDER_EXTERNAL_URL || ''
   };
   const missing = ['supabaseUrl', 'supabaseKey', 'jwtSecret', 'webhookSecret'].filter(k => !config[k]);
   if (missing.length) throw new Error(`Missing env: ${missing.join(', ')}`);
@@ -34,12 +40,12 @@ function loadConfig(env = process.env) {
   return config;
 }
 
-function createApp({ db, config }) {
+function createApp({ db, config, http = fetch }) {
   const app = express();
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
 
-  const ctx = { db, config, loginLimiter: new LoginLimiter(), revocations: new Revocations() };
+  const ctx = { db, config, http, loginLimiter: new LoginLimiter(), revocations: new Revocations() };
 
   app.use((req, res, next) => {
     req.ctx = ctx;
@@ -72,6 +78,7 @@ function createApp({ db, config }) {
   });
   app.use('/api/auth', authRoutes());
   app.use('/api/webhooks', webhookRoutes());
+  app.use('/api/google', googleCallback());
 
   const signedIn = [authenticate, requirePasswordChanged];
   app.use('/api/lookups', signedIn, lookupRoutes());
@@ -79,6 +86,9 @@ function createApp({ db, config }) {
   app.use('/api/complaints', signedIn, complaintRoutes());
   app.use('/api/kpis', signedIn, requireAdmin, kpiRoutes());
   app.use('/api/admin', signedIn, requireAdmin, adminRoutes());
+  app.use('/api/calls', signedIn, callRoutes());
+  app.use('/api/reviews', signedIn, reviewRoutes());
+  app.use('/api/google', signedIn, requireAdmin, googleRoutes());
 
   app.use('/api', (_req, _res, next) => next(new UserError('المسار غير موجود', 404)));
 

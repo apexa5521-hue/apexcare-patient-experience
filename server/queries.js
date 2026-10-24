@@ -21,6 +21,7 @@ function applyExperienceFilters(q, f, tz) {
   if (f.doctorId) q = q.eq('doctor_id', f.doctorId);
   if (f.sentiment) q = q.eq('sentiment', f.sentiment);
   if (f.visitType) q = q.eq('visit_type', f.visitType);
+  if (f.channel) q = q.eq('channel', f.channel);
   if (f.fileNo) q = q.ilike('file_no', `%${f.fileNo}%`);
   return q;
 }
@@ -54,6 +55,7 @@ function mapExperience(e, { admin, tz, doctorNames, usernames }) {
     severity: e.severity || '',
     followUp: e.follow_up || '',
     generalNote: e.general_note || '',
+    channel: e.channel || 'حضوري',
     by: admin ? usernames.get(e.created_by) || '' : undefined
   };
 }

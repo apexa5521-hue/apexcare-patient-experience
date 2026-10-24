@@ -12,7 +12,8 @@ async function activeLookups(db) {
   return {
     doctors, categories,
     branches: V.BRANCHES, specialties: V.SPECIALTIES, visitTypes: V.VISIT_TYPES, sentiments: V.SENTIMENTS,
-    severities: V.SEVERITIES, statuses: V.STATUSES, planAnswers: V.PLAN_ANSWERS, notApplicable: V.NOT_APPLICABLE
+    severities: V.SEVERITIES, statuses: V.STATUSES, planAnswers: V.PLAN_ANSWERS, notApplicable: V.NOT_APPLICABLE,
+    channels: V.CHANNELS, callStatuses: V.CALL_STATUSES, callOutcomes: V.CALL_OUTCOMES
   };
 }
 

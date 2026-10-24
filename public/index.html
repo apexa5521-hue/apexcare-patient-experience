@@ -305,6 +305,53 @@ details.tv th,details.tv td{padding:6px 10px}
 .quote{background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;margin:0 0 14px;white-space:pre-wrap;line-height:1.6}
 .check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px}
 .check input{width:18px;height:18px;accent-color:var(--brand)}
+.badge.soft{background:var(--brand-soft);color:var(--brand)}
+.call-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;margin-bottom:18px;border-radius:12px;background:var(--info-soft);color:#1e3a8a;font-size:14px}
+.call-banner b{font-weight:700}
+.call-banner .btn{margin-inline-start:auto}
+.seg.locked{opacity:.75;pointer-events:none}
+a.tel{color:var(--brand);font-weight:600;text-decoration:none;font-variant-numeric:tabular-nums}
+a.tel:hover{text-decoration:underline}
+.row-actions{display:flex;gap:6px;align-items:center}
+.row-actions select{min-height:36px;width:auto;padding:4px 30px 4px 10px;font-size:13px}
+.paste{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;direction:ltr;text-align:left;min-height:180px;white-space:pre}
+.import-guide{font-size:13px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.import-guide code{background:var(--neu-soft);padding:1px 5px;border-radius:5px;font-size:12px}
+.rev-list{display:grid;gap:12px}
+.rev{padding:16px 18px}
+.rev-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rev-head .when{color:var(--muted);font-size:12.5px;margin-inline-start:auto}
+.rev p.txt{margin:10px 0 0;line-height:1.7;white-space:pre-wrap}
+.rev p.txt.none{color:var(--muted);font-style:italic}
+.rev .reply{margin-top:12px;padding:10px 12px;border-inline-start:3px solid var(--brand);background:var(--brand-soft);border-radius:0 10px 10px 0;font-size:14px;white-space:pre-wrap}
+.rev .reply small{display:block;color:var(--brand-ink);font-weight:600;margin-bottom:4px}
+.rev .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rev.low{border-inline-start:3px solid var(--neg)}
+.setup ol{margin:8px 0 0;padding-inline-start:20px;line-height:1.9}
+.setup code{background:var(--neu-soft);padding:1px 6px;border-radius:5px;font-size:12.5px;direction:ltr;unicode-bidi:isolate}
+.map-row{display:grid;grid-template-columns:minmax(0,1fr) 160px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-2)}
+.map-row:last-child{border-bottom:0}
+@media(max-width:560px){.map-row{grid-template-columns:1fr}}
+.setup code{white-space:nowrap;display:inline-block;margin:2px 0}
+.tiles-compact{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+@media(max-width:560px){
+  .tiles-compact .tile{padding:12px}
+  .tiles-compact .tile .v{font-size:24px}
+  .tiles-compact .tile .s{display:none}
+  /* call list as cards on phones: the call action must be reachable without sideways scrolling */
+  #callTable,#callTable tbody{display:block}
+  #callTable thead{display:none}
+  #callTable tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:14px;border-bottom:1px solid var(--line-2)}
+  #callTable tr:last-child{border-bottom:0}
+  #callTable td{display:block;border:0;padding:0;white-space:normal}
+  #callTable td[data-l]::before{content:attr(data-l) ": ";color:var(--muted);font-size:12px}
+  #callTable td.c-file{font-weight:700;font-size:15px}
+  #callTable td.c-phone{grid-column:2;grid-row:1;text-align:left}
+  #callTable td.c-act{grid-column:1/-1;margin-top:8px}
+  #callTable td.c-act .row-actions{justify-content:stretch}
+  #callTable td.c-act .btn{flex:1}
+  #callTable td.empty{grid-column:1/-1}
+}
 .skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,#efede8 0,#f7f6f3 50%,#efede8 100%);background-size:200% 100%;animation:sk 1.2s infinite}
 @keyframes sk{to{background-position:-200% 0}}
 </style>
@@ -347,8 +394,10 @@ details.tv th,details.tv td{padding:6px 10px}
     <div class="wrap" style="padding-top:0;padding-bottom:0">
       <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام النظام">
         <button role="tab" data-tab="add" aria-selected="true">تسجيل تجربة</button>
+        <button role="tab" data-tab="calls" aria-selected="false">قائمة الاتصال<span class="badge soft hidden" id="callBadge"></span></button>
         <button role="tab" data-tab="log" aria-selected="false">السجل</button>
         <button role="tab" data-tab="complaints" aria-selected="false">الشكاوى<span class="badge hidden" id="openBadge"></span></button>
+        <button role="tab" data-tab="reviews" aria-selected="false">تقييمات قوقل</button>
         <button role="tab" data-tab="kpi" aria-selected="false" data-admin>مؤشرات الأداء</button>
         <button role="tab" data-tab="admin" aria-selected="false" data-admin>الإدارة</button>
       </nav>
@@ -362,10 +411,13 @@ details.tv th,details.tv td{padding:6px 10px}
       <div class="form-shell">
         <div class="section-head"><div><h2>تسجيل تجربة مريض</h2><p class="muted small">الحقول المعلّمة بـ <span class="req">*</span> إلزامية. لا تكتب اسم المريض في أي حقل.</p></div></div>
         <form id="exForm" class="card pad" novalidate>
+          <input type="hidden" name="callId" id="exCallId">
+          <div id="callBanner" class="call-banner hidden" role="status"></div>
           <div class="step">
             <div class="step-n">1</div>
             <div class="step-body">
               <div class="step-title">بيانات الزيارة</div>
+              <div class="field" data-f="channel" style="margin-bottom:14px"><span class="label" id="chL">طريقة التقييم<span class="req">*</span></span><div class="seg" id="chSeg" role="radiogroup" aria-labelledby="chL"></div></div>
               <div class="grid g3">
                 <div class="field" data-f="fileNo"><label for="exFile">رقم الملف<span class="req">*</span></label><input type="text" id="exFile" name="fileNo" class="ltr" inputmode="text" autocomplete="off" maxlength="20" spellcheck="false"></div>
                 <div class="field" data-f="phone"><label for="exPhone">رقم الجوال</label><input type="tel" id="exPhone" name="phone" class="ltr" placeholder="05XXXXXXXX" maxlength="16" autocomplete="off"></div>
@@ -417,6 +469,33 @@ details.tv th,details.tv td{padding:6px 10px}
 
           <div class="savebar"><button class="btn" type="submit" id="exSave">حفظ التجربة</button><span class="muted small" id="exHint"></span></div>
         </form>
+      </div>
+    </section>
+
+    <!-- Call list -->
+    <section data-pane="calls" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>قائمة الاتصال</h2><p class="muted small">زيارات بانتظار استبيان هاتفي. اضغط «ابدأ التقييم» لفتح النموذج جاهزاً.</p></div>
+        <div class="row"><button class="btn ghost sm" id="importCalls" type="button" data-admin>استيراد من Excel</button><button class="btn sm" id="newCall" type="button">إضافة زيارة</button></div></div>
+      <div class="grid g3 tiles-compact" style="margin-bottom:14px">
+        <div class="card tile"><div class="l">بانتظار الاتصال</div><div class="v" id="qPending">–</div></div>
+        <div class="card tile"><div class="l">لم يرد</div><div class="v" id="qNoAnswer">–</div><div class="s">تبقى في القائمة لمحاولة أخرى</div></div>
+        <div class="card tile"><div class="l">تم التقييم</div><div class="v" id="qDone">–</div></div>
+      </div>
+      <div class="card pad"><form class="filters" id="callFilters"></form></div>
+      <div class="count-line" id="callCount" aria-live="polite"></div>
+      <div class="tbl-wrap"><table id="callTable"></table></div>
+    </section>
+
+    <!-- Google reviews -->
+    <section data-pane="reviews" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>تقييمات قوقل</h2><p class="muted small" id="revSub">من ملف النشاط التجاري على خرائط قوقل</p></div>
+        <div class="row" id="revActions"></div></div>
+      <div id="revSetup" class="hidden"></div>
+      <div id="revMain" class="hidden">
+        <div class="grid g3" id="revTiles" style="margin-bottom:14px"></div>
+        <div class="card pad"><form class="filters" id="revFilters"></form></div>
+        <div class="count-line" id="revCount" aria-live="polite"></div>
+        <div class="rev-list" id="revList"></div>
       </div>
     </section>
 
@@ -674,6 +753,13 @@ async function enter() {
   await reloadLookups();
   showTab('add');
   refreshBadge();
+  refreshCallBadge();
+  const q = new URLSearchParams(location.search);
+  if (q.get('google')) {
+    history.replaceState(null, '', '/');
+    if (q.get('google') === 'connected') { toast('تم ربط حساب قوقل. اختر موقع كل فرع'); showTab('reviews'); }
+    else toast('لم يكتمل ربط قوقل. حاول مرة أخرى', true);
+  }
 }
 
 (async () => {
@@ -718,6 +804,8 @@ function showTab(t) {
   $$('#tabs button').forEach(b => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
   $$('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
   if (t === 'log') loadLog();
+  if (t === 'calls') loadCalls();
+  if (t === 'reviews') loadReviews();
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
   if (t === 'admin') loadAdmin();
@@ -755,9 +843,15 @@ function fillCats() {
   $('#exCat').innerHTML = opt(cats.map(c => c.name), neg ? 'اختر التصنيف' : 'بدون', cats.some(c => c.name === prev) ? prev : '');
 }
 function setNow() { const n = riyadhNow(); $('#exDate').value = n.date; $('#exTime').value = n.time; $('#exDate').max = n.date; }
+function lastChannel() { try { return localStorage.getItem('pe_channel') || 'حضوري'; } catch { return 'حضوري'; } }
 function buildForm() {
   const keep = $('#exBranch').value || S.user.branch || '';
   $('#exBranch').innerHTML = opt(S.lk.branches, 'اختر الفرع', keep);
+  seg($('#chSeg'), 'channel', S.lk.channels, lastChannel());
+  $('#chSeg').addEventListener('change', () => {
+    const v = ($('input[name=channel]:checked') || {}).value;
+    try { if (v) localStorage.setItem('pe_channel', v); } catch { /* per-device convenience only */ }
+  });
   seg($('#vtSeg'), 'visitType', S.lk.visitTypes);
   seg($('#sentSeg'), 'sentiment', S.lk.sentiments);
   seg($('#sevSeg'), 'severity', S.lk.severities);
@@ -788,6 +882,7 @@ function validateExperience(form, d) {
   if (!d.doctorId) errs.push(['doctorId', 'اختر الطبيب']);
   if (!d.visitDate) errs.push(['visitDate', 'أدخل التاريخ']);
   if (!d.visitTime) errs.push(['visitTime', 'أدخل الوقت']);
+  if (!d.channel) errs.push(['channel', 'اختر طريقة التقييم']);
   if (!d.visitType) errs.push(['visitType', 'اختر نوع الزيارة']);
   if (!d.bookingRating) errs.push(['bookingRating', 'قيّم أداء موظف الحجز']);
   if (!d.receptionRating) errs.push(['receptionRating', 'قيّم أداء موظف الاستقبال']);
@@ -815,20 +910,44 @@ $('#exForm').addEventListener('submit', e => {
     if (d.sentiment === 'محايدة') d.category = '';
     validateExperience(form, d);
     await api('POST', '/experiences', d);
-    toast('تم حفظ التجربة');
+    toast(d.callId ? 'تم حفظ التقييم وإغلاق الاتصال' : 'تم حفظ التجربة');
     resetExperienceForm();
+    if (d.callId) refreshCallBadge();
   });
 });
 function resetExperienceForm() {
   const f = $('#exForm'), b = $('#exBranch').value;
   f.reset(); $('#exBranch').value = b;
   ['#vtSeg', '#sentSeg', '#sevSeg', '#planSeg'].forEach(s => setSeg($(s), null));
+  setSeg($('#chSeg'), lastChannel()); $('#chSeg').classList.remove('locked');
+  $('#exCallId').value = ''; $('#callBanner').classList.add('hidden');
   $$('[data-stars]').forEach(w => w._reset && w._reset());
   fillDoctors(); fillPlan(); fillCats(); setNow();
   $('#noteCount').textContent = '0 / 1000';
   $$('.field.invalid', f).forEach(clearErr);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   $('#exFile').focus({ preventScroll: true });
+}
+
+/** Opens the survey form pre-filled from a call-list entry; saving it closes the call. */
+function startCallSurvey(c) {
+  showTab('add');
+  resetExperienceForm();
+  const f = $('#exForm');
+  $('#exCallId').value = c.id;
+  f.fileNo.value = c.fileNo;
+  f.phone.value = c.phone;
+  if (c.branch) { $('#exBranch').value = c.branch; }
+  fillDoctors();
+  if (c.doctorId && $(`#exDoctor option[value="${c.doctorId}"]`)) $('#exDoctor').value = c.doctorId;
+  if (c.visitAt) { const [dt, tm] = c.visitAt.split(' '); $('#exDate').value = dt; $('#exTime').value = tm; }
+  setSeg($('#chSeg'), 'اتصال'); $('#chSeg').classList.add('locked');
+  const b = $('#callBanner');
+  b.innerHTML = `<span>تقييم بالاتصال · ملف <b class="ltr">${esc(c.fileNo)}</b> · <a class="tel ltr" href="tel:${esc(c.phone)}">${esc(c.phone)}</a>${c.doctor ? ` · ${esc(c.doctor)}` : ''}</span>
+    <button type="button" class="btn ghost sm" id="unlinkCall">إلغاء الربط</button>`;
+  b.classList.remove('hidden');
+  $('#unlinkCall').onclick = () => resetExperienceForm();
+  setTimeout(() => $('[data-stars=bookingRating] input').focus({ preventScroll: true }), 50);
 }
 
 /* ---------- filters ---------- */
@@ -852,6 +971,11 @@ function filterForm(sel, fields, onApply) {
     doctorId: `<div class="field"><label>الطبيب</label><select data-k="doctorId">${opt(docs, 'الكل')}</select></div>`,
     sentiment: `<div class="field"><label>التجربة</label><select data-k="sentiment">${opt(S.lk.sentiments, 'الكل')}</select></div>`,
     visitType: `<div class="field"><label>نوع الزيارة</label><select data-k="visitType">${opt(S.lk.visitTypes, 'الكل')}</select></div>`,
+    channel: `<div class="field"><label>طريقة التقييم</label><select data-k="channel">${opt(S.lk.channels, 'الكل')}</select></div>`,
+    callStatus: `<div class="field"><label>الحالة</label><select data-k="status"><option value="open">المفتوحة (بانتظار + لم يرد)</option>${opt(S.lk.callStatuses)}</select></div>`,
+    rating: `<div class="field"><label>النجوم</label><select data-k="rating">${opt([5, 4, 3, 2, 1].map(n => [String(n), `${n} ★`]), 'الكل')}</select></div>`,
+    replied: `<div class="field"><label>الرد</label><select data-k="replied"><option value="">الكل</option><option value="no">بدون رد</option><option value="yes">تم الرد</option></select></div>`,
+    revStatus: `<div class="field"><label>المتابعة</label><select data-k="status"><option value="">الكل</option><option>جديد</option><option>تمت المراجعة</option></select></div>`,
     status: `<div class="field"><label>الحالة</label><select data-k="status">${opt(S.lk.statuses, 'الكل')}</select></div>`,
     fileNo: `<div class="field"><label>رقم الملف</label><input type="search" class="ltr" data-k="fileNo" placeholder="بحث جزئي"></div>`
   };
@@ -868,9 +992,11 @@ function readFilters(sel) {
   const o = {}; $$(`${sel} [data-k]`).forEach(el => { if (el.value && el.dataset.k[0] !== '_') o[el.dataset.k] = el.value.trim(); }); return o;
 }
 function buildFilters() {
-  filterForm('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'sentiment', 'visitType', 'fileNo'], loadLog);
+  filterForm('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'sentiment', 'visitType', 'channel', 'fileNo'], loadLog);
+  filterForm('#callFilters', ['callStatus', 'from', 'to', 'branch', 'fileNo'], loadCalls);
+  filterForm('#revFilters', ['period', 'from', 'to', 'branch', 'rating', 'replied', 'revStatus'], loadReviews);
   filterForm('#coFilters', ['period', 'from', 'to', 'status', 'branch', 'doctorId', 'fileNo'], loadComplaints);
-  filterForm('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'visitType', 'sentiment'], loadKpi);
+  filterForm('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'visitType', 'sentiment', 'channel'], loadKpi);
 }
 
 /* ---------- log ---------- */
@@ -885,9 +1011,9 @@ async function loadLog() {
     const adm = isAdmin();
     $('#logScope').textContent = adm ? 'كل التجارب المسجّلة' : 'التجارب التي سجّلتها أنت فقط';
     $('#logCount').textContent = r.total ? `${n0(r.total)} تجربة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
-    $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th>
+    $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th><th>الطريقة</th>
       <th>الحجز</th><th>الاستقبال</th><th>الطبيب ★</th><th>وضوح الخطة</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}</tr></thead><tbody>` +
-      r.rows.map(x => `<tr><td class="num ltr">${esc(x.visitAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td>
+      r.rows.map(x => `<tr><td class="num ltr">${esc(x.visitAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td><td>${x.channel === 'اتصال' ? '<span class="pill p-open">اتصال</span>' : '<span class="pill p-off">حضوري</span>'}</td>
         <td>${rChip(x.bookingRating)}</td><td>${rChip(x.receptionRating)}</td><td>${rChip(x.doctorRating)}</td><td>${planPill(x.planExplained)}</td>
         <td>${sentPill(x.sentiment)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td>
         <td>${adm && x.sentiment === 'سلبية' ? `<select data-fu="${esc(x.id)}" aria-label="حالة المتابعة">${opt(S.lk.statuses, undefined, x.followUp)}</select>` : stPill(x.followUp)}</td>
@@ -901,8 +1027,8 @@ async function loadLog() {
   } catch (e) { if (!e.silent) { $('#logTable').innerHTML = emptyRow('تعذّر تحميل السجل', e.message); } }
 }
 $('#exportEx').onclick = () => csv('experiences',
-  ['visitAt', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'followUp', 'generalNote', ...(isAdmin() ? ['by'] : [])],
-  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'نوع الزيارة', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة', ...(isAdmin() ? ['بواسطة'] : [])], S.ex);
+  ['visitAt', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'channel', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'followUp', 'generalNote', ...(isAdmin() ? ['by'] : [])],
+  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'نوع الزيارة', 'طريقة التقييم', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة', ...(isAdmin() ? ['بواسطة'] : [])], S.ex);
 
 function csv(name, keys, heads, rows) {
   if (!rows.length) return toast('لا توجد بيانات للتصدير', true);
@@ -991,6 +1117,220 @@ $('#newCo').onclick = () => {
 $('#exportCo').onclick = () => csv('complaints',
   ['createdAt', 'fileNo', 'phone', 'doctor', 'branch', 'category', 'severity', 'status', 'description', 'source', 'assignedTo', 'resolution', 'closedAt'],
   ['التاريخ', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التصنيف', 'الخطورة', 'الحالة', 'الشكوى', 'المصدر', 'المسؤول', 'الحل', 'تاريخ الإغلاق'], S.co);
+
+/* ---------- call list ---------- */
+const callPill = s => `<span class="pill ${s === 'تم' ? 'p-closed' : s === 'لم يرد' ? 'p-prog' : s === 'بانتظار الاتصال' ? 'p-open' : 'p-neg'}">${esc(s)}</span>`;
+function setCallBadge(n) { const b = $('#callBadge'); b.textContent = n; b.classList.toggle('hidden', !n); b.setAttribute('aria-label', `${n} بانتظار الاتصال`); }
+async function refreshCallBadge() { try { const r = await api('GET', '/calls'); setCallBadge(r.summary.pending + r.summary.noAnswer); } catch { /* ignore */ } }
+async function loadCalls() {
+  loadingTable('#callTable');
+  try {
+    const r = await api('GET', `/calls${qs(readFilters('#callFilters'))}`);
+    S.calls = r.rows;
+    $('#qPending').textContent = n0(r.summary.pending); $('#qNoAnswer').textContent = n0(r.summary.noAnswer); $('#qDone').textContent = n0(r.summary.done);
+    setCallBadge(r.summary.pending + r.summary.noAnswer);
+    $('#callCount').textContent = r.total ? `${n0(r.total)} زيارة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
+    const outcomes = S.lk.callOutcomes;
+    $('#callTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th class="num">المحاولات</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+      r.rows.map(x => `<tr><td class="num" data-l="الزيارة"><span class="ltr">${esc(x.visitAt || '—')}</span></td><td class="ltr c-file">${esc(x.fileNo)}</td><td class="c-phone"><a class="tel ltr" href="tel:${esc(x.phone)}">${esc(x.phone)}</a></td>
+        <td data-l="الطبيب">${esc(x.doctor || '—')}</td><td data-l="الفرع">${esc(x.branch || '—')}</td><td class="num" data-l="المحاولات">${n0(x.attempts)}${x.lastAttemptAt ? ` <span class="tiny muted ltr">${esc(x.lastAttemptAt.slice(5))}</span>` : ''}</td><td>${callPill(x.status)}</td>
+        <td class="c-act">${x.status === 'تم' ? '' : `<div class="row-actions"><button class="btn sm" type="button" data-start="${esc(x.id)}">ابدأ التقييم</button>
+          <select data-out="${esc(x.id)}" aria-label="نتيجة الاتصال"><option value="">نتيجة أخرى…</option>${outcomes.filter(o => o !== x.status).map(o => `<option>${esc(o)}</option>`).join('')}</select></div>`}</td></tr>`).join('') + '</tbody>'
+      : emptyRow('لا توجد زيارات هنا', isAdmin() ? 'استورد زيارات اليوم من Excel أو أضف زيارة.' : 'أضف زيارة أو اطلب من الإدارة استيراد القائمة.');
+    $$('#callTable [data-start]').forEach(b => b.onclick = () => startCallSurvey(S.calls.find(c => c.id === b.dataset.start)));
+    $$('#callTable [data-out]').forEach(sel => sel.onchange = () => sel.value && busy(sel, async () => {
+      await api('PATCH', `/calls/${sel.dataset.out}`, { status: sel.value }); toast(`سُجّلت النتيجة: ${sel.value}`); loadCalls();
+    }));
+  } catch (e) { if (!e.silent) $('#callTable').innerHTML = emptyRow('تعذّر تحميل القائمة', e.message); }
+}
+$('#newCall').onclick = () => {
+  const n = riyadhNow();
+  openModal(`<h2 id="modalTitle">إضافة زيارة للاتصال</h2>
+    <form id="callNew" class="grid" novalidate>
+      <div class="grid g2">
+        <div class="field" data-f="fileNo"><label for="cqFile">رقم الملف<span class="req">*</span></label><input type="text" id="cqFile" name="fileNo" class="ltr" maxlength="20" autocomplete="off"></div>
+        <div class="field" data-f="phone"><label for="cqPhone">الجوال<span class="req">*</span></label><input type="tel" id="cqPhone" name="phone" class="ltr" placeholder="05XXXXXXXX" maxlength="16"></div>
+        <div class="field"><label for="cqBranch">الفرع</label><select id="cqBranch" name="branch">${opt(S.lk.branches, 'غير محدد', S.user.branch || '')}</select></div>
+        <div class="field"><label for="cqDoc">الطبيب</label><select id="cqDoc" name="doctorId"></select></div>
+        <div class="field"><label for="cqDate">تاريخ الزيارة</label><input type="date" id="cqDate" name="visitDate" value="${n.date}" max="${n.date}"></div>
+        <div class="field"><label for="cqTime">الوقت</label><input type="time" id="cqTime" name="visitTime"></div>
+      </div>
+      <div class="actions"><button class="btn" type="submit">إضافة</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  const fillDoc = () => { $('#cqDoc').innerHTML = opt(doctorsFor($('#cqBranch').value).map(d => [d.id, d.name]), 'غير محدد'); };
+  fillDoc(); $('#cqBranch').onchange = fillDoc;
+  $('#callNew').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    busy(e.submitter, async () => {
+      const d = Object.fromEntries(new FormData(f));
+      $$('.field.invalid', f).forEach(clearErr);
+      const errs = [];
+      if (!d.fileNo.trim()) errs.push(['fileNo', 'أدخل رقم الملف']);
+      if (!d.phone.trim()) errs.push(['phone', 'أدخل رقم الجوال']);
+      errs.forEach(([k, m]) => setErr(f, k, m));
+      if (errs.length) throw new Error(errs[0][1]);
+      await api('POST', '/calls', d); closeModal(); toast('أُضيفت الزيارة للقائمة'); loadCalls();
+    });
+  };
+};
+const IMPORT_ALIASES = {
+  fileNo: ['رقم الملف', 'الملف', 'رقم ملف المريض', 'file', 'file no', 'mrn'],
+  phone: ['الجوال', 'رقم الجوال', 'الهاتف', 'phone', 'mobile'],
+  doctor: ['الطبيب', 'اسم الطبيب', 'doctor'],
+  visitDate: ['التاريخ', 'تاريخ الزيارة', 'date', 'visit date'],
+  visitTime: ['الوقت', 'وقت الزيارة', 'time'],
+  branch: ['الفرع', 'branch']
+};
+/** Rows pasted from Excel (tab-separated). With a header row, columns are matched by name and anything else (e.g. patient names) is ignored. */
+function parsePasted(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return { rows: [], byHeader: false };
+  const sep = lines.some(l => l.includes('\t')) ? '\t' : ',';
+  let cells = lines.map(l => l.split(sep).map(c => c.trim().replace(/^"(.*)"$/, '$1')));
+  const head = cells[0].map(h => h.trim().toLowerCase().replace(/\s+/g, ' '));
+  const idx = Object.fromEntries(Object.entries(IMPORT_ALIASES).map(([k, names]) => [k, head.findIndex(h => names.includes(h))]));
+  let map = idx, byHeader = idx.fileNo >= 0 && idx.phone >= 0;
+  if (byHeader) cells = cells.slice(1); else map = { fileNo: 0, phone: 1, doctor: 2, visitDate: 3, visitTime: 4, branch: 5 };
+  const rows = cells.map(c => Object.fromEntries(Object.entries(map).filter(([, i]) => i >= 0).map(([k, i]) => [k, c[i] || ''])));
+  return { rows, byHeader };
+}
+$('#importCalls').onclick = () => {
+  openModal(`<h2 id="modalTitle">استيراد زيارات من Excel</h2>
+    <div class="import-guide">انسخ الصفوف من Excel والصقها هنا <b>مع صف العناوين</b>. الأعمدة المقروءة:
+      <code>رقم الملف</code> <code>الجوال</code> <code>الطبيب</code> <code>تاريخ الزيارة</code> <code>الوقت</code> <code>الفرع</code>.
+      أي عمود آخر (مثل اسم المريض) يُتجاهل ولا يُرسل. الزيارة المكررة (نفس الملف والوقت) لا تُضاف مرتين.</div>
+    <form id="impForm" class="grid" novalidate>
+      <div class="field"><label for="impText" class="sr">البيانات</label><textarea id="impText" class="paste" spellcheck="false" placeholder="رقم الملف	الجوال	الطبيب	تاريخ الزيارة	الوقت"></textarea>
+        <div class="hint" id="impHint">الصق البيانات…</div></div>
+      <div id="impResult"></div>
+      <div class="actions"><button class="btn" type="submit" id="impGo" disabled>استيراد</button><button type="button" class="btn ghost" data-close>إغلاق</button></div>
+    </form>`);
+  const upd = () => {
+    const { rows, byHeader } = parsePasted($('#impText').value);
+    $('#impGo').disabled = !rows.length;
+    $('#impHint').textContent = rows.length ? `${n0(rows.length)} صف جاهز · ${byHeader ? 'الأعمدة حسب العناوين' : 'بدون صف عناوين: الترتيب ملف، جوال، طبيب، تاريخ، وقت، فرع'}` : 'الصق البيانات…';
+  };
+  $('#impText').addEventListener('input', upd);
+  $('#impForm').onsubmit = e => {
+    e.preventDefault();
+    busy($('#impGo'), async () => {
+      const { rows } = parsePasted($('#impText').value);
+      const r = await api('POST', '/calls/import', { rows });
+      $('#impResult').innerHTML = `<div class="alert" style="background:var(--pos-soft);color:var(--pos)">أُضيف ${n0(r.inserted)} · مكرر ${n0(r.duplicates)} · أخطاء ${n0(r.errorCount)}</div>` +
+        (r.errors.length ? `<div class="tbl-wrap"><table><thead><tr><th class="num">الصف</th><th>المشكلة</th></tr></thead><tbody>${r.errors.map(x => `<tr><td class="num">${x.line}</td><td>${esc(x.error)}</td></tr>`).join('')}</tbody></table></div>` : '');
+      if (!r.errorCount) $('#impText').value = '';
+      upd(); loadCalls();
+    });
+  };
+};
+
+/* ---------- Google reviews ---------- */
+const revPill = s => `<span class="pill ${s === 'جديد' ? 'p-open' : 'p-closed'}">${esc(s)}</span>`;
+function revSetupHtml(g) {
+  const cb = `${location.origin}/api/google/callback`;
+  if (!isAdmin()) return `<div class="card"><div class="empty"><b>تقييمات قوقل غير مربوطة بعد</b>الإدارة تربطها من هذا التبويب.</div></div>`;
+  const steps = `<ol>
+      <li>في <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> أنشئ مشروعاً، وفعّل من APIs &amp; Services: <code>My Business Account Management API</code> و <code>My Business Business Information API</code> و <code>Google My Business API</code>.</li>
+      <li>اطلب الوصول لواجهات Business Profile من <a href="https://developers.google.com/my-business/content/prereqs" target="_blank" rel="noopener">صفحة المتطلبات</a> (نموذج «Access request»). الموافقة تأخذ عادة بضعة أيام.</li>
+      <li>في OAuth consent screen أضف بريد مالك صفحة المجمع كمستخدم، ثم أنشئ <b>OAuth client</b> من نوع Web application وأضف رابط العودة: <code>${esc(cb)}</code></li>
+      <li>في Render ← الخدمة ← Environment أضف <code>GOOGLE_CLIENT_ID</code> و <code>GOOGLE_CLIENT_SECRET</code>.</li>
+      <li>ارجع هنا واضغط «ربط حساب قوقل» وسجّل الدخول بحساب مالك الصفحة، ثم اختر موقع كل فرع.</li></ol>`;
+  return `<div class="card pad setup"><h3>ربط تقييمات قوقل ماب</h3>
+    <p class="muted small" style="margin:4px 0 0">${g.configured ? 'مفاتيح قوقل موجودة. بقي ربط حساب مالك الصفحة.' : 'خطوات لمرة واحدة:'}</p>${g.configured ? '' : steps}
+    <div class="actions" style="margin-top:16px"><button class="btn" type="button" id="gConnect" ${g.configured ? '' : 'disabled'}>ربط حساب قوقل</button></div>
+    ${g.configured ? `<details class="tv"><summary>خطوات الإعداد</summary>${steps}</details>` : ''}</div>`;
+}
+async function loadReviews() {
+  try {
+    const r = await api('GET', `/reviews${qs(readFilters('#revFilters'))}`);
+    const g = r.google;
+    const ready = g.connected && g.mapped.length;
+    $('#revSub').textContent = ready ? `${g.mapped.map(m => `${m.branch}: ${m.title}`).join(' · ')}${g.lastSync ? ` · آخر تحديث ${g.lastSync}` : ''}` : 'من ملف النشاط التجاري على خرائط قوقل';
+    $('#revActions').innerHTML = isAdmin() && g.connected ? `<button class="btn ghost sm" type="button" id="gMap">مواقع الفروع</button>${ready ? '<button class="btn sm" type="button" id="gSync">تحديث الآن</button>' : ''}` : '';
+    if ($('#gMap')) $('#gMap').onclick = mapModal;
+    if ($('#gSync')) $('#gSync').onclick = e => busy(e.target, async () => { const x = await api('POST', '/reviews/sync'); toast(`تم التحديث: ${n0(x.fetched)} تقييم`); loadReviews(); });
+    $('#revSetup').classList.toggle('hidden', !!(ready || r.total));
+    $('#revMain').classList.toggle('hidden', !(ready || r.total));
+    if (!(ready || r.total)) {
+      $('#revSetup').innerHTML = g.connected && isAdmin()
+        ? `<div class="card pad setup"><h3>بقيت خطوة</h3><p class="muted small">تم ربط حساب قوقل. اختر أي موقع يتبع أي فرع.</p><div class="actions"><button class="btn" type="button" id="gMap2">اختيار المواقع</button></div></div>`
+        : revSetupHtml(g);
+      if ($('#gMap2')) $('#gMap2').onclick = mapModal;
+      if ($('#gConnect')) $('#gConnect').onclick = e => busy(e.target, async () => { const x = await api('GET', '/google/connect'); location.href = x.url; });
+      return;
+    }
+    $('#revTiles').innerHTML = r.summary.branches.map(b => `<div class="card tile"><div class="l">${esc(b.branch)}</div>
+        <div class="v">${n1(b.avg)}<small>من 5</small></div><div class="s">${roStars(b.avg, 15)} · ${n0(b.count)} تقييم</div>
+        <div class="s">${n0(b.unreplied)} بدون رد · ${n0(b.low)} بنجمة أو نجمتين</div></div>`).join('') +
+      `<div class="card tile ${r.summary.all.newCount ? 'alert-t' : ''}"><div class="l">بانتظار المتابعة</div><div class="v">${n0(r.summary.all.newCount)}</div><div class="s">تقييمات بحالة «جديد»</div></div>`;
+    $('#revCount').textContent = r.total ? `${n0(r.total)} تقييم${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
+    S.reviews = r.rows;
+    $('#revList').innerHTML = r.rows.length ? r.rows.map(x => `<article class="card rev ${x.rating && x.rating <= 2 ? 'low' : ''}">
+        <div class="rev-head">${roStars(x.rating, 16)}<span class="pill p-off">${esc(x.branch || '—')}</span>${revPill(x.status)}<span class="when ltr num">${esc(x.createdAt)}</span></div>
+        <p class="txt ${x.comment ? '' : 'none'}">${x.comment ? esc(x.comment) : 'تقييم بالنجوم فقط، بدون تعليق'}</p>
+        ${x.reply ? `<div class="reply"><small>ردّ المجمع · <span class="ltr num">${esc(x.repliedAt)}</span></small>${esc(x.reply)}</div>` : ''}
+        ${x.note ? `<p class="small muted" style="margin:10px 0 0">ملاحظة المتابعة: ${esc(x.note)}${x.handledBy ? ` — <span class="ltr">${esc(x.handledBy)}</span>` : ''}</p>` : ''}
+        ${isAdmin() ? `<div class="tools">${x.reply ? '' : `<button class="btn sm" type="button" data-reply="${esc(x.id)}">رد على قوقل</button>`}<button class="btn ghost sm" type="button" data-follow="${esc(x.id)}">متابعة</button></div>` : ''}
+      </article>`).join('') : '<div class="card"><div class="empty"><b>لا توجد تقييمات</b>لا شيء يطابق الفلاتر الحالية.</div></div>';
+    $$('#revList [data-reply]').forEach(b => b.onclick = () => replyModal(S.reviews.find(x => x.id === b.dataset.reply)));
+    $$('#revList [data-follow]').forEach(b => b.onclick = () => followModal(S.reviews.find(x => x.id === b.dataset.follow)));
+  } catch (e) { if (!e.silent) { $('#revSetup').classList.remove('hidden'); $('#revSetup').innerHTML = `<div class="card"><div class="empty"><b>تعذّر تحميل التقييمات</b>${esc(e.message)}</div></div>`; } }
+}
+async function mapModal() {
+  openModal(`<h2 id="modalTitle">مواقع الفروع على قوقل</h2><div id="mapBody"><div class="skeleton"></div></div>`);
+  try {
+    const r = await api('GET', '/google/locations');
+    if (!r.rows.length) { $('#mapBody').innerHTML = '<p class="muted">الحساب المربوط لا يدير أي موقع. اربط بحساب مالك صفحة المجمع.</p><div class="actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>'; return; }
+    $('#mapBody').innerHTML = `<form id="mapForm" novalidate><p class="muted small" style="margin-top:-4px">اختر الفرع لكل موقع. المواقع بدون فرع لا تُجلب تقييماتها.</p>
+      ${r.rows.map((l, i) => `<div class="map-row"><div><b>${esc(l.title || l.location)}</b><div class="tiny muted">${esc(l.address)}</div></div>
+        <select name="b${i}" aria-label="الفرع">${opt(S.lk.branches, 'لا يتبع فرعاً', l.branch || '')}</select></div>`).join('')}
+      <div class="actions"><button class="btn" type="submit">حفظ وتحديث التقييمات</button><button type="button" class="btn ghost" id="gOff">فصل حساب قوقل</button><button type="button" class="btn ghost" data-close>إلغاء</button></div></form>`;
+    $('#gOff').onclick = e => busy(e.target, async () => { if (!confirm('فصل حساب قوقل؟ التقييمات المحفوظة تبقى.')) return; await api('POST', '/google/disconnect'); closeModal(); toast('تم فصل الحساب'); loadReviews(); });
+    $('#mapForm').onsubmit = e => {
+      e.preventDefault();
+      busy(e.submitter, async () => {
+        const locations = r.rows.map((l, i) => ({ location: l.location, title: l.title, branch: e.target[`b${i}`].value || null }));
+        if (!locations.some(l => l.branch)) throw new Error('اختر فرعاً لموقع واحد على الأقل');
+        await api('POST', '/google/locations', { locations });
+        const x = await api('POST', '/reviews/sync');
+        closeModal(); toast(`تم الحفظ وجلب ${n0(x.fetched)} تقييم`); loadReviews();
+      });
+    };
+  } catch (e) { if (!e.silent) $('#mapBody').innerHTML = `<p class="err">${esc(e.message)}</p><div class="actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>`; }
+}
+function replyModal(x) {
+  openModal(`<h2 id="modalTitle">الرد على التقييم</h2>
+    <div class="row" style="margin:-4px 0 10px">${roStars(x.rating, 16)}<span class="small muted">${esc(x.branch)} · <span class="ltr num">${esc(x.createdAt)}</span></span></div>
+    ${x.comment ? `<div class="quote">${esc(x.comment)}</div>` : ''}
+    <form id="repForm" class="grid" novalidate>
+      <div class="field"><label for="repText">نص الرد (يظهر للجميع على قوقل باسم المجمع)</label><textarea id="repText" name="comment" maxlength="4000" placeholder="شكراً لملاحظتك…"></textarea>
+        <div class="hint" style="color:var(--warn)">لا تذكر اسم المريض أو تفاصيل علاجه في الرد العام.</div></div>
+      <div class="actions"><button class="btn" type="submit">نشر الرد</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#repForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => {
+      const comment = $('#repText').value.trim();
+      if (!comment) throw new Error('اكتب نص الرد');
+      await api('POST', `/reviews/${encodeURIComponent(x.id)}/reply`, { comment }); closeModal(); toast('نُشر الرد على قوقل'); loadReviews();
+    });
+  };
+}
+function followModal(x) {
+  openModal(`<h2 id="modalTitle">متابعة التقييم</h2>
+    ${x.comment ? `<div class="quote">${esc(x.comment)}</div>` : ''}
+    <form id="folForm" class="grid" novalidate>
+      <div class="field"><span class="label" id="folL">الحالة</span><div class="seg" id="folSeg" role="radiogroup" aria-labelledby="folL"></div></div>
+      <div class="field"><label for="folNote">ملاحظة داخلية (لا تظهر على قوقل)</label><textarea id="folNote" name="note" maxlength="1000">${esc(x.note)}</textarea></div>
+      <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  seg($('#folSeg'), 'status', ['جديد', 'تمت المراجعة'], x.status);
+  $('#folForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => { await api('PATCH', `/reviews/${encodeURIComponent(x.id)}`, Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم الحفظ'); loadReviews(); });
+  };
+}
 
 /* ---------- KPIs ---------- */
 function tvTable(heads, rows) {
@@ -1102,6 +1442,12 @@ async function loadKpi() {
           ${['avgBooking', 'avgReception', 'avgDoctor'].map(key => `<td><span class="r-chip">${n1(b[key])}</span> ${b[key] === null ? '' : roStars(b[key], 12)}</td>`).join('')}
           <td class="num">${pc(b.planYesPct)}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">لا توجد تجارب</td></tr>'}
         </tbody></table></div></div>
+
+      ${k.byChannel.length ? `<div class="card chart-card"><h3>حسب طريقة التقييم</h3><p class="sub">حضوري في العيادة مقابل الاستبيان الهاتفي</p>
+        <div class="tbl-wrap"><table><thead><tr><th>الطريقة</th><th class="num">التجارب</th><th class="num">النسبة</th><th class="num">سلبية</th><th>الحجز</th><th>الاستقبال</th><th>الأطباء</th><th class="num">وضوح الخطة</th></tr></thead><tbody>
+        ${k.byChannel.map(c => `<tr><td><b>${esc(c.channel)}</b></td><td class="num">${n0(c.total)}</td><td class="num">${pc(c.sharePct)}</td><td class="num">${pc(c.negPct)}</td>
+          ${['avgBooking', 'avgReception', 'avgDoctor'].map(key => `<td><span class="r-chip">${n1(c[key])}</span> ${c[key] === null ? '' : roStars(c[key], 12)}</td>`).join('')}
+          <td class="num">${pc(c.planYesPct)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
 
       <div class="grid g2">
         <div class="card chart-card"><h3>أكثر المشاكل تكراراً — التجارب السلبية</h3><p class="sub">أعلى 10 تصنيفات</p>
