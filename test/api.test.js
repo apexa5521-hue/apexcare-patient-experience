@@ -359,3 +359,16 @@ test('internal errors do not leak details', async () => {
   assert.equal(r.status, 400);
   assert.deepEqual(await r.json(), { ok: false, error: 'صيغة الطلب غير صالحة' });
 });
+
+test('health reports a database problem with a 503 and only an error code', async () => {
+  const ok = await t.call('GET', '/api/health');
+  assert.equal(ok.body.db, 'ok');
+  const { startApp } = require('./helpers');
+  const broken = await startApp();
+  broken.db.from = () => ({ select: () => ({ limit: async () => ({ data: null, error: { code: 'PGRST205', message: 'secret detail' } }) }) });
+  const r = await broken.call('GET', '/api/health');
+  await broken.close();
+  assert.equal(r.status, 503);
+  assert.equal(r.body.db, 'error:PGRST205');
+  assert.equal(JSON.stringify(r.body).includes('secret detail'), false);
+});

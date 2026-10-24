@@ -2,7 +2,7 @@
 
 const crypto = require('node:crypto');
 const express = require('express');
-const { must, audit } = require('../db');
+const { must, countOf, audit } = require('../db');
 const { isAdmin, requireAdmin } = require('../auth');
 const { isOverdue } = require('../kpis');
 const { applyComplaintFilters, mapComplaint } = require('../queries');
@@ -23,12 +23,12 @@ async function doctorNameMap(db) {
 async function summary(db, overdueDays) {
   const cutoff = new Date(Date.now() - overdueDays * 86400000).toISOString();
   const head = () => db.from('complaints').select('id', { count: 'exact', head: true });
-  const [all, open, overdue] = await Promise.all([
-    must(head()),
-    must(head().neq('status', 'مغلقة')),
-    must(head().neq('status', 'مغلقة').lt('created_at', cutoff))
+  const [total, open, overdue] = await Promise.all([
+    countOf(head()),
+    countOf(head().neq('status', 'مغلقة')),
+    countOf(head().neq('status', 'مغلقة').lt('created_at', cutoff))
   ]);
-  return { total: all.count ?? 0, open: open.count ?? 0, overdue: overdue.count ?? 0 };
+  return { total, open, overdue };
 }
 
 function complaintRoutes() {

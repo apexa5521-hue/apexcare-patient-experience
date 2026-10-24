@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const express = require('express');
 const helmet = require('helmet');
-const { createSupabase } = require('./db');
+const { createSupabase, dbProblem } = require('./db');
 const { authenticate, requirePasswordChanged, requireAdmin, LoginLimiter, Revocations } = require('./auth');
 const { UserError } = require('./validate');
 const authRoutes = require('./routes/auth');
@@ -65,7 +65,11 @@ function createApp({ db, config }) {
   }));
   app.use(express.json({ limit: '200kb' }));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'patient-experience', time: new Date().toISOString() }));
+  // Reports only an error code, never details, so it is safe to leave public.
+  app.get('/api/health', async (_req, res) => {
+    const problem = await dbProblem(db);
+    res.status(problem ? 503 : 200).json({ ok: !problem, service: 'patient-experience', db: problem ? `error:${problem}` : 'ok', time: new Date().toISOString() });
+  });
   app.use('/api/auth', authRoutes());
   app.use('/api/webhooks', webhookRoutes());
 
@@ -124,10 +128,9 @@ if (require.main === module) {
  * on first login, and nothing happens once any user exists.
  */
 async function bootstrapAdmin(db) {
-  const { must } = require('./db');
+  const { countOf } = require('./db');
   const { seedAdmin } = require('./seed-admin');
-  const { count } = await must(db.from('app_users').select('id', { count: 'exact', head: true }));
-  if (count > 0) return;
+  if (await countOf(db.from('app_users').select('id', { count: 'exact', head: true }))) return;
   const r = await seedAdmin(db);
   if (r.created) console.log(`[first boot] created user "admin" with temporary password: ${r.password} (must be changed at first login)`);
 }

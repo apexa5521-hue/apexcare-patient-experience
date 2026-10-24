@@ -21,6 +21,28 @@ async function must(promise) {
   return count === undefined || count === null ? data : { data, count };
 }
 
+/**
+ * Row count of a query built with select(..., { count: 'exact', head: true }).
+ * supabase-js turns a HEAD 404 (e.g. a missing table) into an empty success,
+ * so a missing count is treated as an error rather than as zero.
+ */
+async function countOf(promise) {
+  const { error, count } = await promise;
+  if (error) throw Object.assign(new Error(`db: ${error.message || error.code || 'error'}`), { code: error.code });
+  if (typeof count !== 'number') throw Object.assign(new Error('db: count unavailable (is supabase/schema.sql applied?)'), { code: 'NO_COUNT' });
+  return count;
+}
+
+/** Cheap read used by the health check; returns null when the database answers, else an error code. */
+async function dbProblem(db) {
+  try {
+    const { error } = await db.from('categories').select('id').limit(1);
+    return error ? error.code || 'error' : null;
+  } catch (e) {
+    return e.code || 'unreachable';
+  }
+}
+
 const PAGE = 1000;
 
 /**
@@ -45,4 +67,4 @@ async function audit(db, username, action, details) {
   }
 }
 
-module.exports = { createSupabase, must, fetchAll, audit };
+module.exports = { createSupabase, must, countOf, dbProblem, fetchAll, audit };
