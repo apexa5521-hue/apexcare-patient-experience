@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تجربة المريض | Apex Care</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f5;--card:#fff;--ink:#14231f;--muted:#5c6b67;--line:#e2e8e6;
+  --brand:#0f766e;--brand-2:#115e59;--brand-soft:#e6f4f2;
+  --pos:#15803d;--pos-soft:#e8f6ec;--neg:#c2410c;--neg-soft:#fdeee6;--neu:#64748b;--neu-soft:#eef1f5;
+  --warn:#b45309;--radius:14px;--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;font-size:15px}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login .card{width:100%;max-width:380px}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.logo .mark{width:40px;height:40px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+.logo b{display:block;font-size:17px}.logo small{color:var(--muted)}
+
+/* layout */
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px}
+header.top .who{margin-inline-start:auto;text-align:left;font-size:13px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 16px;max-width:1180px;margin:0 auto}
+nav.tabs button{border:0;background:none;padding:10px 14px;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
+nav.tabs button.on{color:var(--brand);border-color:var(--brand)}
+.badge{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--neg);color:#fff;font-size:11px;line-height:18px;margin-inline-start:4px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+h2{font-size:18px;margin:0 0 14px}h3{font-size:15px;margin:0 0 10px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.g4.stats{grid-template-columns:repeat(2,1fr)}}
+label.f{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:500}
+label.f i{color:var(--neg);font-style:normal}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=tel],select,textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+textarea{min-height:90px;resize:vertical}
+.btn{border:0;border-radius:10px;padding:10px 16px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--brand-2)}.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}.small{font-size:13px}
+
+/* segmented choice */
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{flex:1;min-width:92px;text-align:center;padding:10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500;background:#fff}
+.seg input:checked+label{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.seg.sent input[value="إيجابية"]:checked+label{border-color:var(--pos);background:var(--pos-soft);color:var(--pos)}
+.seg.sent input[value="سلبية"]:checked+label{border-color:var(--neg);background:var(--neg-soft);color:var(--neg)}
+.seg.sent input[value="محايدة"]:checked+label{border-color:var(--neu);background:var(--neu-soft);color:var(--neu)}
+
+/* filters */
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;align-items:end}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#fafbfb;color:var(--muted);font-weight:600;position:sticky;top:0}
+td.wrap-t{white-space:normal;min-width:200px;max-width:380px}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.p-pos{background:var(--pos-soft);color:var(--pos)}.p-neg{background:var(--neg-soft);color:var(--neg)}.p-neu{background:var(--neu-soft);color:var(--neu)}
+.p-high{background:#fde2e2;color:#b91c1c}.p-mid{background:#fef3c7;color:var(--warn)}.p-low{background:var(--neu-soft);color:var(--neu)}
+.p-open{background:#e0ecff;color:#1d4ed8}.p-prog{background:#fef3c7;color:var(--warn)}.p-closed{background:var(--pos-soft);color:var(--pos)}
+.ltr{direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums}
+
+/* stats */
+.stat{padding:14px}
+.stat .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .l{font-size:12.5px;color:var(--muted)}
+.stat.pos .v{color:var(--pos)}.stat.neg .v{color:var(--neg)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:150px 1fr 54px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:12px;background:#f0f3f2;border-radius:6px;overflow:hidden;display:flex}
+.bar .fill{height:100%;background:var(--neg)}
+.bar .fill.alt{background:#f59e0b}
+.bar .n{text-align:left;font-variant-numeric:tabular-nums;color:var(--muted)}
+@media(max-width:760px){.bar{grid-template-columns:100px 1fr 44px}}
+.cols{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:6px}
+.cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;height:100%;min-width:0}
+.cols .stk{width:100%;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden}
+.cols .stk i{display:block;background:#cfe6e2}.cols .stk i.neg{background:var(--neg)}
+.cols .c span{font-size:10px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+.heat{border-collapse:separate;border-spacing:2px;font-size:10.5px}
+.heat td,.heat th{padding:0;width:26px;height:22px;text-align:center;border:0;background:none;position:static}
+.heat td.h{border-radius:4px;color:#fff}
+.heat th{color:var(--muted);font-weight:500}
+
+/* toast & modal */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:50;opacity:0;transition:.2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:1}#toast.err{background:#b91c1c}
+.modal{position:fixed;inset:0;background:rgba(15,23,21,.45);display:grid;place-items:center;padding:16px;z-index:40}
+.modal .card{width:100%;max-width:520px;max-height:90vh;overflow:auto}
+.empty{text-align:center;padding:30px;color:var(--muted)}
+.section{margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:13px;margin:3px;background:#fff}
+.chip.off{opacity:.5;text-decoration:line-through}
+.chip button{border:0;background:none;cursor:pointer;color:var(--muted);padding:0}
+</style>
+</head>
+<body>
+
+<!-- ===== شاشة الدخول ===== -->
+<section id="loginView" class="login">
+  <div class="card">
+    <div class="logo"><div class="mark">A</div><div><b>نظام تجربة المريض</b><small>Apex Care Clinics</small></div></div>
+    <form id="loginForm" class="grid">
+      <div><label class="f">اسم المستخدم</label><input type="text" id="lgUser" autocomplete="username" required></div>
+      <div><label class="f">كلمة المرور</label><input type="password" id="lgPass" autocomplete="current-password" required></div>
+      <button class="btn" type="submit">دخول</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===== التطبيق ===== -->
+<section id="appView" class="hidden">
+  <header class="top">
+    <div class="wrap">
+      <div class="logo" style="margin:0"><div class="mark">A</div><div><b>تجربة المريض</b><small>Apex Care</small></div></div>
+      <div class="who"><div id="whoName"></div><button class="btn ghost sm" id="btnPw">كلمة المرور</button> <button class="btn ghost sm" id="btnOut">خروج</button></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="add" class="on">تسجيل تجربة</button>
+      <button data-tab="log">السجل</button>
+      <button data-tab="complaints">الشكاوى <span class="badge hidden" id="openBadge"></span></button>
+      <button data-tab="kpi" data-admin>مؤشرات الأداء</button>
+      <button data-tab="admin" data-admin>الإدارة</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+
+    <!-- تسجيل تجربة -->
+    <div data-pane="add" class="card">
+      <h2>تسجيل تجربة مريض</h2>
+      <form id="exForm" class="grid">
+        <div class="grid g3">
+          <div><label class="f">رقم الملف <i>*</i></label><input type="text" name="fileNo" class="ltr" inputmode="numeric" maxlength="20" required></div>
+          <div><label class="f">رقم الجوال</label><input type="tel" name="phone" class="ltr" placeholder="05XXXXXXXX" maxlength="14"></div>
+          <div><label class="f">الفرع <i>*</i></label><select name="branch" id="exBranch" required></select></div>
+        </div>
+        <div class="grid g3">
+          <div><label class="f">الطبيب <i>*</i></label><select name="doctor" id="exDoctor" required></select></div>
+          <div><label class="f">تاريخ الزيارة <i>*</i></label><input type="date" name="visitDate" required></div>
+          <div><label class="f">الوقت <i>*</i></label><input type="time" name="visitTime" required></div>
+        </div>
+        <div><label class="f">نوع الزيارة <i>*</i></label><div class="seg" id="vtSeg"></div></div>
+        <div><label class="f">التجربة <i>*</i></label><div class="seg sent" id="sentSeg"></div></div>
+        <div class="grid g2" id="negBox">
+          <div><label class="f" id="catLabel">التصنيف</label><select name="category" id="exCat"></select></div>
+          <div id="sevBox"><label class="f">درجة الخطورة</label><div class="seg" id="sevSeg"></div></div>
+        </div>
+        <div><label class="f">ملاحظة</label><textarea name="note" maxlength="1000" placeholder="اكتب ما ذكره المريض بإيجاز، بدون اسم المريض"></textarea></div>
+        <div class="row"><button class="btn" type="submit">حفظ التجربة</button><span class="muted small">لا تكتب اسم المريض. يكفي رقم الملف.</span></div>
+      </form>
+    </div>
+
+    <!-- السجل -->
+    <div data-pane="log" class="card hidden">
+      <div class="row" style="justify-content:space-between"><h2>سجل التجارب</h2><button class="btn ghost sm" id="exportEx">تصدير CSV</button></div>
+      <div class="filters" id="logFilters"></div>
+      <div class="muted small" id="logCount"></div>
+      <div class="tbl-wrap section"><table id="logTable"></table></div>
+    </div>
+
+    <!-- الشكاوى -->
+    <div data-pane="complaints" class="hidden">
+      <div class="grid g3" style="margin-bottom:14px">
+        <div class="card stat"><div class="v" id="cTotal">–</div><div class="l">إجمالي الشكاوى</div></div>
+        <div class="card stat"><div class="v" id="cOpen" style="color:#1d4ed8">–</div><div class="l">مفتوحة</div></div>
+        <div class="card stat neg"><div class="v" id="cOver">–</div><div class="l">متأخرة (أكثر من 3 أيام)</div></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2>الشكاوى</h2>
+          <div class="row"><button class="btn ghost sm hidden" id="syncBtn" data-admin>مزامنة شيت الشكاوى</button><button class="btn ghost sm" id="exportCo">تصدير CSV</button><button class="btn sm" id="newCo">شكوى جديدة</button></div>
+        </div>
+        <div class="filters" id="coFilters"></div>
+        <div class="tbl-wrap"><table id="coTable"></table></div>
+      </div>
+    </div>
+
+    <!-- المؤشرات -->
+    <div data-pane="kpi" class="hidden">
+      <div class="card"><div class="filters" id="kpiFilters" style="margin:0"></div></div>
+      <div class="grid g4 stats section">
+        <div class="card stat"><div class="v" id="kTotal">–</div><div class="l">إجمالي التجارب</div></div>
+        <div class="card stat pos"><div class="v" id="kPos">–</div><div class="l">إيجابية</div></div>
+        <div class="card stat neg"><div class="v" id="kNeg">–</div><div class="l">سلبية</div></div>
+        <div class="card stat"><div class="v" id="kClose">–</div><div class="l">متوسط إغلاق الشكوى (ساعة)</div></div>
+      </div>
+      <div class="card section">
+        <h3>مؤشرات الأطباء</h3>
+        <p class="muted small" style="margin-top:-4px">صافي التجربة = (الإيجابي − السلبي) ÷ الإجمالي. يُفسَّر بحذر إذا قلّ عدد التجارب عن 20.</p>
+        <div class="tbl-wrap"><table id="docTable"></table></div>
+      </div>
+      <div class="grid g2 section">
+        <div class="card"><h3>أكثر المشاكل تكراراً</h3><div class="bars" id="topProblems"></div>
+          <div class="legend"><span><i style="background:var(--neg)"></i>من التجارب</span><span><i style="background:#f59e0b"></i>من الشكاوى</span></div></div>
+        <div class="card"><h3>حسب الساعة</h3><div class="cols" id="byHour"></div>
+          <div class="legend"><span><i style="background:var(--neg)"></i>سلبية</span><span><i style="background:#cfe6e2"></i>أخرى</span></div></div>
+      </div>
+      <div class="grid g2 section">
+        <div class="card"><h3>حسب الشهر</h3><div class="cols" id="byMonth"></div></div>
+        <div class="card"><h3>حسب السنة واليوم</h3><div class="bars" id="byYear"></div><div class="bars section" id="byWeekday"></div></div>
+      </div>
+      <div class="card section"><h3>الخريطة الحرارية للتجارب السلبية (اليوم × الساعة)</h3><div style="overflow-x:auto"><table class="heat" id="heat"></table></div></div>
+    </div>
+
+    <!-- الإدارة -->
+    <div data-pane="admin" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><h2>المستخدمون</h2><button class="btn sm" id="newUser">مستخدم جديد</button></div>
+        <div class="tbl-wrap"><table id="userTable"></table></div>
+      </div>
+      <div class="grid g2 section">
+        <div class="card">
+          <h3>الأطباء</h3>
+          <form id="docForm" class="grid g2" style="margin-bottom:10px">
+            <input type="text" name="name" placeholder="اسم الطبيب" required>
+            <select name="specialty"><option>أسنان</option><option>جلدية</option></select>
+            <select name="branch"><option>بريدة</option><option>عنيزة</option><option>الكل</option></select>
+            <button class="btn sm">إضافة</button>
+          </form>
+          <div id="docChips"></div>
+        </div>
+        <div class="card">
+          <h3>تصنيفات المشاكل والإشادات</h3>
+          <form id="catForm" class="grid g2" style="margin-bottom:10px">
+            <input type="text" name="name" placeholder="اسم التصنيف" required>
+            <select name="type"><option>سلبية</option><option>إيجابية</option><option>الكل</option></select>
+            <button class="btn sm">إضافة</button>
+          </form>
+          <div id="catChips"></div>
+        </div>
+      </div>
+      <div class="card section">
+        <h3>ربط شيت الشكاوى</h3>
+        <p class="muted small">ضع معرّف الشيت (ID) واسم الورقة. يُقرأ بحسب أسماء الأعمدة، ولا يُنسخ أي عمود لاسم المريض.</p>
+        <form id="srcForm" class="grid g3">
+          <input type="text" name="ComplaintsSourceId" class="ltr" placeholder="Spreadsheet ID">
+          <input type="text" name="ComplaintsSourceSheet" placeholder="اسم الورقة (اختياري)">
+          <button class="btn sm">حفظ</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- نوافذ -->
+<div class="modal hidden" id="modal"><div class="card" id="modalBody"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ==== الإعداد: ضع رابط نشر Apps Script هنا ==== */
+const API_URL = 'PASTE_WEB_APP_URL_HERE';
+
+const S = { token: null, user: null, lk: null, ex: [], co: [] };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isAdmin = () => S.user && S.user.role === 'admin';
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'on' + (err ? ' err' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3200);
+}
+
+async function api(action, data = {}) {
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, data }) });
+  const j = await res.json();
+  if (!j.ok) {
+    if (/انتهت الجلسة|غير مفعّل/.test(j.error || '')) logoutLocal();
+    throw new Error(j.error || 'خطأ');
+  }
+  return j;
+}
+
+async function busy(btn, fn) {
+  if (btn) btn.disabled = true;
+  try { return await fn(); } catch (e) { toast(e.message, true); } finally { if (btn) btn.disabled = false; }
+}
+
+function store(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { } }
+function load(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+
+/* ===== الدخول ===== */
+$('#loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  busy(e.submitter, async () => {
+    const r = await api('login', { username: $('#lgUser').value, password: $('#lgPass').value });
+    S.token = r.token; S.user = r.user; store('pe_token', r.token);
+    $('#lgPass').value = '';
+    await enter();
+  });
+});
+
+function logoutLocal() {
+  S.token = null; S.user = null; store('pe_token', null);
+  $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
+}
+$('#btnOut').onclick = async () => { try { await api('logout'); } catch (e) { } logoutLocal(); };
+$('#btnPw').onclick = () => pwModal(false);
+
+async function enter() {
+  $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
+  $('#whoName').textContent = `${S.user.name} · ${isAdmin() ? 'إدارة' : 'موظف'}${S.user.branch ? ' · ' + S.user.branch : ''}`;
+  $$('[data-admin]').forEach(el => el.classList.toggle('hidden', !isAdmin()));
+  if (S.user.mustChange) return pwModal(true);
+  const r = await api('lookups'); S.lk = r.lookups;
+  buildForm(); buildFilters();
+  showTab('add');
+  refreshComplaintsBadge();
+}
+
+(async () => {
+  const t = load('pe_token'); if (!t) return;
+  S.token = t;
+  try { const r = await api('me'); S.user = r.user; await enter(); } catch (e) { logoutLocal(); }
+})();
+
+function pwModal(forced) {
+  openModal(`<h2>${forced ? 'غيّر كلمة المرور المؤقتة' : 'تغيير كلمة المرور'}</h2>
+    <form id="pwForm" class="grid">
+      <div><label class="f">كلمة المرور الحالية</label><input type="password" name="oldPassword" required></div>
+      <div><label class="f">كلمة المرور الجديدة (8 أحرف على الأقل)</label><input type="password" name="newPassword" minlength="8" required></div>
+      <div class="row"><button class="btn">حفظ</button>${forced ? '' : '<button type="button" class="btn ghost" data-close>إلغاء</button>'}</div>
+    </form>`, !forced);
+  $('#pwForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => {
+      await api('changePassword', Object.fromEntries(new FormData(e.target)));
+      closeModal(); toast('تم تغيير كلمة المرور');
+      if (forced) { S.user.mustChange = false; await enter(); }
+    });
+  };
+}
+
+function openModal(html, closable = true) {
+  $('#modalBody').innerHTML = html; $('#modal').classList.remove('hidden');
+  $('#modal').onclick = e => { if (closable && (e.target.id === 'modal' || e.target.hasAttribute('data-close'))) closeModal(); };
+}
+function closeModal() { $('#modal').classList.add('hidden'); }
+
+/* ===== التبويبات ===== */
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); });
+function showTab(t) {
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
+  if (t === 'log') loadLog();
+  if (t === 'complaints') loadComplaints();
+  if (t === 'kpi') loadKpi();
+  if (t === 'admin') loadAdmin();
+}
+
+/* ===== نموذج التسجيل ===== */
+const opt = (arr, ph) => (ph ? `<option value="">${ph}</option>` : '') + arr.map(v => `<option>${esc(v)}</option>`).join('');
+function seg(el, name, arr, def) {
+  el.innerHTML = arr.map((v, i) => `<input type="radio" name="${name}" id="${name}${i}" value="${esc(v)}" ${v === def ? 'checked' : ''} required><label for="${name}${i}">${esc(v)}</label>`).join('');
+}
+function doctorsFor(branch) {
+  return S.lk.doctors.filter(d => !branch || d.branch === branch || d.branch === 'الكل' || !d.branch);
+}
+function fillDoctors() {
+  const b = $('#exBranch').value;
+  $('#exDoctor').innerHTML = `<option value="">اختر الطبيب</option>` +
+    doctorsFor(b).map(d => `<option value="${esc(d.name)}">${esc(d.name)} — ${esc(d.specialty)}</option>`).join('');
+}
+function fillCats() {
+  const s = ($('input[name=sentiment]:checked') || {}).value;
+  const neg = s === 'سلبية', pos = s === 'إيجابية';
+  $('#negBox').classList.toggle('hidden', !(neg || pos));
+  $('#sevBox').classList.toggle('hidden', !neg);
+  $('#catLabel').innerHTML = neg ? 'تصنيف المشكلة <i>*</i>' : 'نوع الإشادة';
+  const type = neg ? 'سلبية' : 'إيجابية';
+  $('#exCat').innerHTML = `<option value="">${neg ? 'اختر التصنيف' : 'اختياري'}</option>` +
+    S.lk.categories.filter(c => c.type === type || c.type === 'الكل').map(c => `<option>${esc(c.name)}</option>`).join('');
+  $('#exCat').required = neg;
+}
+function setNow() {
+  const f = $('#exForm'), d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  f.visitDate.value = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  f.visitTime.value = `${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function buildForm() {
+  $('#exBranch').innerHTML = opt(S.lk.branches, 'اختر الفرع');
+  if (S.user.branch) $('#exBranch').value = S.user.branch;
+  seg($('#vtSeg'), 'visitType', S.lk.visitTypes);
+  seg($('#sentSeg'), 'sentiment', S.lk.sentiments);
+  seg($('#sevSeg'), 'severity', S.lk.severities, 'بسيطة');
+  fillDoctors(); fillCats(); setNow();
+  $('#exBranch').onchange = fillDoctors;
+  $('#sentSeg').onchange = fillCats;
+}
+$('#exForm').addEventListener('submit', e => {
+  e.preventDefault();
+  busy(e.submitter, async () => {
+    const d = Object.fromEntries(new FormData(e.target));
+    await api('addExperience', d);
+    toast('تم حفظ التجربة');
+    const keepBranch = $('#exBranch').value;
+    e.target.reset(); $('#exBranch').value = keepBranch; fillDoctors(); fillCats(); setNow();
+    $('input[name=severity][value="بسيطة"]').checked = true;
+    e.target.fileNo.focus();
+  });
+});
+
+/* ===== الفلاتر ===== */
+function filterHtml(id, fields) {
+  const docs = S.lk.doctors.map(d => d.name);
+  const F = {
+    from: `<div><label class="f">من تاريخ</label><input type="date" data-k="from"></div>`,
+    to: `<div><label class="f">إلى تاريخ</label><input type="date" data-k="to"></div>`,
+    timeFrom: `<div><label class="f">من ساعة</label><input type="time" data-k="timeFrom"></div>`,
+    timeTo: `<div><label class="f">إلى ساعة</label><input type="time" data-k="timeTo"></div>`,
+    branch: `<div><label class="f">الفرع</label><select data-k="branch">${opt(S.lk.branches, 'الكل')}</select></div>`,
+    doctor: `<div><label class="f">الطبيب</label><select data-k="doctor">${opt(docs, 'الكل')}</select></div>`,
+    sentiment: `<div><label class="f">التجربة</label><select data-k="sentiment">${opt(S.lk.sentiments, 'الكل')}</select></div>`,
+    visitType: `<div><label class="f">نوع الزيارة</label><select data-k="visitType">${opt(S.lk.visitTypes, 'الكل')}</select></div>`,
+    status: `<div><label class="f">الحالة</label><select data-k="status">${opt(S.lk.statuses, 'الكل')}</select></div>`,
+    fileNo: `<div><label class="f">رقم الملف</label><input type="text" class="ltr" data-k="fileNo"></div>`,
+    period: `<div><label class="f">فترة سريعة</label><select data-k="_period"><option value="">مخصص</option><option value="month">هذا الشهر</option><option value="last">الشهر الماضي</option><option value="q">آخر 3 أشهر</option><option value="year">هذه السنة</option></select></div>`
+  };
+  $(id).innerHTML = fields.map(f => F[f]).join('') + `<div><button class="btn sm" data-apply>تطبيق</button></div>`;
+  const per = $(`${id} [data-k=_period]`);
+  if (per) per.onchange = () => {
+    const d = new Date(), p = n => String(n).padStart(2, '0'), fmt = x => `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}`;
+    let a = '', b = '';
+    if (per.value === 'month') { a = fmt(new Date(d.getFullYear(), d.getMonth(), 1)); b = fmt(d); }
+    if (per.value === 'last') { a = fmt(new Date(d.getFullYear(), d.getMonth() - 1, 1)); b = fmt(new Date(d.getFullYear(), d.getMonth(), 0)); }
+    if (per.value === 'q') { a = fmt(new Date(d.getFullYear(), d.getMonth() - 2, 1)); b = fmt(d); }
+    if (per.value === 'year') { a = `${d.getFullYear()}-01-01`; b = fmt(d); }
+    $(`${id} [data-k=from]`).value = a; $(`${id} [data-k=to]`).value = b;
+  };
+}
+function readFilters(id) {
+  const o = {}; $$(`${id} [data-k]`).forEach(el => { if (el.value && el.dataset.k[0] !== '_') o[el.dataset.k] = el.value; }); return o;
+}
+function buildFilters() {
+  filterHtml('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctor', 'sentiment', 'visitType', 'fileNo']);
+  filterHtml('#coFilters', ['from', 'to', 'status', 'branch', 'doctor', 'fileNo']);
+  filterHtml('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctor', 'visitType']);
+  $('#logFilters [data-apply]').onclick = e => busy(e.target, loadLog);
+  $('#coFilters [data-apply]').onclick = e => busy(e.target, loadComplaints);
+  $('#kpiFilters [data-apply]').onclick = e => busy(e.target, loadKpi);
+}
+
+/* ===== السجل ===== */
+const sentPill = s => `<span class="pill ${s === 'إيجابية' ? 'p-pos' : s === 'سلبية' ? 'p-neg' : 'p-neu'}">${esc(s)}</span>`;
+const sevPill = s => s ? `<span class="pill ${s === 'عالية' ? 'p-high' : s === 'متوسطة' ? 'p-mid' : 'p-low'}">${esc(s)}</span>` : '';
+const stPill = s => s ? `<span class="pill ${s === 'مغلقة' ? 'p-closed' : s === 'قيد المعالجة' ? 'p-prog' : 'p-open'}">${esc(s)}</span>` : '';
+
+async function loadLog() {
+  try {
+    const r = await api('listExperiences', readFilters('#logFilters'));
+    S.ex = r.rows;
+    $('#logCount').textContent = `${r.total} سجل${r.total > r.rows.length ? ' (يُعرض أحدث 500)' : ''}${isAdmin() ? '' : ' · سجلاتك فقط'}`;
+    const adm = isAdmin();
+    $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}</tr></thead><tbody>` +
+      r.rows.map(x => `<tr><td class="ltr">${esc(x.visit)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td><td>${sentPill(x.sentiment)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td>
+        <td>${adm && x.sentiment === 'سلبية' ? `<select data-fu="${esc(x.id)}" style="padding:4px 6px;width:auto">${S.lk.statuses.map(s => `<option ${s === x.followUp ? 'selected' : ''}>${s}</option>`).join('')}</select>` : stPill(x.followUp)}</td>
+        <td class="wrap-t">${esc(x.note)}</td>${adm ? `<td>${esc(x.by)}</td>` : ''}</tr>`).join('') + '</tbody>'
+      : `<tbody><tr><td class="empty">لا توجد سجلات</td></tr></tbody>`;
+    $$('#logTable [data-fu]').forEach(s => s.onchange = () => busy(s, async () => { await api('updateExperience', { id: s.dataset.fu, followUp: s.value }); toast('تم تحديث المتابعة'); }));
+  } catch (e) { toast(e.message, true); }
+}
+$('#exportEx').onclick = () => csv('experiences', ['visit', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'sentiment', 'category', 'severity', 'followUp', 'note'],
+  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'النوع', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة'], S.ex);
+
+function csv(name, keys, heads, rows) {
+  if (!rows.length) return toast('لا توجد بيانات للتصدير', true);
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const body = [heads.map(q).join(','), ...rows.map(r => keys.map(k => q(r[k])).join(','))].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }));
+  a.download = `${name}-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ===== الشكاوى ===== */
+async function refreshComplaintsBadge() {
+  try {
+    const r = await api('listComplaints', { status: 'جديدة' });
+    const b = $('#openBadge'); b.textContent = r.summary.open; b.classList.toggle('hidden', !r.summary.open);
+  } catch (e) { }
+}
+async function loadComplaints() {
+  try {
+    const r = await api('listComplaints', readFilters('#coFilters'));
+    S.co = r.rows;
+    $('#cTotal').textContent = r.summary.total; $('#cOpen').textContent = r.summary.open; $('#cOver').textContent = r.summary.overdue;
+    const b = $('#openBadge'); b.textContent = r.summary.open; b.classList.toggle('hidden', !r.summary.open);
+    const adm = isAdmin();
+    $('#coTable').innerHTML = r.rows.length ? `<thead><tr><th>التاريخ</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>التصنيف</th><th>الخطورة</th><th>الحالة</th><th>الشكوى</th><th>المصدر</th>${adm ? '<th></th>' : ''}</tr></thead><tbody>` +
+      r.rows.map(x => `<tr ${x.overdue ? 'style="background:#fff7f3"' : ''}><td class="ltr">${esc(x.createdAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td><td>${stPill(x.status)}${x.overdue ? ' <span class="pill p-high">متأخرة</span>' : ''}</td><td class="wrap-t">${esc(x.description)}</td><td class="small muted">${esc(x.source)}</td>${adm ? `<td><button class="btn ghost sm" data-co="${esc(x.id)}">معالجة</button></td>` : ''}</tr>`).join('') + '</tbody>'
+      : `<tbody><tr><td class="empty">لا توجد شكاوى</td></tr></tbody>`;
+    $$('#coTable [data-co]').forEach(btn => btn.onclick = () => complaintModal(S.co.find(c => c.id === btn.dataset.co)));
+  } catch (e) { toast(e.message, true); }
+}
+function complaintModal(c) {
+  openModal(`<h2>معالجة شكوى</h2>
+    <p class="small muted">ملف <span class="ltr">${esc(c.fileNo)}</span> · ${esc(c.doctor || '—')} · ${esc(c.branch || '—')}</p>
+    <p>${esc(c.description)}</p>
+    <form id="coEdit" class="grid">
+      <div><label class="f">الحالة</label><select name="status">${S.lk.statuses.map(s => `<option ${s === c.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div><label class="f">المسؤول عن المتابعة</label><input type="text" name="assignedTo" value="${esc(c.assignedTo)}"></div>
+      <div><label class="f">الإجراء المتخذ / الحل</label><textarea name="resolution">${esc(c.resolution)}</textarea></div>
+      <div class="row"><button class="btn">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#coEdit').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => { await api('updateComplaint', { id: c.id, ...Object.fromEntries(new FormData(e.target)) }); closeModal(); toast('تم الحفظ'); loadComplaints(); });
+  };
+}
+$('#newCo').onclick = () => {
+  openModal(`<h2>تسجيل شكوى</h2>
+    <form id="coNew" class="grid">
+      <div class="grid g2">
+        <div><label class="f">رقم الملف <i>*</i></label><input type="text" name="fileNo" class="ltr" required></div>
+        <div><label class="f">الجوال</label><input type="tel" name="phone" class="ltr" placeholder="05XXXXXXXX"></div>
+        <div><label class="f">الفرع <i>*</i></label><select name="branch" required>${opt(S.lk.branches, 'اختر')}</select></div>
+        <div><label class="f">الطبيب</label><select name="doctor">${opt(S.lk.doctors.map(d => d.name), 'غير محدد')}</select></div>
+        <div><label class="f">التصنيف</label><select name="category">${opt(S.lk.categories.filter(c => c.type !== 'إيجابية').map(c => c.name), 'اختر')}</select></div>
+        <div><label class="f">الخطورة</label><select name="severity">${S.lk.severities.map(s => `<option ${s === 'متوسطة' ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      </div>
+      <div><label class="f">تفاصيل الشكوى <i>*</i></label><textarea name="description" required placeholder="بدون اسم المريض"></textarea></div>
+      <div class="row"><button class="btn">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  if (S.user.branch) $('#coNew [name=branch]').value = S.user.branch;
+  $('#coNew').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => { await api('addComplaint', Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم تسجيل الشكوى'); loadComplaints(); });
+  };
+};
+$('#syncBtn').onclick = e => busy(e.target, async () => { const r = await api('syncComplaints'); toast(`تمت المزامنة: ${r.added} شكوى جديدة`); loadComplaints(); });
+$('#exportCo').onclick = () => csv('complaints', ['createdAt', 'fileNo', 'phone', 'doctor', 'branch', 'category', 'severity', 'status', 'description', 'source', 'assignedTo', 'resolution', 'closedAt'],
+  ['التاريخ', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التصنيف', 'الخطورة', 'الحالة', 'الشكوى', 'المصدر', 'المسؤول', 'الحل', 'تاريخ الإغلاق'], S.co);
+
+/* ===== المؤشرات ===== */
+const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+
+function cols(el, items, labelFn) {
+  const max = Math.max(1, ...items.map(i => i.total));
+  el.innerHTML = items.length ? items.map((i, k) => `<div class="c" title="${esc(labelFn(i, k))}: ${i.total} (سلبية ${i.neg})">
+    <div class="stk" style="height:${i.total / max * 100}%"><i class="neg" style="flex:${i.neg}"></i><i style="flex:${i.total - i.neg}"></i></div>
+    <span>${esc(labelFn(i, k, true))}</span></div>`).join('') : '<div class="empty" style="width:100%">لا توجد بيانات</div>';
+}
+function bars(el, items, nameFn) {
+  const max = Math.max(1, ...items.map(i => i.total));
+  el.innerHTML = items.map((i, k) => `<div class="bar"><div>${esc(nameFn(i, k))}</div><div class="track"><div class="fill" style="width:${i.neg / max * 100}%"></div><div class="fill" style="width:${(i.total - i.neg) / max * 100}%;background:#cfe6e2"></div></div><div class="n">${i.total}</div></div>`).join('');
+}
+
+async function loadKpi() {
+  try {
+    const { kpis: k } = await api('kpis', readFilters('#kpiFilters'));
+    const s = k.summary;
+    $('#kTotal').textContent = s.total;
+    $('#kPos').textContent = `${pct(s.pos, s.total)}%`;
+    $('#kNeg').textContent = `${pct(s.neg, s.total)}%`;
+    $('#kClose').textContent = s.avgCloseHours ?? '–';
+
+    $('#docTable').innerHTML = k.doctors.length ? `<thead><tr><th>الطبيب</th><th>التخصص</th><th>التجارب</th><th>إيجابية</th><th>محايدة</th><th>سلبية</th><th>صافي التجربة</th><th>سلبية عالية</th><th>الشكاوى</th><th>متوسط الإغلاق (س)</th></tr></thead><tbody>` +
+      k.doctors.map(d => `<tr><td><b>${esc(d.name)}</b></td><td>${esc(d.specialty)}</td><td>${d.total}${d.total && d.total < 20 ? ' <span class="small muted">(عينة صغيرة)</span>' : ''}</td>
+        <td>${d.total ? `<span class="pill p-pos">${d.posRate}%</span>` : '–'}</td><td>${d.total ? pct(d.neu, d.total) + '%' : '–'}</td><td>${d.total ? `<span class="pill p-neg">${d.negRate}%</span>` : '–'}</td>
+        <td><b style="color:${d.score === null ? 'inherit' : d.score >= 50 ? 'var(--pos)' : d.score < 0 ? 'var(--neg)' : 'var(--warn)'}">${d.score ?? '–'}</b></td>
+        <td>${d.high || 0}</td><td>${d.complaints}</td><td>${d.avgCloseHours ?? '–'}</td></tr>`).join('') + '</tbody>'
+      : `<tbody><tr><td class="empty">أضف الأطباء من تبويب الإدارة</td></tr></tbody>`;
+
+    const tmax = Math.max(1, ...k.topProblems.map(p => p.count));
+    $('#topProblems').innerHTML = k.topProblems.length ? k.topProblems.map(p => `<div class="bar"><div>${esc(p.name)}</div><div class="track"><div class="fill" style="width:${p.ex / tmax * 100}%"></div><div class="fill alt" style="width:${p.co / tmax * 100}%"></div></div><div class="n">${p.count}</div></div>`).join('') : '<div class="empty">لا توجد مشاكل مسجّلة</div>';
+
+    cols($('#byHour'), k.byHour.map((h, i) => ({ ...h, i })).filter(h => h.i >= 7 && h.i <= 23 || h.total), (h, _, short) => short ? String(h.i) : `الساعة ${h.i}:00`);
+    cols($('#byMonth'), k.byMonth.slice(-18), (m, _, short) => { const [y, mo] = m.key.split('-'); return short ? mo : `${MONTHS[+mo - 1]} ${y}`; });
+    bars($('#byYear'), k.byYear, y => `سنة ${y.key}`);
+    bars($('#byWeekday'), k.byWeekday, (_, i) => WD[i]);
+
+    const hmax = Math.max(1, ...k.heat.flat());
+    const hrs = [...Array(24).keys()].filter(h => h >= 7 || k.heat.some(r => r[h]));
+    $('#heat').innerHTML = `<tr><th></th>${hrs.map(h => `<th>${h}</th>`).join('')}</tr>` + k.heat.map((r, i) => `<tr><th style="width:auto;padding-inline-end:6px;white-space:nowrap">${WD[i]}</th>${hrs.map(h => {
+      const v = r[h], a = v ? .15 + .85 * v / hmax : 0;
+      return `<td class="h" title="${WD[i]} ${h}:00 — ${v}" style="background:${v ? `rgba(194,65,12,${a.toFixed(2)})` : '#f0f3f2'}">${v || ''}</td>`;
+    }).join('')}</tr>`).join('');
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ===== الإدارة ===== */
+let ADM = null;
+async function loadAdmin() {
+  try {
+    ADM = await api('listUsers');
+    $('#userTable').innerHTML = `<thead><tr><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الفرع</th><th>الحالة</th><th>آخر دخول</th><th></th></tr></thead><tbody>` +
+      ADM.users.map(u => `<tr><td class="ltr">${esc(u.username)}</td><td>${esc(u.name)}</td><td>${u.role === 'admin' ? 'إدارة' : 'موظف'}</td><td>${esc(u.branch || 'الكل')}</td><td>${u.active ? '<span class="pill p-closed">مفعّل</span>' : '<span class="pill p-neu">معطّل</span>'}</td><td class="ltr small">${esc(u.lastLogin)}</td><td><button class="btn ghost sm" data-u="${esc(u.username)}">تعديل</button></td></tr>`).join('') + '</tbody>';
+    $$('#userTable [data-u]').forEach(b => b.onclick = () => userModal(ADM.users.find(u => u.username === b.dataset.u)));
+    $('#docChips').innerHTML = ADM.doctors.map(d => `<span class="chip ${d.active ? '' : 'off'}">${esc(d.name)} · ${esc(d.specialty)} · ${esc(d.branch)} <button title="${d.active ? 'تعطيل' : 'تفعيل'}" data-doc="${esc(d.name)}">${d.active ? '✕' : '↺'}</button></span>`).join('') || '<span class="muted small">لا يوجد أطباء بعد</span>';
+    $('#catChips').innerHTML = ADM.categories.map(c => `<span class="chip ${c.active ? '' : 'off'}">${esc(c.name)} · ${esc(c.type)} <button data-cat="${esc(c.name)}">${c.active ? '✕' : '↺'}</button></span>`).join('');
+    $$('#docChips [data-doc]').forEach(b => b.onclick = () => busy(b, async () => { const d = ADM.doctors.find(x => x.name === b.dataset.doc); await api('saveDoctor', { ...d, active: !d.active }); await afterLookupChange(); }));
+    $$('#catChips [data-cat]').forEach(b => b.onclick = () => busy(b, async () => { const c = ADM.categories.find(x => x.name === b.dataset.cat); await api('saveCategory', { ...c, active: !c.active }); await afterLookupChange(); }));
+    const st = await api('getSettings');
+    $('#srcForm [name=ComplaintsSourceId]').value = st.settings.ComplaintsSourceId || '';
+    $('#srcForm [name=ComplaintsSourceSheet]').value = st.settings.ComplaintsSourceSheet || '';
+  } catch (e) { toast(e.message, true); }
+}
+async function afterLookupChange() {
+  const r = await api('lookups'); S.lk = r.lookups; buildForm(); buildFilters(); await loadAdmin();
+}
+$('#docForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => { await api('saveDoctor', Object.fromEntries(new FormData(e.target))); e.target.reset(); toast('تمت إضافة الطبيب'); await afterLookupChange(); }); };
+$('#catForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => { await api('saveCategory', Object.fromEntries(new FormData(e.target))); e.target.reset(); toast('تمت إضافة التصنيف'); await afterLookupChange(); }); };
+$('#srcForm').onsubmit = e => { e.preventDefault(); busy(e.submitter, async () => { await api('saveSettings', Object.fromEntries(new FormData(e.target))); toast('تم حفظ الربط. اضغط "مزامنة" في تبويب الشكاوى'); }); };
+$('#newUser').onclick = () => userModal(null);
+
+function userModal(u) {
+  openModal(`<h2>${u ? 'تعديل مستخدم' : 'مستخدم جديد'}</h2>
+    <form id="uForm" class="grid">
+      <div><label class="f">اسم المستخدم (إنجليزي)</label><input type="text" name="username" class="ltr" value="${esc(u?.username)}" ${u ? 'readonly' : ''} required pattern="[a-zA-Z0-9._\\-]{3,30}"></div>
+      <div><label class="f">الاسم</label><input type="text" name="name" value="${esc(u?.name)}" required></div>
+      <div class="grid g2">
+        <div><label class="f">الدور</label><select name="role"><option value="staff" ${u?.role === 'staff' ? 'selected' : ''}>موظف</option><option value="admin" ${u?.role === 'admin' ? 'selected' : ''}>إدارة</option></select></div>
+        <div><label class="f">الفرع</label><select name="branch"><option value="">الكل</option>${S.lk.branches.map(b => `<option ${u?.branch === b ? 'selected' : ''}>${b}</option>`).join('')}</select></div>
+      </div>
+      ${u ? `<label class="row small"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}> الحساب مفعّل</label>
+             <label class="row small"><input type="checkbox" name="resetPassword"> إعادة تعيين كلمة المرور</label>` : ''}
+      <div class="row"><button class="btn">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
+    </form>`);
+  $('#uForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => {
+      const f = e.target, d = Object.fromEntries(new FormData(f));
+      d.active = u ? f.active.checked : true; d.resetPassword = u ? f.resetPassword.checked : false;
+      const r = await api('saveUser', d);
+      if (r.tempPassword) {
+        openModal(`<h2>كلمة المرور المؤقتة</h2><p>سلّمها للموظف، وسيُطلب منه تغييرها عند أول دخول.</p>
+          <p class="ltr" style="font-size:22px;font-weight:700;background:var(--brand-soft);padding:12px;border-radius:10px;text-align:center">${esc(r.tempPassword)}</p>
+          <p class="small muted">لن تظهر مرة أخرى.</p><button class="btn" data-close>تم</button>`);
+      } else { closeModal(); toast('تم الحفظ'); }
+      loadAdmin();
+    });
+  };
+}
+</script>
+</body>
+</html>
