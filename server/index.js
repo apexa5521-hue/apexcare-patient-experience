@@ -115,6 +115,21 @@ if (require.main === module) {
   createApp({ db, config }).listen(config.port, () => {
     console.log(`patient-experience listening on :${config.port}`);
   });
+  bootstrapAdmin(db).catch(e => console.error('admin bootstrap failed:', e.message));
+}
+
+/**
+ * First boot only: when there are no users at all, create "admin" and log its temporary
+ * password once (Render's free plan has no Shell to run seed-admin.js). It must be changed
+ * on first login, and nothing happens once any user exists.
+ */
+async function bootstrapAdmin(db) {
+  const { must } = require('./db');
+  const { seedAdmin } = require('./seed-admin');
+  const { count } = await must(db.from('app_users').select('id', { count: 'exact', head: true }));
+  if (count > 0) return;
+  const r = await seedAdmin(db);
+  if (r.created) console.log(`[first boot] created user "admin" with temporary password: ${r.password} (must be changed at first login)`);
 }
 
 module.exports = { createApp, loadConfig };

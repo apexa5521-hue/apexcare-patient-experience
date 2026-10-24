@@ -2,8 +2,8 @@ services:
   - type: web
     name: apexcare-patient-experience
     runtime: node
-    plan: starter            # free sleeps when idle; starter recommended for daily clinic use
-    region: frankfurt
+    plan: free               # sleeps when idle; upgrade to starter to keep it always on
+    region: singapore
     buildCommand: npm ci
     startCommand: node server/index.js
     healthCheckPath: /api/health
