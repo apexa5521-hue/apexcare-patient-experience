@@ -1,6 +1,6 @@
 'use strict';
 
-// Runs the complaints-sheet Apps Script's pure helpers in a sandbox (no Google services).
+// Runs the QR-sheets Apps Script's pure helpers in a sandbox (no Google services).
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const src = fs.readFileSync(path.join(__dirname, '..', 'integrations', 'complaints-sheet', 'Code.gs'), 'utf8');
+const src = fs.readFileSync(path.join(__dirname, '..', 'integrations', 'qr-sheets', 'Code.gs'), 'utf8');
 const sandbox = {};
 vm.runInNewContext(src, sandbox);
 const { matchHeaders_, time24_ } = sandbox;
@@ -144,4 +144,10 @@ test('rating sheets push their answers as text to /api/webhooks/ratings with the
   assert.equal(sent.q_waiting, 'Strongly disagree    أرفض بشدة');
   assert.equal(sent.q_overall, 'Poor فقير');
   assert.equal(sent.source_key, 'SS:Form Responses 1:2');
+});
+
+test('the system URL is accepted as the base or with /complaints or /ratings, and each type goes to its path', () => {
+  const b = 'https://apexcare-patient-experience.onrender.com/api/webhooks';
+  for (const u of [b, b + '/', b + '/complaints', b + '/ratings']) assert.equal(sandbox.webhookBase_(u), b, u);
+  for (const u of ['http://x/api/webhooks', 'https://x/api/other', '']) assert.equal(sandbox.webhookBase_(u), '', u);
 });

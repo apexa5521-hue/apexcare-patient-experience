@@ -1,14 +1,14 @@
 /**
  * Apex Care — ربط شيتات الباركود (الشكاوى وتقييم الخدمة) بنظام تجربة المريض
  *
- * يُلصق هذا الملف في شيت الشكاوى: الإضافات ← Apps Script.
+ * سكربت واحد للنوعين: يُلصق في ملف الشكاوى، ونفسه في ملف تقييم الخدمة (الإضافات ← Apps Script).
  * افتح ورقة الشكاوى ثم شغّل setup() وأدخل:
- *   1) رابط الـ webhook:  https://<render-app>.onrender.com/api/webhooks/complaints
+ *   1) رابط النظام:  https://<render-app>.onrender.com/api/webhooks
  *   2) قيمة WEBHOOK_SECRET من إعدادات الخدمة في Render
  *   3) فرع الورقة (اختياري)
  * لربط ورقة ثانية (ورقة لكل فرع، أو ورقة تقييم الخدمة): افتحها وشغّل setup() مرة أخرى.
  * نوع الورقة (شكاوى أو تقييم خدمة) يُعرف تلقائياً من عناوين الأعمدة.
- * الرابط نفسه يُستخدم للنوعين (…/api/webhooks/complaints)، والسكربت يرسل كل نوع لمساره.
+ * الرابط نفسه للنوعين، والسكربت يرسل الشكاوى إلى …/complaints والتقييمات إلى …/ratings.
  *
  * يُرسَل فقط: رقم الملف، الجوال، الطبيب، الفرع، التصنيف، الخطورة، نص الشكوى، التاريخ والوقت.
  * الفرع: من عمود الفرع (بأي صيغة: بريدة / فرع بريدة / Buraydah…)، وإلا فرع الورقة من الإعداد،
@@ -90,10 +90,10 @@ function setup() {
   var savedUrl = props.getProperty(PROP_URL), savedSecret = props.getProperty(PROP_SECRET);
   var keep = '\n(اتركه فارغاً لاستخدام القيمة المحفوظة)';
 
-  var url = ui.prompt('رابط الـ webhook', 'مثال: https://apexcare-patient-experience.onrender.com/api/webhooks/complaints' + (savedUrl ? keep : ''), ui.ButtonSet.OK_CANCEL);
+  var url = ui.prompt('رابط النظام', 'https://apexcare-patient-experience.onrender.com/api/webhooks' + (savedUrl ? keep : ''), ui.ButtonSet.OK_CANCEL);
   if (url.getSelectedButton() !== ui.Button.OK) return;
-  var u = url.getResponseText().trim() || savedUrl || '';
-  if (!/^https:\/\/.+\/api\/webhooks\/complaints$/.test(u)) { ui.alert('الرابط يجب أن يبدأ بـ https:// وينتهي بـ /api/webhooks/complaints'); return; }
+  var u = webhookBase_(url.getResponseText().trim() || savedUrl || '');
+  if (!u) { ui.alert('الرابط يجب أن يبدأ بـ https:// وينتهي بـ /api/webhooks'); return; }
 
   var secret = ui.prompt('السر المشترك', 'انسخ قيمة WEBHOOK_SECRET من Render ← Environment' + (savedSecret ? keep : ''), ui.ButtonSet.OK_CANCEL);
   if (secret.getSelectedButton() !== ui.Button.OK) return;
@@ -194,7 +194,7 @@ function pushSheet_(ss, sheet, cfg, url, secret, props) {
   var defaultBranch = cfg.branch || '';
   var cols = headerMap_(sheet, type);
   if (type === 'complaints' && cols.description === undefined) return { sent: 0, inserted: 0, error: 'لا يوجد عمود نص الشكوى' };
-  var endpoint = url.replace(/\/complaints$/, '/' + type);
+  var endpoint = webhookBase_(url) + '/' + type;
 
   var key = 'LAST_ROW:' + sheet.getSheetId();
   var lastSent = Number(props.getProperty(key) || 1); // row 1 = headers
@@ -265,6 +265,12 @@ function ratingRow_(row, shownRow, cols, tz) {
 function hasContent_(out, type) {
   if (type === 'complaints') return !!out.description;
   return Object.keys(out).some(function (k) { return k.indexOf('q_') === 0 && out[k]; });
+}
+
+/** ".../api/webhooks" from any accepted form (base, or ending in /complaints or /ratings); '' if invalid. */
+function webhookBase_(u) {
+  var m = /^(https:\/\/.+\/api\/webhooks)(?:\/(?:complaints|ratings))?\/?$/.exec(String(u || '').trim());
+  return m ? m[1] : '';
 }
 
 function headers_(sheet) {
