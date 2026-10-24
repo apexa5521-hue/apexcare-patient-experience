@@ -5,9 +5,17 @@ const { createClient } = require('@supabase/supabase-js');
 /** Server-only Supabase client (service role bypasses RLS). Never expose this key to the browser. */
 function createSupabase(url, serviceKey) {
   if (!url || !serviceKey) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
-  return createClient(url, serviceKey, {
+  return createClient(normalizeSupabaseUrl(url), serviceKey.trim(), {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
+}
+
+/**
+ * Accept the project URL however it was copied: Supabase's Data API page shows it with
+ * /rest/v1, which supabase-js would append a second time (PostgREST error PGRST125).
+ */
+function normalizeSupabaseUrl(url) {
+  return String(url).trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '');
 }
 
 /** Unwrap a supabase-js result, throwing on error. */
@@ -67,4 +75,4 @@ async function audit(db, username, action, details) {
   }
 }
 
-module.exports = { createSupabase, must, countOf, dbProblem, fetchAll, audit };
+module.exports = { createSupabase, normalizeSupabaseUrl, must, countOf, dbProblem, fetchAll, audit };

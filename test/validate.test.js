@@ -81,3 +81,10 @@ test('Riyadh local time converts to UTC and back', () => {
   assert.equal(localToUtc('2026-03-10', '01:15', 'Asia/Riyadh').toISOString(), '2026-03-09T22:15:00.000Z');
   assert.equal(formatLocal('2026-03-10T20:30:00.000Z', 'Asia/Riyadh'), '2026-03-10 23:30');
 });
+
+test('Supabase URL is accepted with or without /rest/v1', () => {
+  const { normalizeSupabaseUrl } = require('../server/db');
+  for (const u of ['https://abc.supabase.co', 'https://abc.supabase.co/', ' https://abc.supabase.co/rest/v1 ', 'https://abc.supabase.co/rest/v1/']) {
+    assert.equal(normalizeSupabaseUrl(u), 'https://abc.supabase.co', u);
+  }
+});
