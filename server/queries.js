@@ -35,12 +35,12 @@ function applyComplaintFilters(q, f, tz) {
   return q;
 }
 
-function mapExperience(e, { admin, tz, doctorNames, usernames }) {
+function mapExperience(e, { admin, fullPhone, tz, doctorNames, usernames }) {
   return {
     id: e.id,
     visitAt: formatLocal(e.visit_at, tz),
     fileNo: e.file_no,
-    phone: admin ? e.phone || '' : maskPhone(e.phone),
+    phone: fullPhone ? e.phone || '' : maskPhone(e.phone),
     doctorId: e.doctor_id,
     doctor: doctorNames.get(e.doctor_id) || '',
     branch: e.branch,
@@ -60,12 +60,12 @@ function mapExperience(e, { admin, tz, doctorNames, usernames }) {
   };
 }
 
-function mapComplaint(c, { admin, tz, doctorNames, overdue }) {
+function mapComplaint(c, { fullPhone, tz, doctorNames, overdue }) {
   return {
     id: c.id,
     createdAt: formatLocal(c.created_at, tz),
     fileNo: c.file_no || '',
-    phone: admin ? c.phone || '' : maskPhone(c.phone),
+    phone: fullPhone ? c.phone || '' : maskPhone(c.phone),
     doctorId: c.doctor_id,
     doctor: (c.doctor_id && doctorNames.get(c.doctor_id)) || c.doctor_name_raw || '',
     branch: c.branch || '',

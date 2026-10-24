@@ -6,7 +6,8 @@ const crypto = require('node:crypto');
 const express = require('express');
 const helmet = require('helmet');
 const { createSupabase, dbProblem } = require('./db');
-const { authenticate, requirePasswordChanged, requireAdmin, LoginLimiter, Revocations } = require('./auth');
+const { authenticate, requirePasswordChanged, LoginLimiter, Revocations } = require('./auth');
+const { requirePerm } = require('./access');
 const { UserError } = require('./validate');
 const authRoutes = require('./routes/auth');
 const lookupRoutes = require('./routes/lookups');
@@ -15,6 +16,7 @@ const { complaintRoutes, webhookRoutes } = require('./routes/complaints');
 const kpiRoutes = require('./routes/kpis');
 const adminRoutes = require('./routes/admin');
 const callRoutes = require('./routes/calls');
+const caseRoutes = require('./routes/cases');
 const { reviewRoutes, googleRoutes, googleCallback } = require('./routes/reviews');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -84,11 +86,12 @@ function createApp({ db, config, http = fetch }) {
   app.use('/api/lookups', signedIn, lookupRoutes());
   app.use('/api/experiences', signedIn, experienceRoutes());
   app.use('/api/complaints', signedIn, complaintRoutes());
-  app.use('/api/kpis', signedIn, requireAdmin, kpiRoutes());
-  app.use('/api/admin', signedIn, requireAdmin, adminRoutes());
-  app.use('/api/calls', signedIn, callRoutes());
+  app.use('/api/kpis', signedIn, requirePerm('analytics'), kpiRoutes());
+  app.use('/api/admin', signedIn, requirePerm('manageSetup'), adminRoutes());
+  app.use('/api/calls', signedIn, requirePerm('calls'), callRoutes());
+  app.use('/api/cases', signedIn, caseRoutes());
   app.use('/api/reviews', signedIn, reviewRoutes());
-  app.use('/api/google', signedIn, requireAdmin, googleRoutes());
+  app.use('/api/google', signedIn, requirePerm('manageSetup'), googleRoutes());
 
   app.use('/api', (_req, _res, next) => next(new UserError('المسار غير موجود', 404)));
 

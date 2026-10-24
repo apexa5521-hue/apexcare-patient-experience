@@ -2,11 +2,12 @@
 
 const express = require('express');
 const { must, audit } = require('../db');
-const { isAdmin, requireAdmin } = require('../auth');
+const { can, branchScope, requirePerm } = require('../access');
+const { openCases, caseIdsFor } = require('../cases');
 const { localToUtc } = require('../time');
 const { applyExperienceFilters, mapExperience } = require('../queries');
 const {
-  UserError, UUID_RE, parse, parseFilters, normalizeFileNo, normalizePhone, experienceSchema, followUpSchema
+  UserError, parse, parseFilters, normalizeFileNo, normalizePhone, experienceSchema
 } = require('../validate');
 
 const LIST_LIMIT = 500;
@@ -26,7 +27,7 @@ async function nameMaps(db, admin) {
 function experienceRoutes() {
   const r = express.Router();
 
-  r.post('/', async (req, res) => {
+  r.post('/', requirePerm('record'), async (req, res) => {
     const { db, config } = req.ctx;
     const d = parse(experienceSchema, req.body);
     const fileNo = normalizeFileNo(d.fileNo);
@@ -81,37 +82,39 @@ function experienceRoutes() {
         status: 'تم', experience_id: row.id, last_attempt_at: new Date().toISOString(), updated_by: req.user.username
       }).eq('id', call.id));
     }
+    if (negative) {
+      await openCases(db, [{
+        source: 'تجربة سلبية', source_id: row.id, branch: d.branch, doctor_id: doctor.id, file_no: fileNo, phone,
+        summary: [category, d.generalNote].filter(Boolean).join(' — '), category, severity: d.severity
+      }]);
+    }
     await audit(db, req.user.username, 'add_experience', call ? `${row.id} (call ${call.id})` : row.id);
     res.status(201).json({ ok: true, id: row.id });
   });
 
   r.get('/', async (req, res) => {
     const { db, config } = req.ctx;
-    const admin = isAdmin(req.user);
+    const seeAll = can(req.user, 'viewAllExperiences');
     const f = parseFilters(req.query);
+    const scope = branchScope(req.user);
+    if (scope) f.branch = scope;
     let q = db.from('experiences').select('*', { count: 'exact' });
     q = applyExperienceFilters(q, f, config.tz);
-    if (!admin) q = q.eq('created_by', req.user.id);
+    if (!seeAll) q = q.eq('created_by', req.user.id);
     const { data, count } = await must(q.order('visit_at', { ascending: false }).range(0, LIST_LIMIT - 1));
-    const maps = await nameMaps(db, admin);
+    const [maps, caseIds] = await Promise.all([
+      nameMaps(db, seeAll),
+      caseIdsFor(db, 'تجربة سلبية', data.filter(e => e.sentiment === 'سلبية').map(e => e.id))
+    ]);
     res.json({
       ok: true,
       total: count ?? data.length,
       limit: LIST_LIMIT,
-      rows: data.map(e => mapExperience(e, { admin, tz: config.tz, ...maps }))
+      rows: data.map(e => ({
+        ...mapExperience(e, { admin: seeAll, fullPhone: can(req.user, 'fullPhones'), tz: config.tz, ...maps }),
+        caseId: caseIds.get(e.id) || null
+      }))
     });
-  });
-
-  r.patch('/:id/follow-up', requireAdmin, async (req, res) => {
-    const { db } = req.ctx;
-    if (!UUID_RE.test(req.params.id)) throw new UserError('السجل غير موجود', 404);
-    const { followUp } = parse(followUpSchema, req.body);
-    const e = await must(db.from('experiences').select('id,sentiment').eq('id', req.params.id).maybeSingle());
-    if (!e) throw new UserError('السجل غير موجود', 404);
-    if (e.sentiment !== 'سلبية') throw new UserError('المتابعة للتجارب السلبية فقط');
-    await must(db.from('experiences').update({ follow_up: followUp }).eq('id', e.id));
-    await audit(db, req.user.username, 'update_follow_up', `${e.id} -> ${followUp}`);
-    res.json({ ok: true });
   });
 
   return r;

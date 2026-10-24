@@ -28,6 +28,9 @@ function seed(db) {
   t.doctors.push(...docs);
   const staff = { id: crypto.randomUUID(), username: 'seed', name: 'seed', role: 'staff', branch: null, password_hash: 'x', active: true, must_change: false, created_at: new Date().toISOString(), last_login: null };
   t.app_users.push(staff);
+  const mk = (username, name, role, branch = null) => ({ id: crypto.randomUUID(), username, name, role, branch,
+    password_hash: bcrypt.hashSync('Role-Pass-1', 4), active: true, must_change: false, created_at: new Date().toISOString(), last_login: null });
+  t.app_users.push(mk('officer', 'نورة المتابعة', 'case_officer'), mk('ceo', 'المدير التنفيذي', 'executive'), mk('bm.b', 'مدير بريدة', 'branch_manager', 'بريدة'));
   // Some history so the KPI charts have shape.
   const sentiments = ['إيجابية', 'إيجابية', 'إيجابية', 'محايدة', 'سلبية'];
   const cats = ['وقت الانتظار', 'تأخر الموعد', 'أسلوب التعامل', 'التكلفة والأسعار'];
@@ -238,6 +241,54 @@ async function run() {
       await page.waitForSelector('#revSetup:not(.hidden) .setup');
       await shot('13-reviews-setup');
       await noHScroll('reviews');
+
+      // Follow-up: the negative experience recorded above opened a case; handle it end to end.
+      await page.click('#tabs button[data-tab=cases]');
+      await page.waitForSelector('#caseList .case-card');
+      await page.click('#caseView button[data-v=none]');
+      await page.waitForSelector(`#caseList .case-card:has-text("وقت الانتظار")`);
+      await shot('14-cases');
+      await noHScroll('cases');
+      await page.click(`#caseList .case-card:has-text("وقت الانتظار") >> nth=0`);
+      await page.waitForSelector('#evForm');
+      assert.equal(await page.locator('#csWa').count(), 1, 'WhatsApp button shown for a valid mobile');
+      const wa = await page.getAttribute('#csWa', 'href');
+      assert.match(wa, /^https:\/\/wa\.me\/9665\d{8}\?text=/);
+      await page.selectOption('#evOut', 'تم التواصل');
+      await page.fill('#evBody', 'اعتذرنا عن التأخير وشرحنا السبب');
+      await page.click('#evForm button[type=submit]');
+      await page.waitForSelector('.timeline li:has-text("تم التواصل")');
+      await page.selectOption('#clReason', 'تم الاعتذار والتوضيح');
+      await page.fill('#clRes', 'تم التواصل والاعتذار');
+      await page.evaluate(() => document.querySelector('#clForm').scrollIntoView());
+      await shot('15-case-detail');
+      await page.click('#clForm button[type=submit]');
+      await page.waitForSelector('.panel h3:has-text("الإقفال")');
+      await page.click('#modalBody [data-close]');
+
+      // Other roles see only their tabs.
+      for (const [username, visible, hidden] of [
+        ['officer', ['cases', 'calls', 'add'], ['kpi', 'admin']],
+        ['ceo', ['cases', 'kpi', 'complaints'], ['add', 'calls', 'admin']],
+        ['bm.b', ['cases', 'kpi', 'add'], ['admin']]
+      ]) {
+        const ctx2 = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, locale: 'ar-SA', timezoneId: 'Asia/Riyadh' });
+        const p2 = await ctx2.newPage();
+        p2.on('pageerror', e => problems.push(`${username}: ${e.message}`));
+        await p2.goto(base);
+        await p2.fill('#lgUser', username); await p2.fill('#lgPass', 'Role-Pass-1');
+        await p2.click('#loginForm button[type=submit]');
+        await p2.waitForSelector('#appView:not(.hidden)');
+        for (const t of visible) assert.equal(await p2.isVisible(`#tabs button[data-tab=${t}]`), true, `${username} sees ${t}`);
+        for (const t of hidden) assert.equal(await p2.isVisible(`#tabs button[data-tab=${t}]`), false, `${username} must not see ${t}`);
+        if (username === 'ceo') {
+          await p2.waitForSelector('#caseList .case-card, #caseList .empty');
+          await p2.click('#tabs button[data-tab=kpi]');
+          await p2.waitForSelector('#kpiBody .chart-card h3:has-text("المتابعة")');
+          await p2.screenshot({ path: path.join(OUT, `${vp.name}-16-kpis-ceo.png`), fullPage: true });
+        }
+        await ctx2.close();
+      }
 
       assert.deepEqual(problems, [], `${vp.name}: console errors`);
       console.log(`✓ ${vp.name}`);

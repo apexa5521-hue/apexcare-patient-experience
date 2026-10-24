@@ -5,7 +5,7 @@
 
 const express = require('express');
 const { must, countOf, audit } = require('../db');
-const { requireAdmin } = require('../auth');
+const { requirePerm, branchScope } = require('../access');
 const { localToUtc, addDays, formatLocal } = require('../time');
 const { doctorKey } = require('./complaints');
 const {
@@ -86,7 +86,7 @@ function callRoutes() {
     const q = req.query;
     const status = typeof q.status === 'string' && q.status ? q.status : null;
     if (status && status !== 'open' && !CALL_STATUSES.includes(status)) throw new UserError('قيمة فلتر غير صالحة');
-    const branch = q.branch ? normalizeBranch(q.branch) : null;
+    const branch = branchScope(req.user) || (q.branch ? normalizeBranch(q.branch) : null);
     let query = db.from('call_queue').select('*', { count: 'exact' });
     query = !status || status === 'open' ? query.in('status', OPEN) : query.eq('status', status);
     if (branch) query = query.eq('branch', branch);
@@ -137,7 +137,7 @@ function callRoutes() {
   });
 
   /** Bulk import (rows pasted from Excel). Bad rows are reported back by line; duplicates are skipped. */
-  r.post('/import', requireAdmin, async (req, res) => {
+  r.post('/import', requirePerm('importCalls'), async (req, res) => {
     const { db, config } = req.ctx;
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : null;
     if (!rows || !rows.length) throw new UserError('لا توجد صفوف للاستيراد');

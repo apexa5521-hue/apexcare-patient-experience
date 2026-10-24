@@ -8,7 +8,7 @@ create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   username text unique not null check (username ~ '^[a-z0-9._-]{3,30}$'),
   name text not null,
-  role text not null check (role in ('staff','admin')),
+  role text not null check (role in ('staff','case_officer','branch_manager','operations','quality','executive','admin')),
   branch text check (branch in ('بريدة','عنيزة')),          -- null = all branches
   password_hash text not null,
   active boolean not null default true,
@@ -16,6 +16,10 @@ create table if not exists app_users (
   created_at timestamptz not null default now(),
   last_login timestamptz
 );
+
+-- Roles (widened after the first release; re-runnable).
+alter table app_users drop constraint if exists app_users_role_check;
+alter table app_users add constraint app_users_role_check check (role in ('staff','case_officer','branch_manager','operations','quality','executive','admin'));
 
 create table if not exists doctors (
   id uuid primary key default gen_random_uuid(),
@@ -137,6 +141,48 @@ create table if not exists app_settings (
   updated_at timestamptz not null default now()
 );
 
+-- Follow-up cases: one per complaint, negative experience, low service rating or low Google review.
+create table if not exists cases (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  source text not null check (source in ('شكوى','تجربة سلبية','تقييم خدمة','تقييم قوقل')),
+  source_id text not null,
+  branch text check (branch in ('بريدة','عنيزة')),
+  doctor_id uuid references doctors(id),
+  file_no text,
+  phone text,
+  summary text check (char_length(summary) <= 2000),
+  category text,
+  severity text not null default 'متوسطة' check (severity in ('بسيطة','متوسطة','عالية')),
+  status text not null default 'جديدة' check (status in ('جديدة','قيد المعالجة','بانتظار المريض','بانتظار الاعتماد','مغلقة')),
+  assigned_to uuid references app_users(id),
+  due_at timestamptz,
+  first_response_at timestamptz,
+  close_reason text,
+  resolution text check (char_length(resolution) <= 2000),
+  closed_at timestamptz,
+  closed_by text,
+  approved_by text
+);
+create unique index if not exists cases_source_uniq on cases(source, source_id);
+create index if not exists cases_status_idx on cases(status);
+create index if not exists cases_branch_idx on cases(branch);
+create index if not exists cases_assigned_idx on cases(assigned_to);
+create index if not exists cases_created_idx on cases(created_at);
+
+-- Timeline of a case: notes, contact attempts and their outcome, status changes, assignment, approval.
+create table if not exists case_events (
+  id bigserial primary key,
+  case_id uuid not null references cases(id) on delete cascade,
+  at timestamptz not null default now(),
+  username text,
+  type text not null check (type in ('ملاحظة','اتصال','واتساب','رسالة','حالة','إسناد','اعتماد','نظام')),
+  outcome text,
+  body text check (char_length(body) <= 2000)
+);
+create index if not exists case_events_case_idx on case_events(case_id, at);
+
 -- Lock everything: only the server (service_role) can read/write.
 alter table app_users  enable row level security;
 alter table doctors    enable row level security;
@@ -147,6 +193,8 @@ alter table audit_log  enable row level security;
 alter table call_queue enable row level security;
 alter table google_reviews enable row level security;
 alter table app_settings enable row level security;
+alter table cases enable row level security;
+alter table case_events enable row level security;
 -- No policies are created on purpose (anon/authenticated get nothing).
 
 insert into categories (name, type) values

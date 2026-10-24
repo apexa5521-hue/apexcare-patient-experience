@@ -3,6 +3,7 @@
 const express = require('express');
 const { must, audit } = require('../db');
 const { hashPassword, randomPassword } = require('../auth');
+const { ROLE_LABELS } = require('../access');
 const { formatLocal } = require('../time');
 const {
   UserError, UUID_RE, parse, userCreateSchema, userUpdateSchema, doctorSchema, categorySchema
@@ -19,7 +20,7 @@ function uniqueViolation(e, msg) {
 
 function userRow(u, tz) {
   return {
-    id: u.id, username: u.username, name: u.name, role: u.role, branch: u.branch,
+    id: u.id, username: u.username, name: u.name, role: u.role, roleLabel: ROLE_LABELS[u.role] || u.role, branch: u.branch,
     active: u.active, mustChange: u.must_change, lastLogin: formatLocal(u.last_login, tz)
   };
 }
@@ -71,11 +72,15 @@ function adminRoutes() {
     checkId(req.params.id, 'المستخدم');
     const d = parse(userUpdateSchema, req.body);
     const self = req.params.id === req.user.id;
-    if (self && (d.active === false || (d.role && d.role !== 'admin'))) {
-      throw new UserError('لا يمكنك تعطيل حسابك أو تخفيض صلاحيتك');
+    if (self && (d.active === false || (d.role && d.role !== req.user.role))) {
+      throw new UserError('لا يمكنك تعطيل حسابك أو تغيير دورك');
     }
     const patch = {};
     for (const k of ['name', 'role', 'branch', 'active']) if (d[k] !== undefined) patch[k] = d[k];
+    const current = await must(db.from('app_users').select('role,branch').eq('id', req.params.id).maybeSingle());
+    if (!current) throw new UserError('المستخدم غير موجود', 404);
+    const role = patch.role ?? current.role, branch = patch.branch !== undefined ? patch.branch : current.branch;
+    if (role === 'branch_manager' && !branch) throw new UserError('حدد فرع مدير الفرع');
     let tempPassword = null;
     if (d.resetPassword) {
       tempPassword = randomPassword();

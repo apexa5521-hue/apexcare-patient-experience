@@ -4,6 +4,7 @@ const express = require('express');
 const { must, fetchAll } = require('../db');
 const { computeKpis } = require('../kpis');
 const { parseFilters } = require('../validate');
+const { branchScope } = require('../access');
 const { applyExperienceFilters, applyComplaintFilters } = require('../queries');
 
 const EX_COLS = 'id,visit_at,doctor_id,branch,sentiment,category,severity,booking_rating,reception_rating,plan_explained,doctor_rating,channel';
@@ -14,6 +15,8 @@ function kpiRoutes() {
   r.get('/', async (req, res) => {
     const { db, config } = req.ctx;
     const f = parseFilters(req.query);
+    const scope = branchScope(req.user);
+    if (scope) f.branch = scope;
     const [experiences, complaints, allDoctors] = await Promise.all([
       fetchAll(() => applyExperienceFilters(db.from('experiences').select(EX_COLS), f, config.tz).order('visit_at').order('id')),
       // Complaints carry no visit time or visit type, so only date/branch/doctor apply to them.

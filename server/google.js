@@ -5,6 +5,7 @@
 // The HTTP function is injected (ctx.http) so tests run without the network.
 
 const { must } = require('./db');
+const { openCases } = require('./cases');
 const { UserError, normalizeBranch, BRANCHES } = require('./validate');
 
 const SCOPE = 'https://www.googleapis.com/auth/business.manage';
@@ -162,7 +163,13 @@ async function syncReviews(ctx) {
       const r = await gapi(ctx, `${REVIEWS_API}/${loc.location}/reviews?${p}`);
       const reviews = r.reviews || [];
       if (reviews.length) {
-        await must(ctx.db.from('google_reviews').upsert(reviews.map(x => reviewRow(x, loc)), { onConflict: 'id' }));
+        const rows = reviews.map(x => reviewRow(x, loc));
+        await must(ctx.db.from('google_reviews').upsert(rows, { onConflict: 'id' }));
+        // One or two stars open a follow-up case (once per review).
+        await openCases(ctx.db, rows.filter(x => x.rating && x.rating <= 2).map(x => ({
+          source: 'تقييم قوقل', source_id: x.id, created_at: x.created_at, branch: x.branch,
+          summary: x.comment || `تقييم ${x.rating} نجوم بدون تعليق`, severity: x.rating === 1 ? 'عالية' : 'متوسطة'
+        })));
         fetched += reviews.length;
       }
       const reachedOld = since && reviews.some(x => (x.updateTime || x.createTime) < since);

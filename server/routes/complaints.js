@@ -3,7 +3,8 @@
 const crypto = require('node:crypto');
 const express = require('express');
 const { must, countOf, audit } = require('../db');
-const { isAdmin, requireAdmin } = require('../auth');
+const { can, requirePerm, branchScope, assertBranch } = require('../access');
+const { openCases, caseIdsFor } = require('../cases');
 const { isOverdue } = require('../kpis');
 const { applyComplaintFilters, mapComplaint } = require('../queries');
 const {
@@ -36,8 +37,9 @@ function complaintRoutes() {
 
   r.get('/', async (req, res) => {
     const { db, config } = req.ctx;
-    const admin = isAdmin(req.user);
     const f = parseFilters(req.query);
+    const scope = branchScope(req.user);
+    if (scope) f.branch = scope;
     let q = db.from('complaints').select('*', { count: 'exact' });
     q = applyComplaintFilters(q, f, config.tz);
     const [{ data, count }, sum, doctorNames] = await Promise.all([
@@ -46,16 +48,21 @@ function complaintRoutes() {
       doctorNameMap(db)
     ]);
     const now = new Date();
+    const caseIds = can(req.user, 'viewCases') ? await caseIdsFor(db, 'شكوى', data.map(c => c.id)) : new Map();
+    const fullPhone = can(req.user, 'fullPhones');
     res.json({
       ok: true,
       summary: sum,
       total: count ?? data.length,
       limit: LIST_LIMIT,
-      rows: data.map(c => mapComplaint(c, { admin, tz: config.tz, doctorNames, overdue: isOverdue(c, now, config.overdueDays) }))
+      rows: data.map(c => ({
+        ...mapComplaint(c, { fullPhone, tz: config.tz, doctorNames, overdue: isOverdue(c, now, config.overdueDays) }),
+        caseId: caseIds.get(c.id) || null
+      }))
     });
   });
 
-  r.post('/', async (req, res) => {
+  r.post('/', requirePerm('addComplaint'), async (req, res) => {
     const { db } = req.ctx;
     const d = parse(complaintSchema, req.body);
     if (d.doctorId) {
@@ -73,26 +80,21 @@ function complaintRoutes() {
       description: d.description,
       source: 'إدخال يدوي',
       updated_by: req.user.username
-    }).select('id').single());
+    }).select('*').single());
+    await openCases(db, [complaintCase(row)]);
     await audit(db, req.user.username, 'add_complaint', row.id);
     res.status(201).json({ ok: true, id: row.id });
   });
 
-  r.patch('/:id', requireAdmin, async (req, res) => {
+  /** Data correction only (branch, doctor); handling happens on the complaint's case. */
+  r.patch('/:id', requirePerm('handleCases'), async (req, res) => {
     const { db } = req.ctx;
     if (!UUID_RE.test(req.params.id)) throw new UserError('الشكوى غير موجودة', 404);
     const d = parse(complaintUpdateSchema, req.body);
-    const c = await must(db.from('complaints').select('id,status,closed_at').eq('id', req.params.id).maybeSingle());
+    const c = await must(db.from('complaints').select('id,branch').eq('id', req.params.id).maybeSingle());
     if (!c) throw new UserError('الشكوى غير موجودة', 404);
-    const closing = d.status === 'مغلقة';
-    const patch = {
-      status: d.status,
-      assigned_to: d.assignedTo,
-      resolution: d.resolution,
-      // Keep the original close time if it was already closed; clear it on reopen.
-      closed_at: closing ? c.closed_at || new Date().toISOString() : null,
-      updated_by: req.user.username
-    };
+    assertBranch(req.user, c.branch);
+    const patch = { updated_by: req.user.username };
     if (d.branch !== undefined) patch.branch = d.branch;
     if (d.doctorId !== undefined) {
       if (d.doctorId) {
@@ -102,11 +104,22 @@ function complaintRoutes() {
       patch.doctor_id = d.doctorId;
     }
     await must(db.from('complaints').update(patch).eq('id', c.id));
-    await audit(db, req.user.username, 'update_complaint', `${c.id} -> ${d.status}`);
+    const casePatch = {};
+    if (patch.branch !== undefined) casePatch.branch = patch.branch;
+    if (patch.doctor_id !== undefined) casePatch.doctor_id = patch.doctor_id;
+    if (Object.keys(casePatch).length) await must(db.from('cases').update(casePatch).eq('source', 'شكوى').eq('source_id', c.id));
+    await audit(db, req.user.username, 'update_complaint', `${c.id} ${JSON.stringify(casePatch)}`);
     res.json({ ok: true });
   });
 
   return r;
+}
+
+function complaintCase(c) {
+  return {
+    source: 'شكوى', source_id: c.id, created_at: c.created_at, branch: c.branch, doctor_id: c.doctor_id,
+    file_no: c.file_no, phone: c.phone, summary: c.description, category: c.category, severity: c.severity
+  };
 }
 
 /* ---------- complaints sheet webhook ---------- */
@@ -191,8 +204,9 @@ function webhookRoutes() {
       // ignoreDuplicates: a re-sent row never overwrites status/resolution set by the admins.
       const out = await must(db.from('complaints')
         .upsert([...unique.values()], { onConflict: 'source_key', ignoreDuplicates: true })
-        .select('id'));
+        .select('*'));
       inserted = out.length;
+      await openCases(db, out.map(complaintCase));
     }
     await audit(db, 'sheet', 'webhook_complaints', `received=${rows.length} inserted=${inserted}`);
     res.json({ ok: true, received: rows.length, accepted: unique.size, inserted });

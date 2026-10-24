@@ -42,7 +42,7 @@ async function countOf(promise) {
 }
 
 // One table per schema step, so a migration that was not run shows up in /api/health.
-const HEALTH_TABLES = { categories: 'id', call_queue: 'id', google_reviews: 'id', app_settings: 'key' };
+const HEALTH_TABLES = { categories: 'id', call_queue: 'id', google_reviews: 'id', app_settings: 'key', cases: 'id', case_events: 'id' };
 
 /** Cheap reads used by the health check; null when all answer, else "<table>:<error code>". */
 async function dbProblem(db) {

@@ -56,6 +56,18 @@ const SCHEMA = {
     unique: ['id'],
     defaults: () => ({ status: 'جديد', fetched_at: new Date().toISOString() })
   },
+  cases: {
+    cols: ['id', 'created_at', 'updated_at', 'source', 'source_id', 'branch', 'doctor_id', 'file_no', 'phone', 'summary', 'category',
+      'severity', 'status', 'assigned_to', 'due_at', 'first_response_at', 'close_reason', 'resolution', 'closed_at', 'closed_by', 'approved_by'],
+    unique: [['source', 'source_id']],
+    defaults: () => ({ created_at: new Date().toISOString(), updated_at: new Date().toISOString(), severity: 'متوسطة', status: 'جديدة' })
+  },
+  case_events: {
+    cols: ['id', 'case_id', 'at', 'username', 'type', 'outcome', 'body'],
+    unique: [],
+    serial: true,
+    defaults: () => ({ at: new Date().toISOString() })
+  },
   app_settings: {
     cols: ['key', 'value', 'updated_at'],
     unique: ['key'],

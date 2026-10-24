@@ -4,7 +4,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const { must, fetchAll, audit } = require('../db');
-const { requireAdmin } = require('../auth');
+const { can, requirePerm, branchScope, assertBranch } = require('../access');
 const { formatLocal, localToUtc, addDays } = require('../time');
 const { UserError, BRANCHES, parse, parseFilters } = require('../validate');
 const G = require('../google');
@@ -36,6 +36,8 @@ function reviewRoutes() {
     const { db, config } = req.ctx;
     const st = await G.status(req.ctx);
     const f = parseFilters({ from: req.query.from, to: req.query.to, branch: req.query.branch });
+    const scope = branchScope(req.user);
+    if (scope) f.branch = scope;
     const rating = Number(req.query.rating) || null;
     const replied = req.query.replied;
     const status = REVIEW_STATUSES.includes(req.query.status) ? req.query.status : null;
@@ -70,7 +72,7 @@ function reviewRoutes() {
     });
   });
 
-  r.patch('/:id', requireAdmin, async (req, res) => {
+  r.patch('/:id', requirePerm('handleCases'), async (req, res) => {
     const { db } = req.ctx;
     const d = parse(z.object({
       status: z.string().refine(v => REVIEW_STATUSES.includes(v), 'قيمة غير صالحة: الحالة'),
@@ -82,20 +84,21 @@ function reviewRoutes() {
     res.json({ ok: true });
   });
 
-  r.post('/:id/reply', requireAdmin, async (req, res) => {
+  r.post('/:id/reply', requirePerm('handleCases'), async (req, res) => {
     const { db } = req.ctx;
     const { comment } = parse(z.object({
       comment: z.string({ error: 'اكتب نص الرد' }).trim().min(1, 'اكتب نص الرد').max(4000, 'الرد طويل (الحد 4000 حرف)')
     }), req.body);
-    const review = await must(db.from('google_reviews').select('id,location').eq('id', String(req.params.id)).maybeSingle());
+    const review = await must(db.from('google_reviews').select('id,location,branch').eq('id', String(req.params.id)).maybeSingle());
     if (!review) throw new UserError('التقييم غير موجود', 404);
+    assertBranch(req.user, review.branch);
     const at = await G.postReply(req.ctx, review, comment);
     await must(db.from('google_reviews').update({ reply: comment, replied_at: at, status: 'تمت المراجعة', handled_by: req.user.username }).eq('id', review.id));
     await audit(db, req.user.username, 'review_reply', review.id);
     res.json({ ok: true });
   });
 
-  r.post('/sync', requireAdmin, async (req, res) => {
+  r.post('/sync', requirePerm('handleCases'), async (req, res) => {
     if (req.ctx.reviewSyncing) throw new UserError('التحديث جارٍ الآن، انتظر قليلاً', 409);
     req.ctx.reviewSyncing = true;
     try {
@@ -167,7 +170,7 @@ function googleCallback() {
     if (claims.purpose !== STATE_PURPOSE) return back({ google: 'error', reason: 'state' });
     if (req.query.error || !req.query.code) return back({ google: 'error', reason: String(req.query.error || 'denied').slice(0, 40) });
     const admin = await must(req.ctx.db.from('app_users').select('username,role,active').eq('id', claims.sub).maybeSingle());
-    if (!admin || !admin.active || admin.role !== 'admin') return back({ google: 'error', reason: 'user' });
+    if (!admin || !admin.active || !can(admin, 'manageSetup')) return back({ google: 'error', reason: 'user' });
     try {
       await G.exchangeCode(req.ctx, req, String(req.query.code));
     } catch (e) {

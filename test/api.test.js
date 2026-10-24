@@ -179,13 +179,18 @@ test('experience list filters by hour:minute in Riyadh time and by file number',
   assert.equal((await t.call('GET', '/api/experiences?timeFrom=12:00&timeTo=08:00', { token: adminToken })).status, 400);
 });
 
-test('follow-up: admin only, negative experiences only', async () => {
+test('a negative experience opens a follow-up case; staff cannot see cases', async () => {
   const neg = t.db._store.tables.experiences.find(e => e.sentiment === 'سلبية');
-  const pos = t.db._store.tables.experiences.find(e => e.sentiment === 'إيجابية');
-  assert.equal((await t.call('PATCH', `/api/experiences/${neg.id}/follow-up`, { token: staffToken, body: { followUp: 'مغلقة' } })).status, 403);
-  assert.match((await t.call('PATCH', `/api/experiences/${pos.id}/follow-up`, { token: adminToken, body: { followUp: 'مغلقة' } })).body.error, /السلبية فقط/);
-  assert.equal((await t.call('PATCH', `/api/experiences/${neg.id}/follow-up`, { token: adminToken, body: { followUp: 'مغلقة' } })).status, 200);
-  assert.equal(neg.follow_up, 'مغلقة');
+  const c = t.db._store.tables.cases.find(x => x.source === 'تجربة سلبية' && x.source_id === neg.id);
+  assert.ok(c, 'case opened');
+  assert.equal(c.severity, neg.severity);
+  assert.equal(c.status, 'جديدة');
+  assert.ok(c.due_at > c.created_at);
+  assert.equal(t.db._store.tables.cases.filter(x => x.source === 'تجربة سلبية').length,
+    t.db._store.tables.experiences.filter(e => e.sentiment === 'سلبية').length, 'positive ones open nothing');
+  assert.equal((await t.call('GET', '/api/cases', { token: staffToken })).status, 403);
+  const log = await t.call('GET', '/api/experiences', { token: adminToken });
+  assert.equal(log.body.rows.find(r => r.id === neg.id).caseId, c.id);
 });
 
 test('staff cannot see KPIs or admin endpoints', async () => {
@@ -194,7 +199,7 @@ test('staff cannot see KPIs or admin endpoints', async () => {
   assert.equal((await t.call('POST', '/api/admin/doctors', { token: staffToken, body: { name: 'x', specialty: 'أسنان', branch: 'بريدة' } })).status, 403);
 });
 
-test('complaints: staff add, admin handles; closed_at set on close and cleared on reopen', async () => {
+test('complaints: staff add one, it opens a case, and closing the case closes the complaint', async () => {
   const add = await t.call('POST', '/api/complaints', {
     token: staffToken, body: { fileNo: 'C-1', phone: '0559876543', branch: 'بريدة', doctorId: doc.id, category: 'التكلفة والأسعار', description: 'الفاتورة أعلى من المتفق عليه' }
   });
@@ -204,17 +209,20 @@ test('complaints: staff add, admin handles; closed_at set on close and cleared o
   assert.equal(c.phone, '05*****543');
   assert.equal(c.doctor, doc.name);
   assert.equal(c.source, 'إدخال يدوي');
+  assert.equal(c.caseId, null, 'staff do not get case links');
   assert.equal(list.body.summary.open >= 1, true);
 
-  assert.equal((await t.call('PATCH', `/api/complaints/${c.id}`, { token: staffToken, body: { status: 'مغلقة' } })).status, 403);
-  const close = await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'مغلقة', assignedTo: 'مشرفة الجودة', resolution: 'تم تعديل الفاتورة' } });
-  assert.equal(close.status, 200);
+  const kase = t.db._store.tables.cases.find(x => x.source === 'شكوى' && x.source_id === c.id);
+  assert.ok(kase);
+  assert.equal((await t.call('PATCH', `/api/complaints/${c.id}`, { token: staffToken, body: { branch: 'عنيزة' } })).status, 403);
+  const close = await t.call('POST', `/api/cases/${kase.id}/close`, { token: adminToken, body: { reason: 'تم الحل', resolution: 'تم تعديل الفاتورة' } });
+  assert.equal(close.status, 200, JSON.stringify(close.body));
   const stored = t.db._store.tables.complaints.find(x => x.id === c.id);
+  assert.equal(stored.status, 'مغلقة');
   assert.ok(stored.closed_at);
-  const firstClose = stored.closed_at;
-  await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'مغلقة', resolution: 'تحديث' } });
-  assert.equal(stored.closed_at, firstClose, 'closing again keeps the original close time');
-  await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'قيد المعالجة' } });
+  assert.equal(stored.resolution, 'تم تعديل الفاتورة');
+  await t.call('POST', `/api/cases/${kase.id}/reopen`, { token: adminToken, body: { note: 'المريض عاود الشكوى' } });
+  assert.equal(stored.status, 'قيد المعالجة');
   assert.equal(stored.closed_at, null);
 });
 
@@ -270,10 +278,15 @@ test('webhook: idempotent on source_key, matches doctors, never stores patient n
   const dump = JSON.stringify(t.db._store.tables);
   assert.equal(dump.includes('محمد أحمد'), false, 'patient name must not be stored anywhere');
 
-  // An admin's handling must survive a re-send of the same row.
-  await t.call('PATCH', `/api/complaints/${a.id}`, { token: adminToken, body: { status: 'مغلقة', resolution: 'تم التواصل' } });
+  // Sheet complaints open cases; handling survives a re-send of the same row.
+  const kase = t.db._store.tables.cases.find(x => x.source === 'شكوى' && x.source_id === a.id);
+  assert.ok(kase);
+  assert.equal(kase.severity, 'عالية');
+  await t.call('POST', `/api/cases/${kase.id}/close`, { token: adminToken, body: { reason: 'تم الحل', resolution: 'تم التواصل' } });
   await t.call('POST', '/api/webhooks/complaints', { headers, body: { rows } });
   assert.equal(a.status, 'مغلقة');
+  assert.equal(kase.status, 'مغلقة');
+  assert.equal(t.db._store.tables.cases.filter(x => x.source_id === a.id).length, 1, 'no duplicate case');
 });
 
 test('webhook: rejects oversized batches and malformed bodies', async () => {

@@ -229,6 +229,8 @@ test('google: full flow — connect, map locations, sync without reviewer names,
   assert.equal(stored.find(r => r.id === 'r1').rating, 1);
   assert.equal(stored.find(r => r.id === 'r3').branch, 'عنيزة');
   assert.equal(stored.find(r => r.id === 'r2').reply, 'شكراً لك');
+  const lowCases = t.db._store.tables.cases.filter(c => c.source === 'تقييم قوقل');
+  assert.deepEqual(lowCases.map(c => [c.source_id, c.severity, c.branch]), [['r1', 'عالية', 'بريدة']], 'only the 1-star review opens a case');
 
   // staff can read; summary per branch
   const list = await t.call('GET', '/api/reviews', { token: staffToken });

@@ -10,7 +10,7 @@ const SEVERITIES = ['بسيطة', 'متوسطة', 'عالية'];
 const STATUSES = ['جديدة', 'قيد المعالجة', 'مغلقة'];
 const PLAN_ANSWERS = ['نعم', 'جزئياً', 'لا', 'لا ينطبق'];
 const CATEGORY_TYPES = ['سلبية', 'إيجابية', 'الكل'];
-const ROLES = ['staff', 'admin'];
+const ROLES = ['staff', 'case_officer', 'branch_manager', 'operations', 'quality', 'executive', 'admin'];
 const NOT_APPLICABLE = 'لا ينطبق';
 const CHANNELS = ['حضوري', 'اتصال'];
 const CALL_STATUSES = ['بانتظار الاتصال', 'لم يرد', 'رفض', 'رقم خاطئ', 'تم'];
@@ -115,22 +115,18 @@ const complaintSchema = z.object({
 });
 
 const complaintUpdateSchema = z.object({
-  status: oneOf(STATUSES, 'الحالة'),
-  assignedTo: optText(80),
-  resolution: optText(1000),
   // Optional: lets admins complete sheet complaints that arrived without a branch or doctor.
   branch: z.preprocess(v => (v === '' ? null : v), oneOf(BRANCHES, 'الفرع').nullable().optional()),
   doctorId: z.preprocess(v => (v === '' ? null : v), z.string().regex(UUID_RE, 'الطبيب غير موجود في القائمة').nullable().optional())
 });
 
-const followUpSchema = z.object({ followUp: oneOf(STATUSES, 'الحالة') });
 
 const userCreateSchema = z.object({
   username: z.string({ error: 'اسم المستخدم مطلوب' }).trim().toLowerCase().regex(/^[a-z0-9._-]{3,30}$/, 'اسم المستخدم: 3-30 حرفاً إنجليزياً صغيراً أو أرقاماً أو . _ -'),
   name: z.string({ error: 'أدخل الاسم' }).trim().min(1, 'أدخل الاسم').max(80),
   role: oneOf(ROLES, 'الدور'),
   branch: z.preprocess(v => v || null, oneOf(BRANCHES, 'الفرع').nullable())
-});
+}).refine(d => d.role !== 'branch_manager' || d.branch, { message: 'حدد فرع مدير الفرع' });
 
 const userUpdateSchema = z.object({
   name: z.string().trim().min(1, 'أدخل الاسم').max(80).optional(),
@@ -193,6 +189,6 @@ module.exports = {
   BRANCHES, SPECIALTIES, VISIT_TYPES, SENTIMENTS, SEVERITIES, STATUSES, PLAN_ANSWERS, CATEGORY_TYPES, ROLES, NOT_APPLICABLE,
   CHANNELS, CALL_STATUSES, CALL_OUTCOMES,
   UUID_RE, UserError, normalizePhone, tryPhone, normalizeFileNo, normalizeBranch, maskPhone, parse, parseFilters,
-  experienceSchema, complaintSchema, complaintUpdateSchema, followUpSchema,
+  experienceSchema, complaintSchema, complaintUpdateSchema,
   userCreateSchema, userUpdateSchema, doctorSchema, categorySchema, passwordChangeSchema
 };

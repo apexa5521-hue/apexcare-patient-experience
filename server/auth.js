@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { must } = require('./db');
 const { UserError } = require('./validate');
+const { ROLE_LABELS, permsOf, branchScope } = require('./access');
 
 const BCRYPT_COST = 12;
 const TOKEN_TTL_SECONDS = 8 * 60 * 60;
@@ -56,7 +57,10 @@ function signToken(user, secret) {
 }
 
 function publicUser(u) {
-  return { id: u.id, username: u.username, name: u.name, role: u.role, branch: u.branch, mustChange: !!u.must_change };
+  return {
+    id: u.id, username: u.username, name: u.name, role: u.role, roleLabel: ROLE_LABELS[u.role] || u.role, branch: u.branch,
+    mustChange: !!u.must_change, perms: permsOf(u), scope: branchScope(u)
+  };
 }
 
 /** Verifies the bearer token and loads the (active) user onto req.user. */
@@ -87,14 +91,7 @@ function requirePasswordChanged(req, _res, next) {
   next();
 }
 
-function requireAdmin(req, _res, next) {
-  if (req.user.role !== 'admin') return next(new UserError('لا تملك صلاحية لهذا الإجراء', 403));
-  next();
-}
-
-const isAdmin = (user) => user && user.role === 'admin';
-
 module.exports = {
   hashPassword, checkPassword, randomPassword, LoginLimiter, Revocations, signToken, publicUser,
-  authenticate, requirePasswordChanged, requireAdmin, isAdmin, TOKEN_TTL_SECONDS
+  authenticate, requirePasswordChanged, TOKEN_TTL_SECONDS
 };

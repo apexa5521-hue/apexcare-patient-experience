@@ -352,6 +352,45 @@ a.tel:hover{text-decoration:underline}
   #callTable td.c-act .btn{flex:1}
   #callTable td.empty{grid-column:1/-1}
 }
+.tiles-compact4{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(max-width:860px){.tiles-compact4{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:560px){.tiles-compact4 .tile{padding:12px}.tiles-compact4 .tile .v{font-size:24px}}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-weight:500;font-size:14px}
+.chips button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chips button .n{font-variant-numeric:tabular-nums;margin-inline-start:6px;opacity:.8}
+.case-list{display:grid;gap:10px}
+.case-card{display:grid;grid-template-columns:1fr auto;gap:6px 14px;padding:14px 16px;text-align:right;cursor:pointer;width:100%;font:inherit;color:inherit;transition:border-color .15s,box-shadow .15s}
+.case-card:hover{border-color:#cfcabf;box-shadow:var(--sh-lg)}
+.case-card.late{border-inline-start:3px solid var(--danger)}
+.case-card .top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.case-card .sum{grid-column:1/-1;color:var(--ink);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.case-card .meta{grid-column:1/-1;display:flex;gap:4px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.case-card .side{text-align:left;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.sla{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.sla.ok{background:var(--neu-soft);color:var(--neu)}.sla.soon{background:var(--warn-soft);color:var(--warn)}.sla.late{background:var(--danger-soft);color:var(--danger)}.sla.done{background:var(--pos-soft);color:var(--pos)}
+.modal .dialog.wide{max-width:780px}
+.case-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-4px 0 14px}
+.info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px;padding:14px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px}
+.info div small{display:block;color:var(--muted);font-size:12px}
+.info div b{font-weight:600}
+@media(max-width:560px){.info{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.contact-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn.wa{background:#1f8f4e}.btn.wa:hover{background:#18763f}
+.panel{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
+.panel h3{margin-bottom:10px}
+.panel.approve{border-color:var(--warn);background:var(--warn-soft)}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{position:relative;padding:0 18px 14px 0;border-inline-start:2px solid var(--line-2);margin-inline-start:6px}
+.timeline li::before{content:"";position:absolute;inset-inline-start:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--c-single)}
+.timeline li.k-اتصال::before,.timeline li.k-واتساب::before{border-color:var(--brand)}
+.timeline li.k-اعتماد::before{border-color:var(--warn)}
+.timeline li:last-child{border-color:transparent;padding-bottom:0}
+.timeline .h{font-size:12.5px;color:var(--muted)}
+.timeline .h b{color:var(--ink-2);font-weight:600}
+.timeline .b{margin-top:2px;white-space:pre-wrap;line-height:1.6}
+.ratings{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;margin-top:8px}
 .skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,#efede8 0,#f7f6f3 50%,#efede8 100%);background-size:200% 100%;animation:sk 1.2s infinite}
 @keyframes sk{to{background-position:-200% 0}}
 </style>
@@ -393,13 +432,14 @@ a.tel:hover{text-decoration:underline}
     </div>
     <div class="wrap" style="padding-top:0;padding-bottom:0">
       <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام النظام">
-        <button role="tab" data-tab="add" aria-selected="true">تسجيل تجربة</button>
-        <button role="tab" data-tab="calls" aria-selected="false">قائمة الاتصال<span class="badge soft hidden" id="callBadge"></span></button>
+        <button role="tab" data-tab="add" aria-selected="true" data-perm="record">تسجيل تجربة</button>
+        <button role="tab" data-tab="cases" aria-selected="false" data-perm="viewCases">المتابعة<span class="badge hidden" id="caseBadge"></span></button>
+        <button role="tab" data-tab="calls" aria-selected="false" data-perm="calls">قائمة الاتصال<span class="badge soft hidden" id="callBadge"></span></button>
         <button role="tab" data-tab="log" aria-selected="false">السجل</button>
         <button role="tab" data-tab="complaints" aria-selected="false">الشكاوى<span class="badge hidden" id="openBadge"></span></button>
         <button role="tab" data-tab="reviews" aria-selected="false">تقييمات قوقل</button>
-        <button role="tab" data-tab="kpi" aria-selected="false" data-admin>مؤشرات الأداء</button>
-        <button role="tab" data-tab="admin" aria-selected="false" data-admin>الإدارة</button>
+        <button role="tab" data-tab="kpi" aria-selected="false" data-perm="analytics">مؤشرات الأداء</button>
+        <button role="tab" data-tab="admin" aria-selected="false" data-perm="manageSetup">الإدارة</button>
       </nav>
     </div>
   </header>
@@ -472,10 +512,20 @@ a.tel:hover{text-decoration:underline}
       </div>
     </section>
 
+    <!-- Follow-up cases -->
+    <section data-pane="cases" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>المتابعة</h2><p class="muted small">كل شكوى، وتجربة سلبية، وتقييم منخفض يفتح حالة هنا حتى تُقفل</p></div></div>
+      <div class="grid g4 tiles-compact4" id="caseTiles" style="margin-bottom:14px"></div>
+      <div class="seg case-views" id="caseView" role="radiogroup" aria-label="عرض"></div>
+      <details class="card pad more-filters" style="margin-top:12px"><summary>تصفية متقدمة</summary><form class="filters" id="caseFilters" style="margin-top:10px"></form></details>
+      <div class="count-line" id="caseCount" aria-live="polite"></div>
+      <div class="case-list" id="caseList"></div>
+    </section>
+
     <!-- Call list -->
     <section data-pane="calls" role="tabpanel" class="hidden">
       <div class="section-head"><div><h2>قائمة الاتصال</h2><p class="muted small">زيارات بانتظار استبيان هاتفي. اضغط «ابدأ التقييم» لفتح النموذج جاهزاً.</p></div>
-        <div class="row"><button class="btn ghost sm" id="importCalls" type="button" data-admin>استيراد من Excel</button><button class="btn sm" id="newCall" type="button">إضافة زيارة</button></div></div>
+        <div class="row"><button class="btn ghost sm" id="importCalls" type="button" data-perm="importCalls">استيراد من Excel</button><button class="btn sm" id="newCall" type="button">إضافة زيارة</button></div></div>
       <div class="grid g3 tiles-compact" style="margin-bottom:14px">
         <div class="card tile"><div class="l">بانتظار الاتصال</div><div class="v" id="qPending">–</div></div>
         <div class="card tile"><div class="l">لم يرد</div><div class="v" id="qNoAnswer">–</div><div class="s">تبقى في القائمة لمحاولة أخرى</div></div>
@@ -510,7 +560,7 @@ a.tel:hover{text-decoration:underline}
     <!-- Complaints -->
     <section data-pane="complaints" role="tabpanel" class="hidden">
       <div class="section-head"><div><h2>الشكاوى</h2><p class="muted small">من الإدخال اليدوي وشيت الشكاوى</p></div>
-        <div class="row"><button class="btn ghost sm" id="exportCo" type="button">تصدير CSV</button><button class="btn sm" id="newCo" type="button">شكوى جديدة</button></div></div>
+        <div class="row"><button class="btn ghost sm" id="exportCo" type="button">تصدير CSV</button><button class="btn sm" id="newCo" type="button" data-perm="addComplaint">شكوى جديدة</button></div></div>
       <div class="grid g3" style="margin-bottom:14px">
         <div class="card tile"><div class="l">إجمالي الشكاوى</div><div class="v" id="cTotal">–</div></div>
         <div class="card tile"><div class="l">مفتوحة</div><div class="v" id="cOpen">–</div><div class="s">جديدة أو قيد المعالجة</div></div>
@@ -561,7 +611,7 @@ const S = { token: null, user: null, lk: null, overdueDays: 3, ex: [], co: [], a
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const isAdmin = () => S.user && S.user.role === 'admin';
+const has = perm => !!(S.user && S.user.perms && S.user.perms.includes(perm));
 const STAR = '<svg aria-hidden="true"><use href="#i-star"/></svg>';
 const RATING_TEXT = ['', 'ضعيف جداً', 'ضعيف', 'مقبول', 'جيد', 'ممتاز'];
 const WD = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -639,6 +689,7 @@ function openModal(html, { closable = true } = {}) {
   lastFocus = document.activeElement;
   const m = $('#modal');
   $('#modalBody').innerHTML = html;
+  $('#modalBody').classList.remove('wide');
   m.classList.remove('hidden');
   m.dataset.closable = closable ? '1' : '';
   const first = $('#modalBody input:not([type=hidden]):not([readonly]), #modalBody select, #modalBody textarea, #modalBody button');
@@ -646,7 +697,7 @@ function openModal(html, { closable = true } = {}) {
   if (first) first.focus();
 }
 function closeModal() {
-  $('#modal').classList.add('hidden'); $('#modalBody').innerHTML = '';
+  $('#modal').classList.add('hidden'); $('#modalBody').innerHTML = ''; $('#modalBody').classList.remove('wide');
   if (lastFocus && lastFocus.focus) lastFocus.focus();
 }
 $('#modal').addEventListener('click', e => {
@@ -747,13 +798,14 @@ $('#btnPw').onclick = () => pwModal(false);
 async function enter() {
   $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
   $('#whoName').textContent = S.user.name;
-  $('#whoRole').textContent = `${isAdmin() ? 'إدارة' : 'موظف'}${S.user.branch ? ' · ' + S.user.branch : ''}`;
-  $$('[data-admin]').forEach(el => el.classList.toggle('hidden', !isAdmin()));
+  $('#whoRole').textContent = `${S.user.roleLabel || ''}${S.user.branch ? ' · ' + S.user.branch : ''}`;
+  $$('[data-perm]').forEach(el => el.classList.toggle('hidden', !has(el.dataset.perm)));
   if (S.user.mustChange) return pwModal(true);
   await reloadLookups();
-  showTab('add');
+  showTab(has('record') ? 'add' : has('viewCases') ? 'cases' : 'complaints');
   refreshBadge();
-  refreshCallBadge();
+  if (has('calls')) refreshCallBadge();
+  if (has('viewCases')) refreshCaseBadge();
   const q = new URLSearchParams(location.search);
   if (q.get('google')) {
     history.replaceState(null, '', '/');
@@ -805,6 +857,7 @@ function showTab(t) {
   $$('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
   if (t === 'log') loadLog();
   if (t === 'calls') loadCalls();
+  if (t === 'cases') loadCases();
   if (t === 'reviews') loadReviews();
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
@@ -975,6 +1028,9 @@ function filterForm(sel, fields, onApply) {
     callStatus: `<div class="field"><label>الحالة</label><select data-k="status"><option value="open">المفتوحة (بانتظار + لم يرد)</option>${opt(S.lk.callStatuses)}</select></div>`,
     rating: `<div class="field"><label>النجوم</label><select data-k="rating">${opt([5, 4, 3, 2, 1].map(n => [String(n), `${n} ★`]), 'الكل')}</select></div>`,
     replied: `<div class="field"><label>الرد</label><select data-k="replied"><option value="">الكل</option><option value="no">بدون رد</option><option value="yes">تم الرد</option></select></div>`,
+    caseStatus: `<div class="field"><label>الحالة</label><select data-k="status"><option value="">حسب العرض</option><option value="all">الكل</option>${opt(CASE_STATUSES)}</select></div>`,
+    source: `<div class="field"><label>المصدر</label><select data-k="source">${opt(CASE_SOURCES, 'الكل')}</select></div>`,
+    severity: `<div class="field"><label>الخطورة</label><select data-k="severity">${opt(S.lk.severities, 'الكل')}</select></div>`,
     revStatus: `<div class="field"><label>المتابعة</label><select data-k="status"><option value="">الكل</option><option>جديد</option><option>تمت المراجعة</option></select></div>`,
     status: `<div class="field"><label>الحالة</label><select data-k="status">${opt(S.lk.statuses, 'الكل')}</select></div>`,
     fileNo: `<div class="field"><label>رقم الملف</label><input type="search" class="ltr" data-k="fileNo" placeholder="بحث جزئي"></div>`
@@ -993,6 +1049,7 @@ function readFilters(sel) {
 }
 function buildFilters() {
   filterForm('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'sentiment', 'visitType', 'channel', 'fileNo'], loadLog);
+  filterForm('#caseFilters', ['caseStatus', 'source', ...(S.user.scope ? [] : ['branch']), 'severity', 'from', 'to', 'fileNo'], loadCases);
   filterForm('#callFilters', ['callStatus', 'from', 'to', 'branch', 'fileNo'], loadCalls);
   filterForm('#revFilters', ['period', 'from', 'to', 'branch', 'rating', 'replied', 'revStatus'], loadReviews);
   filterForm('#coFilters', ['period', 'from', 'to', 'status', 'branch', 'doctorId', 'fileNo'], loadComplaints);
@@ -1008,27 +1065,23 @@ async function loadLog() {
   try {
     const r = await api('GET', `/experiences${qs(readFilters('#logFilters'))}`);
     S.ex = r.rows;
-    const adm = isAdmin();
-    $('#logScope').textContent = adm ? 'كل التجارب المسجّلة' : 'التجارب التي سجّلتها أنت فقط';
+    const adm = has('viewAllExperiences');
+    $('#logScope').textContent = adm ? (S.user.scope ? `تجارب فرع ${S.user.scope}` : 'كل التجارب المسجّلة') : 'التجارب التي سجّلتها أنت فقط';
     $('#logCount').textContent = r.total ? `${n0(r.total)} تجربة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
     $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th><th>الطريقة</th>
       <th>الحجز</th><th>الاستقبال</th><th>الطبيب ★</th><th>وضوح الخطة</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}</tr></thead><tbody>` +
       r.rows.map(x => `<tr><td class="num ltr">${esc(x.visitAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td><td>${x.channel === 'اتصال' ? '<span class="pill p-open">اتصال</span>' : '<span class="pill p-off">حضوري</span>'}</td>
         <td>${rChip(x.bookingRating)}</td><td>${rChip(x.receptionRating)}</td><td>${rChip(x.doctorRating)}</td><td>${planPill(x.planExplained)}</td>
         <td>${sentPill(x.sentiment)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td>
-        <td>${adm && x.sentiment === 'سلبية' ? `<select data-fu="${esc(x.id)}" aria-label="حالة المتابعة">${opt(S.lk.statuses, undefined, x.followUp)}</select>` : stPill(x.followUp)}</td>
+        <td>${stPill(x.followUp)}${x.caseId && has('viewCases') ? ` <button class="btn quiet sm" type="button" data-case="${esc(x.caseId)}">الحالة</button>` : ''}</td>
         <td class="wrap-t">${esc(x.generalNote)}</td>${adm ? `<td class="ltr">${esc(x.by)}</td>` : ''}</tr>`).join('') + '</tbody>'
       : emptyRow('لا توجد تجارب', 'غيّر الفلاتر أو سجّل تجربة جديدة.');
-    $$('#logTable [data-fu]').forEach(s => s.onchange = () => busy(s, async () => {
-      await api('PATCH', `/experiences/${s.dataset.fu}/follow-up`, { followUp: s.value });
-      const row = S.ex.find(x => x.id === s.dataset.fu); if (row) row.followUp = s.value;
-      toast('تم تحديث المتابعة');
-    }));
+    $$('#logTable [data-case]').forEach(b => b.onclick = () => caseModal(b.dataset.case));
   } catch (e) { if (!e.silent) { $('#logTable').innerHTML = emptyRow('تعذّر تحميل السجل', e.message); } }
 }
 $('#exportEx').onclick = () => csv('experiences',
-  ['visitAt', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'channel', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'followUp', 'generalNote', ...(isAdmin() ? ['by'] : [])],
-  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'نوع الزيارة', 'طريقة التقييم', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة', ...(isAdmin() ? ['بواسطة'] : [])], S.ex);
+  ['visitAt', 'fileNo', 'phone', 'doctor', 'branch', 'specialty', 'visitType', 'channel', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'followUp', 'generalNote', ...(has('viewAllExperiences') ? ['by'] : [])],
+  ['الزيارة', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التخصص', 'نوع الزيارة', 'طريقة التقييم', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'المتابعة', 'ملاحظة', ...(has('viewAllExperiences') ? ['بواسطة'] : [])], S.ex);
 
 function csv(name, keys, heads, rows) {
   if (!rows.length) return toast('لا توجد بيانات للتصدير', true);
@@ -1054,31 +1107,29 @@ async function loadComplaints() {
     $('#cOverS').textContent = `مفتوحة منذ أكثر من ${S.overdueDays} أيام`;
     setBadge(r.summary.open);
     $('#coCount').textContent = r.total ? `${n0(r.total)} شكوى${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
-    const adm = isAdmin();
+    const adm = has('viewCases');
     $('#coTable').innerHTML = r.rows.length ? `<thead><tr><th>التاريخ</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>التصنيف</th><th>الخطورة</th><th>الحالة</th><th>الشكوى</th><th>المسؤول</th><th>المصدر</th>${adm ? '<th></th>' : ''}</tr></thead><tbody>` +
       r.rows.map(x => `<tr class="${x.overdue ? 'overdue' : ''}"><td class="num ltr">${esc(x.createdAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor || '—')}</td><td>${esc(x.branch || '—')}</td>
         <td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td><td>${stPill(x.status)}${x.overdue ? ' <span class="pill p-high">متأخرة</span>' : ''}</td>
         <td class="wrap-t">${esc(x.description)}</td><td>${esc(x.assignedTo)}</td><td class="small muted">${esc(x.source)}</td>
-        ${adm ? `<td><button class="btn ghost sm" type="button" data-co="${esc(x.id)}">معالجة</button></td>` : ''}</tr>`).join('') + '</tbody>'
+        ${adm ? `<td><div class="row-actions">${x.caseId ? `<button class="btn sm" type="button" data-case="${esc(x.caseId)}">الحالة</button>` : ''}${has('handleCases') ? `<button class="btn ghost sm" type="button" data-co="${esc(x.id)}">تعديل</button>` : ''}</div></td>` : ''}</tr>`).join('') + '</tbody>'
       : emptyRow('لا توجد شكاوى', 'لا شيء يطابق الفلاتر الحالية.');
     $$('#coTable [data-co]').forEach(btn => btn.onclick = () => complaintModal(S.co.find(c => c.id === btn.dataset.co)));
+    $$('#coTable [data-case]').forEach(btn => btn.onclick = () => caseModal(btn.dataset.case));
   } catch (e) { if (!e.silent) $('#coTable').innerHTML = emptyRow('تعذّر تحميل الشكاوى', e.message); }
 }
 function complaintModal(c) {
-  openModal(`<h2 id="modalTitle">معالجة شكوى</h2>
+  openModal(`<h2 id="modalTitle">تعديل بيانات الشكوى</h2>
     <p class="small muted" style="margin:-6px 0 10px">ملف <span class="ltr">${esc(c.fileNo || '—')}</span> · ${esc(c.doctor || 'بدون طبيب')} · ${esc(c.branch || '—')} · <span class="ltr num">${esc(c.createdAt)}</span></p>
     <div class="quote">${esc(c.description)}</div>
     <form id="coEdit" class="grid" novalidate>
-      <div class="field"><span class="label" id="cosL">الحالة</span><div class="seg" id="coStatus" role="radiogroup" aria-labelledby="cosL"></div></div>
+      <p class="small muted" style="margin:0">المعالجة والتواصل والإقفال تتم من «الحالة».</p>
       <div class="grid g2">
         <div class="field"><label for="coBr">الفرع</label><select id="coBr" name="branch">${opt(S.lk.branches, 'غير محدد', c.branch)}</select></div>
         <div class="field"><label for="coDoc">الطبيب</label><select id="coDoc" name="doctorId"></select></div>
       </div>
-      <div class="field"><label for="coAs">المسؤول عن المتابعة</label><input type="text" id="coAs" name="assignedTo" maxlength="80" value="${esc(c.assignedTo)}"></div>
-      <div class="field"><label for="coRes">الإجراء المتخذ / الحل</label><textarea id="coRes" name="resolution" maxlength="1000">${esc(c.resolution)}</textarea></div>
       <div class="actions"><button class="btn" type="submit">حفظ</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
     </form>`);
-  seg($('#coStatus'), 'status', S.lk.statuses, c.status);
   const fillCoDoc = () => {
     const list = doctorsFor($('#coBr').value);
     const keep = c.doctorId && !list.some(d => d.id === c.doctorId) ? S.lk.doctors.filter(d => d.id === c.doctorId) : [];
@@ -1087,7 +1138,7 @@ function complaintModal(c) {
   fillCoDoc(); $('#coBr').onchange = fillCoDoc;
   $('#coEdit').onsubmit = e => {
     e.preventDefault();
-    busy(e.submitter, async () => { await api('PATCH', `/complaints/${c.id}`, Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم حفظ المعالجة'); loadComplaints(); });
+    busy(e.submitter, async () => { await api('PATCH', `/complaints/${c.id}`, Object.fromEntries(new FormData(e.target))); closeModal(); toast('تم حفظ التعديل'); loadComplaints(); });
   };
 }
 $('#newCo').onclick = () => {
@@ -1128,6 +1179,178 @@ $('#exportCo').onclick = () => csv('complaints',
   ['createdAt', 'fileNo', 'phone', 'doctor', 'branch', 'category', 'severity', 'status', 'description', 'source', 'assignedTo', 'resolution', 'closedAt'],
   ['التاريخ', 'رقم الملف', 'الجوال', 'الطبيب', 'الفرع', 'التصنيف', 'الخطورة', 'الحالة', 'الشكوى', 'المصدر', 'المسؤول', 'الحل', 'تاريخ الإغلاق'], S.co);
 
+/* ---------- follow-up cases ---------- */
+const CASE_SOURCES = ['شكوى', 'تجربة سلبية', 'تقييم خدمة', 'تقييم قوقل'];
+const CASE_STATUSES = ['جديدة', 'قيد المعالجة', 'بانتظار المريض', 'بانتظار الاعتماد', 'مغلقة'];
+const CLOSE_REASONS = ['تم الحل', 'تم الاعتذار والتوضيح', 'إجراء تصحيحي / تعويض', 'تعذّر التواصل', 'غير مبررة', 'مكررة'];
+const CONTACT_OUTCOMES = ['تم التواصل', 'لم يرد', 'مشغول / مغلق', 'رقم خاطئ', 'طلب معاودة الاتصال', 'أُرسلت رسالة'];
+const caseStatusPill = s => `<span class="pill ${s === 'مغلقة' ? 'p-closed' : s === 'جديدة' ? 'p-open' : s === 'بانتظار الاعتماد' ? 'p-mid' : 'p-prog'}">${esc(s)}</span>`;
+const sourcePill = s => `<span class="pill p-off">${esc(s)}</span>`;
+function slaBadge(c) {
+  if (c.status === 'مغلقة') return `<span class="sla done">مغلقة</span>`;
+  if (c.overdue) return `<span class="sla late">متأخرة</span>`;
+  return `<span class="sla ok">الاستحقاق <span class="ltr num">${esc(c.dueAt.slice(5))}</span></span>`;
+}
+function caseViews() {
+  const v = [['open', 'المفتوحة']];
+  if (has('handleCases')) v.unshift(['mine', 'المسندة لي']);
+  v.push(['none', 'غير مسندة'], ['overdue', 'المتأخرة']);
+  if (has('approveCases')) v.push(['approval', 'بانتظار الاعتماد']);
+  v.push(['closed', 'المغلقة']);
+  return v;
+}
+S.caseView = null;
+function caseQuery() {
+  const f = readFilters('#caseFilters');
+  const v = S.caseView;
+  if (v === 'mine') f.assigned = 'me';
+  if (v === 'none') f.assigned = 'none';
+  if (v === 'overdue') f.overdue = '1';
+  if (v === 'approval') f.status = 'بانتظار الاعتماد';
+  if (v === 'closed') f.status = 'مغلقة';
+  return f;
+}
+function setCaseBadge(counts) {
+  const n = has('assignCases') ? counts.awaitingApproval + counts.overdue : counts.mine + counts.unassigned;
+  const b = $('#caseBadge'); b.textContent = n; b.classList.toggle('hidden', !n);
+}
+async function refreshCaseBadge() { try { setCaseBadge((await api('GET', '/cases')).counts); } catch { /* ignore */ } }
+async function loadCases() {
+  if (!S.caseView) S.caseView = has('handleCases') && !has('assignCases') ? 'mine' : 'open';
+  $('#caseList').innerHTML = '<div class="card pad"><div class="skeleton"></div></div>';
+  try {
+    const r = await api('GET', `/cases${qs(caseQuery())}`);
+    const c = r.counts;
+    setCaseBadge(c);
+    $('#caseTiles').innerHTML = [
+      has('handleCases') ? ['مسندة لي', c.mine, ''] : ['مفتوحة', c.open, ''],
+      ['غير مسندة', c.unassigned, ''], ['متأخرة', c.overdue, c.overdue ? 'alert-t' : ''],
+      ['بانتظار الاعتماد', c.awaitingApproval, c.awaitingApproval && has('approveCases') ? 'alert-t' : '']
+    ].map(([l, v, cls]) => `<div class="card tile ${cls}"><div class="l">${l}</div><div class="v">${n0(v)}</div></div>`).join('');
+    const counts = { mine: c.mine, none: c.unassigned, overdue: c.overdue, approval: c.awaitingApproval, open: c.open };
+    $('#caseView').className = 'chips';
+    $('#caseView').innerHTML = caseViews().map(([k, l]) => `<button type="button" data-v="${k}" aria-pressed="${S.caseView === k}">${l}${counts[k] !== undefined ? `<span class="n">${n0(counts[k])}</span>` : ''}</button>`).join('');
+    $$('#caseView button').forEach(b => b.onclick = () => { S.caseView = b.dataset.v; loadCases(); });
+    $('#caseCount').textContent = r.total ? `${n0(r.total)} حالة${r.total > r.rows.length ? ` · يُعرض ${n0(r.rows.length)}` : ''}` : '';
+    S.cases = r.rows;
+    $('#caseList').innerHTML = r.rows.length ? r.rows.map(x => `<button type="button" class="card case-card ${x.overdue ? 'late' : ''}" data-id="${esc(x.id)}">
+        <div class="top">${sevPill(x.severity)}${sourcePill(x.source)}${caseStatusPill(x.status)}${slaBadge(x)}</div>
+        <div class="side">${esc(x.branch || 'بدون فرع')}<br><span class="ltr num">${esc(x.createdAt)}</span></div>
+        <div class="sum">${esc(x.summary || '—')}</div>
+        <div class="meta"><span>المسؤول: ${x.assignedTo ? esc(x.assignedTo.name) : '<b style="color:var(--warn)">غير مسندة</b>'}</span>${x.doctor ? `<span>${esc(x.doctor)}</span>` : ''}${x.fileNo ? `<span>ملف <span class="ltr">${esc(x.fileNo)}</span></span>` : ''}</div>
+      </button>`).join('') : `<div class="card"><div class="empty"><b>لا توجد حالات هنا</b>${S.caseView === 'mine' ? 'لا شيء مسند لك. راجع «غير مسندة».' : 'لا شيء يطابق العرض الحالي.'}</div></div>`;
+    $$('#caseList [data-id]').forEach(b => b.onclick = () => caseModal(b.dataset.id));
+  } catch (e) { if (!e.silent) $('#caseList').innerHTML = `<div class="card"><div class="empty"><b>تعذّر تحميل الحالات</b>${esc(e.message)}</div></div>`; }
+}
+const intlPhone = p => (/^05\d{8}$/.test(p) ? `966${p.slice(1)}` : '');
+function waText(c) {
+  return `السلام عليكم، معك ${S.user.name} من مجمع أبكس كير${c.branch ? ` – فرع ${c.branch}` : ''}. نتواصل معك بخصوص ملاحظتك الأخيرة، ويهمنا نسمع منك ونخدمك. متى يناسبك نتواصل؟`;
+}
+async function caseModal(id) {
+  let r;
+  try { r = await api('GET', `/cases/${id}`); } catch (e) { if (!e.silent) toast(e.message, true); return; }
+  const c = r.case, d = r.detail, can = r.can;
+  const phoneOk = !!intlPhone(c.phone);
+  const srcHtml = !d ? '' : c.source === 'تجربة سلبية'
+    ? `<div class="ratings"><span>الزيارة: <span class="ltr num">${esc(d.visitAt)}</span> · ${esc(d.visitType)} · ${esc(d.channel)}</span>
+        <span>الحجز ${rChip(d.bookingRating)}</span><span>الاستقبال ${rChip(d.receptionRating)}</span><span>الطبيب ${rChip(d.doctorRating)}</span><span>وضوح الخطة ${planPill(d.planExplained)}</span></div>`
+    : c.source === 'تقييم قوقل' ? `<div class="ratings">${roStars(d.rating, 16)}<span class="ltr num">${esc(d.at)}</span></div>${d.reply ? `<div class="reply" style="margin-top:8px"><small>ردّ المجمع</small>${esc(d.reply)}</div>` : ''}`
+    : `<div class="ratings"><span>${esc(d.channel)} · <span class="ltr num">${esc(d.at)}</span></span></div>`;
+  openModal(`<h2 id="modalTitle">${esc(c.source)}${c.fileNo ? ` · ملف <span class="ltr">${esc(c.fileNo)}</span>` : ''}</h2>
+    <div class="case-head">${sevPill(c.severity)}${caseStatusPill(c.status)}${slaBadge(c)}</div>
+    <div class="quote">${esc((d && d.text) || c.summary || '—')}</div>${srcHtml}
+    <div class="info" style="margin-top:14px">
+      <div><small>الفرع</small><b>${esc(c.branch || '—')}</b></div>
+      <div><small>الطبيب</small><b>${esc(c.doctor || '—')}</b></div>
+      <div><small>الجوال</small><b class="ltr num">${esc(c.phone || '—')}</b></div>
+      <div><small>فُتحت</small><b class="ltr num">${esc(c.createdAt)}</b></div>
+      <div><small>الاستحقاق</small><b class="ltr num">${esc(c.dueAt)}</b></div>
+      <div><small>أول تواصل</small><b class="ltr num">${esc(c.firstResponseAt || '—')}</b></div>
+      <div style="grid-column:1/-1"><small>المسؤول</small>${can.assign && c.status !== 'مغلقة'
+        ? `<select id="csAssign" style="max-width:280px;margin-top:4px"><option value="">غير مسندة</option></select>`
+        : `<b>${c.assignedTo ? esc(c.assignedTo.name) : 'غير مسندة'}</b>`}</div>
+    </div>
+    ${can.act && phoneOk ? `<div class="contact-row">
+        <a class="btn sm" href="tel:${esc(c.phone)}" id="csCall">اتصال</a>
+        <a class="btn sm wa" href="https://wa.me/${intlPhone(c.phone)}?text=${encodeURIComponent(waText(c))}" target="_blank" rel="noopener" id="csWa">واتساب</a>
+        <span class="small muted" style="align-self:center">بعد التواصل سجّل النتيجة تحت</span></div>` : ''}
+    ${can.approve ? `<div class="panel approve"><h3>طلب إقفال بانتظار اعتمادك</h3>
+        <p style="margin:0 0 8px"><b>${esc(c.closeReason)}</b> — ${esc(c.resolution)} <span class="small muted">(${esc(c.closedBy)})</span></p>
+        <div class="field"><label for="apNote">ملاحظة (مطلوبة عند الإرجاع)</label><textarea id="apNote" maxlength="1000" style="min-height:70px"></textarea></div>
+        <div class="actions"><button class="btn" type="button" id="apOk">اعتماد الإقفال</button><button class="btn ghost" type="button" id="apNo">إرجاع للمعالجة</button></div></div>` : ''}
+    ${can.act && c.status !== 'بانتظار الاعتماد' ? `<div class="panel"><h3>تسجيل تواصل أو ملاحظة</h3>
+        <form id="evForm" class="grid" novalidate>
+          <div class="seg" id="evType" role="radiogroup" aria-label="النوع"></div>
+          <div class="field" id="evOutBox"><label for="evOut">النتيجة</label><select id="evOut" name="outcome">${opt(CONTACT_OUTCOMES, 'اختر النتيجة')}</select></div>
+          <div class="field"><label for="evBody">ملاحظة</label><textarea id="evBody" name="body" maxlength="2000" style="min-height:70px" placeholder="ما الذي قيل أو تم (بدون اسم المريض)"></textarea></div>
+          <div class="actions" style="margin-top:0"><button class="btn" type="submit">حفظ</button>
+            ${c.status === 'بانتظار المريض' ? '<button class="btn ghost" type="button" data-st="قيد المعالجة">إرجاع إلى قيد المعالجة</button>' : '<button class="btn ghost" type="button" data-st="بانتظار المريض">بانتظار رد المريض</button>'}</div>
+        </form></div>
+      <div class="panel"><h3>${can.closeNeedsApproval ? 'طلب إقفال (يحتاج اعتماد مدير لأنها عالية الخطورة)' : 'إقفال الحالة'}</h3>
+        <form id="clForm" class="grid" novalidate>
+          <div class="field"><label for="clReason">سبب الإقفال</label><select id="clReason" name="reason">${opt(CLOSE_REASONS, 'اختر')}</select></div>
+          <div class="field"><label for="clRes">ما الذي تم؟</label><textarea id="clRes" name="resolution" maxlength="2000" style="min-height:70px"></textarea></div>
+          <div class="actions" style="margin-top:0"><button class="btn" type="submit">${can.closeNeedsApproval ? 'إرسال للاعتماد' : 'إقفال'}</button></div>
+        </form></div>` : ''}
+    ${c.status === 'مغلقة' ? `<div class="panel"><h3>الإقفال</h3><p style="margin:0"><b>${esc(c.closeReason)}</b> — ${esc(c.resolution)}</p>
+        <p class="small muted" style="margin:6px 0 0">${esc(c.closedBy)}${c.approvedBy ? ` · اعتمدها ${esc(c.approvedBy)}` : ''} · <span class="ltr num">${esc(c.closedAt)}</span></p>
+        ${can.reopen ? `<div class="field" style="margin-top:10px"><label for="roNote">سبب إعادة الفتح</label><input type="text" id="roNote" maxlength="300"></div><div class="actions"><button class="btn ghost" type="button" id="roGo">إعادة فتح</button></div>` : ''}</div>` : ''}
+    <div class="panel"><h3>السجل</h3><ul class="timeline">${r.events.slice().reverse().map(e => `<li class="k-${esc(e.type)}">
+        <div class="h"><b>${esc(e.type)}</b>${e.outcome ? ` · ${esc(e.outcome)}` : ''} · ${esc(e.username || '')} · <span class="ltr num">${esc(e.at)}</span></div>
+        ${e.body ? `<div class="b">${esc(e.body)}</div>` : ''}</li>`).join('')}</ul></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>إغلاق</button></div>`);
+  $('#modalBody').classList.add('wide');
+  const after = async (msg) => { toast(msg); await caseModal(id); if (!$('[data-pane=cases]').classList.contains('hidden')) loadCases(); refreshCaseBadge(); };
+
+  if ($('#csAssign')) {
+    try {
+      const a = await api('GET', '/cases/assignees');
+      $('#csAssign').innerHTML = '<option value="">غير مسندة</option>' + a.rows.map(u => `<option value="${esc(u.id)}" ${c.assignedTo && c.assignedTo.id === u.id ? 'selected' : ''}>${esc(u.name)} — ${esc(u.role)}${u.branch ? ` (${esc(u.branch)})` : ''}</option>`).join('');
+    } catch { /* keep the empty list */ }
+    $('#csAssign').onchange = e => busy(e.target, async () => { await api('POST', `/cases/${id}/assign`, { userId: e.target.value || null }); await after('تم الإسناد'); });
+  }
+  if ($('#evForm')) {
+    seg($('#evType'), 'type', ['اتصال', 'واتساب', 'ملاحظة'], 'اتصال');
+    const sync = () => { const t = ($('#evType input:checked') || {}).value; $('#evOutBox').classList.toggle('hidden', t === 'ملاحظة'); };
+    $('#evType').addEventListener('change', sync); sync();
+    const pick = (type, outcome) => { setSeg($('#evType'), type); sync(); if (outcome) $('#evOut').value = outcome; setTimeout(() => $('#evOut').focus(), 300); };
+    if ($('#csCall')) $('#csCall').addEventListener('click', () => pick('اتصال'));
+    if ($('#csWa')) $('#csWa').addEventListener('click', () => pick('واتساب', 'أُرسلت رسالة'));
+    $('#evForm').onsubmit = e => {
+      e.preventDefault();
+      busy(e.submitter, async () => {
+        const type = ($('#evType input:checked') || {}).value;
+        const body = { type, body: $('#evBody').value.trim(), outcome: type === 'ملاحظة' ? null : $('#evOut').value };
+        if (type === 'ملاحظة' && !body.body) throw new Error('اكتب الملاحظة');
+        if (type !== 'ملاحظة' && !body.outcome) throw new Error('اختر نتيجة التواصل');
+        await api('POST', `/cases/${id}/events`, body); await after('سُجّل');
+      });
+    };
+    $$('#evForm [data-st]').forEach(b => b.onclick = () => busy(b, async () => { await api('POST', `/cases/${id}/status`, { status: b.dataset.st }); await after('تم تحديث الحالة'); }));
+    $('#clForm').onsubmit = e => {
+      e.preventDefault();
+      busy(e.submitter, async () => {
+        const reason = $('#clReason').value, resolution = $('#clRes').value.trim();
+        if (!reason) throw new Error('اختر سبب الإقفال');
+        if (!resolution) throw new Error('اكتب ما الذي تم');
+        const x = await api('POST', `/cases/${id}/close`, { reason, resolution });
+        await after(x.status === 'مغلقة' ? 'أُقفلت الحالة' : 'أُرسلت للاعتماد');
+      });
+    };
+  }
+  if ($('#apOk')) {
+    $('#apOk').onclick = e => busy(e.target, async () => { await api('POST', `/cases/${id}/approve`, { approve: true, note: $('#apNote').value.trim() }); await after('اعتُمد الإقفال'); });
+    $('#apNo').onclick = e => busy(e.target, async () => {
+      const note = $('#apNote').value.trim(); if (!note) throw new Error('اكتب سبب الإرجاع');
+      await api('POST', `/cases/${id}/approve`, { approve: false, note }); await after('أُرجعت للمعالجة');
+    });
+  }
+  if ($('#roGo')) $('#roGo').onclick = e => busy(e.target, async () => {
+    const note = $('#roNote').value.trim(); if (!note) throw new Error('اكتب سبب إعادة الفتح');
+    await api('POST', `/cases/${id}/reopen`, { note }); await after('أُعيد فتح الحالة');
+  });
+}
+
 /* ---------- call list ---------- */
 const callPill = s => `<span class="pill ${s === 'تم' ? 'p-closed' : s === 'لم يرد' ? 'p-prog' : s === 'بانتظار الاتصال' ? 'p-open' : 'p-neg'}">${esc(s)}</span>`;
 function setCallBadge(n) { const b = $('#callBadge'); b.textContent = n; b.classList.toggle('hidden', !n); b.setAttribute('aria-label', `${n} بانتظار الاتصال`); }
@@ -1146,7 +1369,7 @@ async function loadCalls() {
         <td data-l="الطبيب">${esc(x.doctor || '—')}</td><td data-l="الفرع">${esc(x.branch || '—')}</td><td class="num" data-l="المحاولات">${n0(x.attempts)}${x.lastAttemptAt ? ` <span class="tiny muted ltr">${esc(x.lastAttemptAt.slice(5))}</span>` : ''}</td><td>${callPill(x.status)}</td>
         <td class="c-act">${x.status === 'تم' ? '' : `<div class="row-actions"><button class="btn sm" type="button" data-start="${esc(x.id)}">ابدأ التقييم</button>
           <select data-out="${esc(x.id)}" aria-label="نتيجة الاتصال"><option value="">نتيجة أخرى…</option>${outcomes.filter(o => o !== x.status).map(o => `<option>${esc(o)}</option>`).join('')}</select></div>`}</td></tr>`).join('') + '</tbody>'
-      : emptyRow('لا توجد زيارات هنا', isAdmin() ? 'استورد زيارات اليوم من Excel أو أضف زيارة.' : 'أضف زيارة أو اطلب من الإدارة استيراد القائمة.');
+      : emptyRow('لا توجد زيارات هنا', has('importCalls') ? 'استورد زيارات اليوم من Excel أو أضف زيارة.' : 'أضف زيارة أو اطلب من الإدارة استيراد القائمة.');
     $$('#callTable [data-start]').forEach(b => b.onclick = () => startCallSurvey(S.calls.find(c => c.id === b.dataset.start)));
     $$('#callTable [data-out]').forEach(sel => sel.onchange = () => sel.value && busy(sel, async () => {
       await api('PATCH', `/calls/${sel.dataset.out}`, { status: sel.value }); toast(`سُجّلت النتيجة: ${sel.value}`); loadCalls();
@@ -1239,7 +1462,7 @@ $('#importCalls').onclick = () => {
 const revPill = s => `<span class="pill ${s === 'جديد' ? 'p-open' : 'p-closed'}">${esc(s)}</span>`;
 function revSetupHtml(g) {
   const cb = `${location.origin}/api/google/callback`;
-  if (!isAdmin()) return `<div class="card"><div class="empty"><b>تقييمات قوقل غير مربوطة بعد</b>الإدارة تربطها من هذا التبويب.</div></div>`;
+  if (!has('manageSetup')) return `<div class="card"><div class="empty"><b>تقييمات قوقل غير مربوطة بعد</b>الإدارة تربطها من هذا التبويب.</div></div>`;
   const steps = `<ol>
       <li>في <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> أنشئ مشروعاً، وفعّل من APIs &amp; Services: <code>My Business Account Management API</code> و <code>My Business Business Information API</code> و <code>Google My Business API</code>.</li>
       <li>اطلب الوصول لواجهات Business Profile من <a href="https://developers.google.com/my-business/content/prereqs" target="_blank" rel="noopener">صفحة المتطلبات</a> (نموذج «Access request»). الموافقة تأخذ عادة بضعة أيام.</li>
@@ -1257,13 +1480,13 @@ async function loadReviews() {
     const g = r.google;
     const ready = g.connected && g.mapped.length;
     $('#revSub').textContent = ready ? `${g.mapped.map(m => `${m.branch}: ${m.title}`).join(' · ')}${g.lastSync ? ` · آخر تحديث ${g.lastSync}` : ''}` : 'من ملف النشاط التجاري على خرائط قوقل';
-    $('#revActions').innerHTML = isAdmin() && g.connected ? `<button class="btn ghost sm" type="button" id="gMap">مواقع الفروع</button>${ready ? '<button class="btn sm" type="button" id="gSync">تحديث الآن</button>' : ''}` : '';
+    $('#revActions').innerHTML = g.connected ? `${has('manageSetup') ? '<button class="btn ghost sm" type="button" id="gMap">مواقع الفروع</button>' : ''}${ready && has('handleCases') ? '<button class="btn sm" type="button" id="gSync">تحديث الآن</button>' : ''}` : '';
     if ($('#gMap')) $('#gMap').onclick = mapModal;
     if ($('#gSync')) $('#gSync').onclick = e => busy(e.target, async () => { const x = await api('POST', '/reviews/sync'); toast(`تم التحديث: ${n0(x.fetched)} تقييم`); loadReviews(); });
     $('#revSetup').classList.toggle('hidden', !!(ready || r.total));
     $('#revMain').classList.toggle('hidden', !(ready || r.total));
     if (!(ready || r.total)) {
-      $('#revSetup').innerHTML = g.connected && isAdmin()
+      $('#revSetup').innerHTML = g.connected && has('manageSetup')
         ? `<div class="card pad setup"><h3>بقيت خطوة</h3><p class="muted small">تم ربط حساب قوقل. اختر أي موقع يتبع أي فرع.</p><div class="actions"><button class="btn" type="button" id="gMap2">اختيار المواقع</button></div></div>`
         : revSetupHtml(g);
       if ($('#gMap2')) $('#gMap2').onclick = mapModal;
@@ -1281,7 +1504,7 @@ async function loadReviews() {
         <p class="txt ${x.comment ? '' : 'none'}">${x.comment ? esc(x.comment) : 'تقييم بالنجوم فقط، بدون تعليق'}</p>
         ${x.reply ? `<div class="reply"><small>ردّ المجمع · <span class="ltr num">${esc(x.repliedAt)}</span></small>${esc(x.reply)}</div>` : ''}
         ${x.note ? `<p class="small muted" style="margin:10px 0 0">ملاحظة المتابعة: ${esc(x.note)}${x.handledBy ? ` — <span class="ltr">${esc(x.handledBy)}</span>` : ''}</p>` : ''}
-        ${isAdmin() ? `<div class="tools">${x.reply ? '' : `<button class="btn sm" type="button" data-reply="${esc(x.id)}">رد على قوقل</button>`}<button class="btn ghost sm" type="button" data-follow="${esc(x.id)}">متابعة</button></div>` : ''}
+        ${has('handleCases') ? `<div class="tools">${x.reply ? '' : `<button class="btn sm" type="button" data-reply="${esc(x.id)}">رد على قوقل</button>`}<button class="btn ghost sm" type="button" data-follow="${esc(x.id)}">متابعة</button></div>` : ''}
       </article>`).join('') : '<div class="card"><div class="empty"><b>لا توجد تقييمات</b>لا شيء يطابق الفلاتر الحالية.</div></div>';
     $$('#revList [data-reply]').forEach(b => b.onclick = () => replyModal(S.reviews.find(x => x.id === b.dataset.reply)));
     $$('#revList [data-follow]').forEach(b => b.onclick = () => followModal(S.reviews.find(x => x.id === b.dataset.follow)));
@@ -1401,11 +1624,38 @@ function netCell(v) {
   return `<span class="net"><span class="nb" aria-hidden="true"><i style="${side};width:${w}%;background:${v < 0 ? 'var(--c-neg)' : 'var(--c-single)'}"></i></span><span dir="ltr">${v > 0 ? '+' : ''}${v}</span></span>`;
 }
 
+/** Follow-up performance: volume, speed, SLA, by source/branch, workload, close reasons. */
+function casesSection(cs) {
+  const hrs = v => (v === null || v === undefined ? '–' : v < 48 ? `${n1(v)} س` : `${n1(v / 24)} يوم`);
+  const row = (g, label) => `<tr><td><b>${esc(label)}</b></td><td class="num">${n0(g.total)}</td><td class="num">${n0(g.open)}</td><td class="num">${g.overdue ? `<span style="color:var(--danger);font-weight:700">${n0(g.overdue)}</span>` : 0}</td><td class="num">${hrs(g.avgFirstResponseH)}</td><td class="num">${hrs(g.avgCloseH)}</td></tr>`;
+  const head = '<thead><tr><th></th><th class="num">الحالات</th><th class="num">مفتوحة</th><th class="num">متأخرة</th><th class="num">أول تواصل</th><th class="num">مدة الإقفال</th></tr></thead>';
+  return `<div class="card chart-card"><h3>المتابعة</h3><p class="sub">الحالات المفتوحة من الشكاوى والتجارب السلبية والتقييمات المنخفضة في الفترة المختارة</p>
+    <div class="grid g4 tiles-compact4">
+      <div class="card tile"><div class="l">الحالات</div><div class="v">${n0(cs.total)}</div><div class="s">${n0(cs.open)} مفتوحة · ${n0(cs.unassigned)} غير مسندة</div></div>
+      <div class="card tile ${cs.overdue ? 'alert-t' : ''}"><div class="l">متأخرة عن الموعد</div><div class="v">${n0(cs.overdue)}</div><div class="s">${n0(cs.awaitingApproval)} بانتظار الاعتماد</div></div>
+      <div class="card tile"><div class="l">متوسط أول تواصل</div><div class="v">${hrs(cs.avgFirstResponseH)}</div><div class="s">من فتح الحالة</div></div>
+      <div class="card tile"><div class="l">أُقفلت في موعدها</div><div class="v">${pc(cs.onTimePct)}</div><div class="s">متوسط مدة الإقفال ${hrs(cs.avgCloseH)}</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div><div class="tbl-wrap"><table>${head}<tbody>${cs.bySource.map(g => row(g, g.key)).join('') || '<tr><td class="empty" colspan="6">لا توجد حالات</td></tr>'}</tbody></table></div></div>
+      <div><div class="tbl-wrap"><table>${head.replace('<th></th>', '<th>الفرع</th>')}<tbody>${cs.byBranch.map(g => row(g, g.key || 'بدون فرع')).join('') || '<tr><td class="empty" colspan="6">لا توجد حالات</td></tr>'}</tbody></table></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div><h3 style="margin-bottom:8px">عبء العمل</h3><div class="tbl-wrap"><table><thead><tr><th>المسؤول</th><th class="num">مفتوحة</th><th class="num">متأخرة</th><th class="num">مُقفلة</th><th class="num">مدة الإقفال</th></tr></thead><tbody>
+        ${cs.assignees.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${n0(a.open)}</td><td class="num">${a.overdue ? `<span style="color:var(--danger);font-weight:700">${n0(a.overdue)}</span>` : 0}</td><td class="num">${n0(a.closed)}</td><td class="num">${hrs(a.avgCloseH)}</td></tr>`).join('') || '<tr><td class="empty" colspan="5">لا توجد حالات مسندة</td></tr>'}</tbody></table></div></div>
+      <div><h3 style="margin-bottom:8px">أسباب الإقفال</h3>${cs.closeReasons.length ? hbars(cs.closeReasons, { name: x => x.key, total: x => x.count, neg: () => 0, tip: x => `${x.key}: ${n0(x.count)}` }) : '<div class="empty">لا توجد حالات مقفلة</div>'}</div>
+    </div></div>`;
+}
+
 async function loadKpi() {
   const body = $('#kpiBody');
   body.innerHTML = '<div class="grid g4">' + '<div class="card tile"><div class="skeleton" style="width:60%"></div><div class="skeleton" style="height:30px;margin-top:12px"></div></div>'.repeat(4) + '</div>';
   try {
-    const { kpis: k } = await api('GET', `/kpis${qs(readFilters('#kpiFilters'))}`);
+    const kf = readFilters('#kpiFilters');
+    const [{ kpis: k }, cs] = await Promise.all([
+      api('GET', `/kpis${qs(kf)}`),
+      has('viewCases') ? api('GET', `/cases/stats${qs({ from: kf.from, to: kf.to, branch: kf.branch })}`).then(x => x.stats).catch(() => null) : null
+    ]);
     const s = k.summary;
     if (!s.total && !s.complaints) {
       body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات في هذه الفترة</b>جرّب فترة أوسع أو امسح الفلاتر.</div></div>';
@@ -1428,6 +1678,8 @@ async function loadKpi() {
         <div class="card tile ${s.overdueComplaints ? 'alert-t' : ''}"><div class="l">الشكاوى</div><div class="v">${n0(s.complaints)}</div>
           <div class="s">${n0(s.openComplaints)} مفتوحة · ${n0(s.overdueComplaints)} متأخرة${s.avgCloseHours === null ? '' : ` · متوسط الإغلاق ${n1(s.avgCloseHours)} ساعة`}</div></div>
       </div>
+
+      ${cs ? casesSection(cs) : ''}
 
       <div class="grid g3">
         ${ratingCard('تقييم موظفي الحجز', s.avgBooking, k.ratingDistribution.booking)}
@@ -1507,7 +1759,7 @@ async function loadAdmin() {
     S.adm = { users: u.rows, doctors: d.rows, categories: c.rows };
     const act = a => (a ? '<span class="pill p-closed">مفعّل</span>' : '<span class="pill p-off">معطّل</span>');
     $('#userTable').innerHTML = `<thead><tr><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الفرع</th><th>الحالة</th><th>آخر دخول</th><th></th></tr></thead><tbody>` +
-      S.adm.users.map(x => `<tr><td class="ltr">${esc(x.username)}</td><td>${esc(x.name)}${x.id === S.user.id ? '<span class="tag">أنت</span>' : ''}</td><td>${x.role === 'admin' ? 'إدارة' : 'موظف'}</td>
+      S.adm.users.map(x => `<tr><td class="ltr">${esc(x.username)}</td><td>${esc(x.name)}${x.id === S.user.id ? '<span class="tag">أنت</span>' : ''}</td><td>${esc(x.roleLabel || x.role)}</td>
         <td>${esc(x.branch || 'الكل')}</td><td>${act(x.active)}${x.mustChange ? ' <span class="pill p-prog">بانتظار تغيير كلمة المرور</span>' : ''}</td><td class="ltr num small">${esc(x.lastLogin || '—')}</td>
         <td><button class="btn ghost sm" type="button" data-u="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>';
     $('#docTable').innerHTML = S.adm.doctors.length ? `<thead><tr><th>الطبيب</th><th>التخصص</th><th>الفرع</th><th>الحالة</th><th></th></tr></thead><tbody>` +
@@ -1532,6 +1784,19 @@ function tempPasswordModal(name, pw) {
     <div class="actions"><button class="btn" type="button" id="copyPw">نسخ</button><button class="btn ghost" type="button" data-close>تم</button></div>`, { closable: true });
   $('#copyPw').onclick = async () => { try { await navigator.clipboard.writeText(pw); toast('تم النسخ'); } catch { toast('انسخها يدوياً', true); } };
 }
+const ROLE_OPTIONS = [
+  ['staff', 'موظف استقبال / اتصال'], ['case_officer', 'موظفة المتابعة'], ['branch_manager', 'مدير فرع'],
+  ['operations', 'مدير التشغيل'], ['quality', 'مدير الجودة'], ['executive', 'المدير التنفيذي'], ['admin', 'مدير النظام']
+];
+const ROLE_HINTS = {
+  staff: 'يسجّل التجارب ويستخدم قائمة الاتصال، ويرى تسجيلاته فقط. الجوال يظهر له مقنّعاً.',
+  case_officer: 'تتابع الحالات المسندة لها وغير المسندة: تواصل، تدوين، إقفال. إن حُدد فرع تقتصر على فرعه. الحالات عالية الخطورة تحتاج اعتماد مدير.',
+  branch_manager: 'يرى فرعه فقط: الحالات والمؤشرات والسجل، ويُسند الحالات ويعتمد إقفالها. لازم يكون له فرع.',
+  operations: 'كل الفروع: المؤشرات، وإسناد الحالات ومعالجتها واعتماد إقفالها.',
+  quality: 'كل شيء، ومعه إدارة المستخدمين والأطباء والتصنيفات وربط قوقل.',
+  executive: 'كل الفروع للاطلاع فقط: المؤشرات والحالات بدون تعديل.',
+  admin: 'مدير النظام: كل الصلاحيات.'
+};
 function userModal(u) {
   const self = u && u.id === S.user.id;
   openModal(`<h2 id="modalTitle">${u ? 'تعديل مستخدم' : 'مستخدم جديد'}</h2>
@@ -1540,13 +1805,16 @@ function userModal(u) {
         ${u ? '' : '<div class="hint">3–30 حرفاً إنجليزياً صغيراً أو أرقاماً أو . _ -</div>'}</div>
       <div class="field"><label for="uName">الاسم</label><input type="text" id="uName" name="name" maxlength="80" value="${esc(u?.name)}"></div>
       <div class="grid g2">
-        <div class="field"><label for="uRole">الدور</label><select id="uRole" name="role" ${self ? 'disabled' : ''}>${opt([['staff', 'موظف'], ['admin', 'إدارة']], undefined, u?.role || 'staff')}</select></div>
-        <div class="field"><label for="uBranch">الفرع</label><select id="uBranch" name="branch">${opt(S.lk.branches, 'الكل', u?.branch || '')}</select></div>
+        <div class="field"><label for="uRole">الدور</label><select id="uRole" name="role" ${self ? 'disabled' : ''}>${opt(ROLE_OPTIONS, undefined, u?.role || 'staff')}</select></div>
+        <div class="field"><label for="uBranch">الفرع</label><select id="uBranch" name="branch">${opt(S.lk.branches, 'كل الفروع', u?.branch || '')}</select></div>
       </div>
+      <div class="hint" id="uRoleHint"></div>
       ${u ? `<label class="check"><input type="checkbox" name="active" ${u.active ? 'checked' : ''} ${self ? 'disabled' : ''}> الحساب مفعّل</label>
              <label class="check"><input type="checkbox" name="resetPassword"> إعادة تعيين كلمة المرور (تظهر كلمة مؤقتة جديدة)</label>` : ''}
       <div class="actions"><button class="btn" type="submit">${u ? 'حفظ' : 'إنشاء المستخدم'}</button><button type="button" class="btn ghost" data-close>إلغاء</button></div>
     </form>`);
+  const hint = () => { $('#uRoleHint').textContent = ROLE_HINTS[$('#uRole').value] || ''; };
+  hint(); $('#uRole').onchange = hint;
   $('#uForm').onsubmit = e => {
     e.preventDefault();
     const f = e.target;
