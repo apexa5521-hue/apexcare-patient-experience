@@ -34,6 +34,12 @@ test('login: wrong password is rejected and audited', async () => {
   assert.ok(t.db._store.tables.audit_log.some(a => a.action === 'login' && a.username === 'boss'));
 });
 
+test('login: a username with characters no account can have is a plain wrong login', async () => {
+  const r = await t.call('POST', '/api/auth/login', { body: { username: "' or 1=1--", password: 'x' } });
+  assert.equal(r.status, 401);
+  assert.match(r.body.error, /غير صحيحة/);
+});
+
 test('login: 5 failures within 10 minutes lock the username', async () => {
   t.addUser({ username: 'locked.user' });
   for (let i = 0; i < 5; i++) await t.call('POST', '/api/auth/login', { body: { username: 'locked.user', password: 'bad' } });

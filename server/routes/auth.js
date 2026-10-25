@@ -29,7 +29,11 @@ function authRoutes() {
     if (loginLimiter.isLocked(username)) {
       throw new UserError('تم إيقاف المحاولات مؤقتاً. حاول بعد 10 دقائق', 429);
     }
-    const user = await must(db.from('app_users').select('*').eq('username', username).maybeSingle());
+    // A name outside the allowed username characters can't exist; don't send it to the database
+    // (Supabase's edge firewall answers SQL-looking strings with an HTML error page, which became a 500).
+    const user = /^[a-z0-9._-]{3,30}$/.test(username)
+      ? await must(db.from('app_users').select('*').eq('username', username).maybeSingle())
+      : null;
     const ok = await checkPassword(password, user?.password_hash || DUMMY_HASH);
     if (!user || !user.active || !ok) {
       loginLimiter.fail(username);
