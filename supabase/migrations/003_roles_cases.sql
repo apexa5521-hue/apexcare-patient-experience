@@ -4,7 +4,7 @@
 
 -- Roles (widened after the first release; re-runnable).
 alter table app_users drop constraint if exists app_users_role_check;
-alter table app_users add constraint app_users_role_check check (role in ('staff','case_officer','branch_manager','operations','quality','executive','admin'));
+alter table app_users add constraint app_users_role_check check (role in ('staff','case_officer','quality_specialist','branch_manager','operations','quality','executive','admin'));
 
 -- Follow-up cases: one per complaint, negative experience, low service rating or low Google review.
 create table if not exists cases (

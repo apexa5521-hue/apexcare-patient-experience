@@ -8,7 +8,7 @@ create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   username text unique not null check (username ~ '^[a-z0-9._-]{3,30}$'),
   name text not null,
-  role text not null check (role in ('staff','case_officer','branch_manager','operations','quality','executive','admin')),
+  role text not null check (role in ('staff','case_officer','quality_specialist','branch_manager','operations','quality','executive','admin')),
   branch text check (branch in ('بريدة','عنيزة')),          -- null = all branches
   password_hash text not null,
   active boolean not null default true,
@@ -19,7 +19,7 @@ create table if not exists app_users (
 
 -- Roles (widened after the first release; re-runnable).
 alter table app_users drop constraint if exists app_users_role_check;
-alter table app_users add constraint app_users_role_check check (role in ('staff','case_officer','branch_manager','operations','quality','executive','admin'));
+alter table app_users add constraint app_users_role_check check (role in ('staff','case_officer','quality_specialist','branch_manager','operations','quality','executive','admin'));
 
 create table if not exists doctors (
   id uuid primary key default gen_random_uuid(),

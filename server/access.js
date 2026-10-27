@@ -8,6 +8,7 @@ const { UserError, ROLES } = require('./validate');
 const ROLE_LABELS = {
   staff: 'موظف استقبال / اتصال',
   case_officer: 'موظفة المتابعة',
+  quality_specialist: 'أخصائية الجودة',
   branch_manager: 'مدير فرع',
   operations: 'مدير التشغيل',
   quality: 'مدير الجودة',
@@ -18,20 +19,22 @@ const ROLE_LABELS = {
 const ALL = ROLES;
 const MANAGERS = ['branch_manager', 'operations', 'quality', 'admin'];
 const NOT_EXEC = ALL.filter(r => r !== 'executive');
+// Quality specialist: works every branch's cases and sees the analytics, but setup and approving high-severity closes stay with managers.
+const QS = 'quality_specialist';
 
 const PERMS = {
   record: NOT_EXEC,                                     // record experiences
   calls: NOT_EXEC,                                      // use the call list
-  importCalls: MANAGERS,
+  importCalls: [...MANAGERS, QS],
   addComplaint: NOT_EXEC,
-  viewAllExperiences: ['branch_manager', 'operations', 'quality', 'executive', 'admin'],
-  analytics: ['branch_manager', 'operations', 'quality', 'executive', 'admin'],
-  viewCases: ['case_officer', ...MANAGERS, 'executive'],
-  handleCases: ['case_officer', ...MANAGERS],          // contact, note, change status, close (subject to approval)
+  viewAllExperiences: [QS, 'branch_manager', 'operations', 'quality', 'executive', 'admin'],
+  analytics: [QS, 'branch_manager', 'operations', 'quality', 'executive', 'admin'],
+  viewCases: ['case_officer', QS, ...MANAGERS, 'executive'],
+  handleCases: ['case_officer', QS, ...MANAGERS],          // contact, note, change status, close (subject to approval)
   assignCases: MANAGERS,
   approveCases: MANAGERS,                               // approve closing high-severity cases
   manageSetup: ['quality', 'admin'],                    // users, doctors, categories, Google connection
-  fullPhones: ['case_officer', ...MANAGERS]
+  fullPhones: ['case_officer', QS, ...MANAGERS]
 };
 
 /** Roles limited to one branch when the user has a branch set. */

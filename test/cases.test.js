@@ -18,7 +18,7 @@ test.before(async () => {
   const people = {
     admin: { role: 'admin' }, quality: { role: 'quality' }, ops: { role: 'operations' }, exec: { role: 'executive' },
     bmB: { role: 'branch_manager', branch: 'بريدة' }, bmU: { role: 'branch_manager', branch: 'عنيزة' },
-    officer: { role: 'case_officer' }, officer2: { role: 'case_officer' }, staffB: { role: 'staff', branch: 'بريدة' }
+    officer: { role: 'case_officer' }, qs: { role: 'quality_specialist' }, officer2: { role: 'case_officer' }, staffB: { role: 'staff', branch: 'بريدة' }
   };
   for (const [k, v] of Object.entries(people)) u[k] = t.addUser({ username: `u.${k.toLowerCase()}`, name: `اسم ${k}`, ...v });
   for (const k of Object.keys(people)) tok[k] = await t.login(`u.${k.toLowerCase()}`);
@@ -47,6 +47,26 @@ test('user admin: branch managers need a branch; only quality/admin manage users
   assert.equal((await t.call('GET', '/api/admin/users', { token: tok.ops })).status, 403);
   assert.equal((await t.call('GET', '/api/admin/users', { token: tok.bmB })).status, 403);
   assert.match((await t.call('PATCH', `/api/admin/users/${u.quality.id}`, { token: tok.quality, body: { role: 'staff' } })).body.error, /دورك/);
+});
+
+test('quality specialist: all branches, works and closes cases, sees analytics; no setup, assigning or approving', async () => {
+  const me = (await t.call('GET', '/api/auth/me', { token: tok.qs })).body.user;
+  assert.equal(me.roleLabel, 'أخصائية الجودة');
+  assert.equal(me.scope, null);
+  for (const p of ['analytics', 'viewAllExperiences', 'viewCases', 'handleCases', 'fullPhones', 'importCalls', 'record']) assert.ok(me.perms.includes(p), p);
+  for (const p of ['manageSetup', 'assignCases', 'approveCases']) assert.ok(!me.perms.includes(p), p);
+  assert.equal((await t.call('GET', '/api/admin/users', { token: tok.qs })).status, 403);
+
+  const other = await t.call('POST', '/api/experiences', { token: tok.staffB, body: neg(docU.id, { fileNo: 'QS-1', branch: 'عنيزة' }) });
+  const c = caseFor('تجربة سلبية', other.body.id);
+  await t.call('POST', `/api/cases/${c.id}/assign`, { token: tok.admin, body: { userId: u.officer.id } });
+  assert.ok((await t.call('GET', '/api/cases?status=all', { token: tok.qs })).body.rows.some(r => r.id === c.id), 'sees cases assigned to others');
+  const closed = await t.call('POST', `/api/cases/${c.id}/close`, { token: tok.qs, body: { reason: 'تم الاعتذار والتوضيح', resolution: 'تم التواصل' } });
+  assert.equal(closed.status, 200, JSON.stringify(closed.body));
+  assert.equal(caseFor('تجربة سلبية', other.body.id).status, 'مغلقة');
+  assert.equal((await t.call('GET', '/api/kpis', { token: tok.qs })).status, 200);
+  const created = await t.call('POST', '/api/admin/users', { token: tok.quality, body: { username: 'qs.new', name: 'أخصائية', role: 'quality_specialist' } });
+  assert.equal(created.status, 201);
 });
 
 test('executive reads but cannot record or act', async () => {
