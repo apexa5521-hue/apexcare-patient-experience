@@ -677,7 +677,7 @@ function userModal(u) {
 const GM={
  lang:'ar',tab:'overview',demo:false,
  samples:[
- {id:'sample-1',branch:'بريدة',doctor:'د. أحمد العتيبي',rating:5,date:'2026-10-20',sent:'mixed',topics:['الطبيب','الانتظار'],text:'الدكتور أحمد ممتاز وشرح لي كل شيء، لكن انتظرت طويلاً قبل الدخول.',en:'The doctor explained everything clearly, but the waiting time was long.'},
+ {id:'sample-1',branch:'بريدة',doctor:'د. أحمد العتيبي',rating:5,date:'2026-10-20',sent:'mixed',doctorSentiment:'positive',topics:['الطبيب','الانتظار'],text:'الدكتور أحمد ممتاز وشرح لي كل شيء، لكن انتظرت طويلاً قبل الدخول.',en:'The doctor explained everything clearly, but the waiting time was long.'},
  {id:'sample-2',branch:'عنيزة',doctor:'د. سارة محمد',rating:2,date:'2026-10-18',sent:'negative',topics:['التواصل'],text:'لم يتم شرح العلاج بالشكل الكافي.',en:'The treatment was not explained clearly enough.'},
  {id:'sample-3',branch:'بريدة',doctor:'',rating:5,date:'2026-10-15',sent:'positive',topics:['الاستقبال','النظافة'],text:'الاستقبال لطيف والعيادة نظيفة جدًا.',en:'Friendly reception and a very clean clinic.'},
  {id:'sample-4',branch:'عنيزة',doctor:'د. خالد عبدالله',rating:4,date:'2026-10-10',sent:'positive',topics:['شرح العلاج'],text:'الدكتور خالد محترم ويشرح الخيارات بوضوح.',en:'Dr Khalid explains the options clearly.'}
@@ -686,6 +686,21 @@ const GM={
 };
 const gmT=(a,e)=>GM.lang==='ar'?a:e;
 const gmTabs=[['overview','نظرة عامة','Overview'],['reviews','جميع التعليقات','All Reviews'],['doctors','تقييمات الأطباء','Doctors'],['positive','الإيجابية','Positive'],['negative','السلبية','Negative'],['complaints','مركز المتابعة','Follow-up']];
+/* Conservative Arabic doctor matching: do not attribute ambiguous first names. */
+function gmNormalize(s){return String(s||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ـ|[ًٌٍَُِّْ]/g,'').replace(/(?:دكتور(?:ة)?|الدكتور(?:ة)?|د\\s*[./\\\\]|dr\\.?)/gi,' ').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ');}
+function gmIdentifyDoctor(review,doctors){
+ const message=' '+gmNormalize(review.text||review.en)+' ';
+ const entries=doctors.map(d=>{const name=typeof d==='string'?d:d.name;const aliases=[name,...(typeof d==='object'&&Array.isArray(d.aliases)?d.aliases:[])].map(gmNormalize).filter(x=>x.split(' ').length>=2);return {name,aliases};});
+ const matches=entries.filter(d=>d.aliases.some(a=>message.includes(' '+a+' ')));
+ return matches.length===1?{name:matches[0].name,confidence:'high'}:{name:'',confidence:matches.length?'ambiguous':'none'};
+}
+function gmDoctorSentiment(r){if(r.doctorSentiment)return r.doctorSentiment;return r.topics.includes('الانتظار')&&r.sent==='mixed'?'positive':r.sent;}
+function gmDoctorSummary(rr){
+ const count=rr.length,valid=rr.filter(r=>Number(r.rating)>=1&&Number(r.rating)<=5),avg=valid.length?(valid.reduce((n,r)=>n+Number(r.rating),0)/valid.length).toFixed(2):'—';
+ const positive=rr.filter(r=>gmDoctorSentiment(r)==='positive').length,negative=rr.filter(r=>gmDoctorSentiment(r)==='negative').length,mixed=rr.filter(r=>gmDoctorSentiment(r)==='mixed').length;
+ return {count,avg,positive,negative,mixed,ratio:count?Math.round(100*positive/count):0};
+}
+function gmMonth(d){return /^\\d{4}-\\d{2}/.test(d||'')?d.slice(0,7):'';}
 function gmRows(){let rows=GM.demo?GM.samples:[];const q=($('#gmiSearch').value||'').trim().toLowerCase(),b=$('#gmiBranch').value,d=$('#gmiDoctor').value;return rows.filter(r=>(!b||r.branch===b)&&(!d||r.doctor===d)&&(!q||[r.text,r.en,r.doctor,r.branch,...r.topics].join(' ').toLowerCase().includes(q)));}
 function gmSetup(){
  const root=$('#gmiRoot');root.dir=GM.lang==='ar'?'rtl':'ltr';
@@ -717,7 +732,14 @@ function gmRender(){
  html='<div class="gmi-stats">'+gmCard('إجمالي التقييمات','Total Reviews',total)+gmCard('متوسط النجوم','Average Rating',total?(rows.reduce((a,x)=>a+x.rating,0)/total).toFixed(1):'—')+gmCard('تعليقات إيجابية','Positive Reviews',pos)+gmCard('تعليقات سلبية','Negative Reviews',neg)+'</div>';
  html+='<div class="gmi-layout"><div class="gmi-panel"><h3>'+gmT('توزيع المشاعر','Sentiment distribution')+'</h3><div class="gmi-sent"><span style="width:'+(total?pos/total*100:0)+'%"></span><span style="width:'+(total?mix/total*100:0)+'%"></span><span style="width:'+(total?neg/total*100:0)+'%"></span></div><p class="gmi-note">'+gmT('إيجابي','Positive')+' '+pos+' · '+gmT('مختلط','Mixed')+' '+mix+' · '+gmT('سلبي','Negative')+' '+neg+'</p><h3>'+gmT('أكثر الموضوعات','Frequent Topics')+'</h3>'+[...new Set(rows.flatMap(r=>r.topics))].map(t=>{const n=rows.filter(r=>r.topics.includes(t)).length;return '<div class="gmi-row"><div class="gmi-meta"><span>'+esc(t)+'</span><b>'+n+'</b></div><div class="gmi-mini"><i style="width:'+(n/Math.max(1,total)*100)+'%"></i></div></div>';}).join('')+'</div><div class="gmi-panel"><h3>'+gmT('أحدث التعليقات','Recent reviews')+'</h3>'+rows.slice(0,3).map(gmReview).join('')+'</div></div>';
  }else if(GM.tab==='doctors'){
- const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))];html='<div class="gmi-panel"><h3>'+gmT('تحليل الإشارات إلى الأطباء','Doctor mentions analysis')+'</h3>'+docs.map(d=>{const rr=rows.filter(r=>r.doctor===d);return '<div class="gmi-row"><div class="gmi-meta"><b>'+esc(d)+'</b><span>'+rr.length+' '+gmT('تعليقات','reviews')+'</span></div><p class="gmi-note">'+gmT('إيجابي','Positive')+': '+rr.filter(r=>r.sent==='positive').length+' · '+gmT('سلبي','Negative')+': '+rr.filter(r=>r.sent==='negative').length+' · '+gmT('مختلط','Mixed')+': '+rr.filter(r=>r.sent==='mixed').length+'</p><button class="gmi-link" data-gmdoctor="'+esc(d)+'">'+gmT('عرض التعليقات','View reviews')+'</button></div>';}).join('')+'</div>';
+ const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))];
+ html='<div class="gmi-panel"><h3>'+gmT('بطاقة مؤشرات الأطباء','Doctor review scorecards')+'</h3><p class="gmi-note">'+gmT('متوسط النجوم خاص بالتعليقات التي تذكر الطبيب فقط، وليس تقييمًا سريريًا أو مهنيًا.','Star averages are based only on reviews mentioning the doctor and are not clinical performance assessments.')+'</p>'+docs.map(d=>{
+ const rr=rows.filter(r=>r.doctor===d),s=gmDoctorSummary(rr),months=[...new Set(rr.map(x=>gmMonth(x.date)).filter(Boolean))].sort().reverse(),latest=months[0],previous=months[1],recent=rr.filter(x=>gmMonth(x.date)===latest),prior=rr.filter(x=>gmMonth(x.date)===previous);
+ return '<div class="gmi-row"><div class="gmi-meta"><b>'+esc(d)+'</b><span>★ '+s.avg+' / 5 · '+s.count+' '+gmT('إشارة','mentions')+'</span></div>'+
+ '<div class="gmi-stats" style="margin-top:10px">'+gmCard('إيجابي للطبيب','Doctor positive',s.positive)+gmCard('سلبي للطبيب','Doctor negative',s.negative)+gmCard('مختلط للطبيب','Doctor mixed',s.mixed)+gmCard('نسبة الإيجابية','Positive share',s.ratio+'%')+'</div>'+
+ '<p class="gmi-note">'+gmT('آخر شهر','Latest month')+': '+esc(latest||'—')+' ('+recent.length+') · '+gmT('الشهر السابق','Previous month')+': '+esc(previous||'—')+' ('+prior.length+')</p>'+
+ '<button class="gmi-link" data-gmdoctor="'+esc(d)+'">'+gmT('عرض تعليقات الطبيب','View doctor reviews')+'</button></div>';
+ }).join('')+'</div>';
  }else if(GM.tab==='complaints'){
  html='<div class="gmi-stats">'+gmCard('تعليقات سلبية','Negative reviews',neg)+gmCard('حالات مفتوحة','Open tasks',GM.tasks.filter(x=>x.status==='open').length)+gmCard('مغلقة','Closed tasks',GM.tasks.filter(x=>x.status==='closed').length)+gmCard('تحتاج مراجعة','Pending review',neg)+'</div><div class="gmi-panel section"><h3>'+gmT('متابعة الملاحظات','Follow-up actions')+'</h3>'+rows.filter(r=>r.sent==='negative').map(r=>gmReview(r)+'<button class="gmi-link" data-gmtask="'+esc(r.id)+'">'+gmT('إنشاء مهمة تجريبية','Create demo task')+'</button>').join('')+'</div>';
  }else{
