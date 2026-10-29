@@ -114,6 +114,14 @@ tr:last-child td{border-bottom:0}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:13px;margin:3px;background:#fff}
 .chip.off{opacity:.5;text-decoration:line-through}
 .chip button{border:0;background:none;cursor:pointer;color:var(--muted);padding:0}
+
+/* Google Maps Intelligence — isolated visual module */
+.gmi{--gm:#0f766e;color:var(--ink)}.gmi-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(110deg,#e5f4f2,#fff);padding:20px;border:1px solid var(--line);border-radius:16px}
+.gmi-head h2{font-size:21px;margin:0 0 5px}.gmi-en{display:block;color:var(--muted);font-size:11px;font-weight:400}.gmi-bar{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}.gmi-bar button{border:1px solid var(--line);padding:9px 12px;border-radius:10px;background:#fff;color:var(--muted);cursor:pointer;font:inherit;font-size:12px}.gmi-bar button.active{background:var(--brand-soft);border-color:var(--brand);color:var(--brand);font-weight:700}
+.gmi-filters{display:flex;gap:9px;flex-wrap:wrap;align-items:end;margin-bottom:14px}.gmi-filters label{flex:1;min-width:135px;font-size:12px;color:var(--muted)}.gmi-filters input,.gmi-filters select{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff;margin-top:4px}
+.gmi-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.gmi-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.gmi-stat strong{font-size:26px;display:block;margin:6px 0;color:var(--ink)}.gmi-stat small{font-size:12px;color:var(--muted)}.gmi-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.gmi-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}.gmi-panel h3{font-size:15px;margin-bottom:12px}
+.gmi-sent{display:flex;height:14px;border-radius:20px;overflow:hidden;background:#eef1f5;margin:18px 0}.gmi-sent span:nth-child(1){background:#159f75}.gmi-sent span:nth-child(2){background:#f4be48}.gmi-sent span:nth-child(3){background:#d95f57}.gmi-row{padding:12px 0;border-bottom:1px solid var(--line)}.gmi-row:last-child{border:0}.gmi-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}.gmi-tag{border-radius:20px;padding:4px 9px;background:var(--brand-soft);color:var(--brand);font-size:11px}.gmi-tag.neg{background:#fdeee6;color:#b45309}.gmi-tag.mix{background:#fff6d9;color:#916500}.gmi-review{margin:8px 0;line-height:1.9;font-size:13px}.gmi-empty{text-align:center;padding:32px 12px;color:var(--muted)}.gmi-link{border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--brand);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer}.gmi-note{font-size:12px;color:var(--muted);margin:12px 0;line-height:1.8}.gmi-mini{height:9px;background:#e8efed;border-radius:20px;overflow:hidden;margin-top:7px}.gmi-mini i{display:block;background:#149784;height:100%}.gmi[dir=ltr]{text-align:left}.gmi[dir=ltr] .gmi-head{direction:ltr}
+@media(max-width:760px){.gmi-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.gmi-layout{grid-template-columns:1fr}.gmi-head{padding:14px}.gmi-head h2{font-size:18px}.gmi-stat{padding:12px}.gmi-stat strong{font-size:21px}.gmi-bar{overflow:auto;flex-wrap:nowrap}.gmi-bar button{flex:none}.gmi-panel{padding:12px}}
 </style>
 </head>
 <body>
@@ -140,7 +148,7 @@ tr:last-child td{border-bottom:0}
     <nav class="tabs" id="tabs">
       <button data-tab="add" class="on">تسجيل تجربة</button>
       <button data-tab="log">السجل</button>
-      <button data-tab="complaints">الشكاوى <span class="badge hidden" id="openBadge"></span></button>
+      <button data-tab="gmi">Google Maps <span style="font-size:11px;opacity:.75">Intelligence</span></button><button data-tab="complaints">الشكاوى <span class="badge hidden" id="openBadge"></span></button>
       <button data-tab="kpi" data-admin>مؤشرات الأداء</button>
       <button data-tab="admin" data-admin>الإدارة</button>
     </nav>
@@ -198,6 +206,13 @@ tr:last-child td{border-bottom:0}
       </div>
     </div>
 
+<div data-pane="gmi" class="hidden gmi" id="gmiRoot" dir="rtl">
+  <div class="gmi-head"><div><h2 id="gmiTitle">ذكاء تقييمات Google Maps</h2><span class="gmi-en">Google Maps Intelligence · Apex Care Patient Experience</span></div><button type="button" class="gmi-link" id="gmiLanguage">English / العربية</button></div>
+  <nav class="gmi-bar" id="gmiNav" aria-label="Google Maps Intelligence"></nav>
+  <div class="gmi-filters"><label id="gmiSearchLabel">بحث / Search<input id="gmiSearch" type="search" placeholder="ابحث في التعليقات أو أسماء الأطباء"></label><label id="gmiBranchLabel">الفرع / Branch<select id="gmiBranch"><option value="">جميع الفروع</option></select></label><label id="gmiDoctorLabel">الطبيب / Doctor<select id="gmiDoctor"><option value="">جميع الأطباء</option></select></label></div>
+  <div id="gmiContent" aria-live="polite"></div>
+  <p class="gmi-note" id="gmiDisclaimer">التقييمات المعروضة تجريبية فقط. لم يتم ربط Google Maps بعد؛ لا توجد بيانات حقيقية في هذه الشاشة.</p>
+</div>
     <!-- المؤشرات -->
     <div data-pane="kpi" class="hidden">
       <div class="card"><div class="filters" id="kpiFilters" style="margin:0"></div></div>
@@ -369,6 +384,7 @@ function showTab(t) {
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
   if (t === 'admin') loadAdmin();
+  if (t === 'gmi') gmSetup();
 }
 
 /* ===== نموذج التسجيل ===== */
@@ -656,6 +672,69 @@ function userModal(u) {
     });
   };
 }
+
+/* Google Maps Intelligence UI: no backend mutations or Google credential handling. */
+const GM={
+ lang:'ar',tab:'overview',demo:false,
+ samples:[
+ {id:'sample-1',branch:'بريدة',doctor:'د. أحمد العتيبي',rating:5,date:'2026-10-20',sent:'mixed',topics:['الطبيب','الانتظار'],text:'الدكتور أحمد ممتاز وشرح لي كل شيء، لكن انتظرت طويلاً قبل الدخول.',en:'The doctor explained everything clearly, but the waiting time was long.'},
+ {id:'sample-2',branch:'عنيزة',doctor:'د. سارة محمد',rating:2,date:'2026-10-18',sent:'negative',topics:['التواصل'],text:'لم يتم شرح العلاج بالشكل الكافي.',en:'The treatment was not explained clearly enough.'},
+ {id:'sample-3',branch:'بريدة',doctor:'',rating:5,date:'2026-10-15',sent:'positive',topics:['الاستقبال','النظافة'],text:'الاستقبال لطيف والعيادة نظيفة جدًا.',en:'Friendly reception and a very clean clinic.'},
+ {id:'sample-4',branch:'عنيزة',doctor:'د. خالد عبدالله',rating:4,date:'2026-10-10',sent:'positive',topics:['شرح العلاج'],text:'الدكتور خالد محترم ويشرح الخيارات بوضوح.',en:'Dr Khalid explains the options clearly.'}
+ ],
+ tasks:[], page:1
+};
+const gmT=(a,e)=>GM.lang==='ar'?a:e;
+const gmTabs=[['overview','نظرة عامة','Overview'],['reviews','جميع التعليقات','All Reviews'],['doctors','تقييمات الأطباء','Doctors'],['positive','الإيجابية','Positive'],['negative','السلبية','Negative'],['complaints','مركز المتابعة','Follow-up']];
+function gmRows(){let rows=GM.demo?GM.samples:[];const q=($('#gmiSearch').value||'').trim().toLowerCase(),b=$('#gmiBranch').value,d=$('#gmiDoctor').value;return rows.filter(r=>(!b||r.branch===b)&&(!d||r.doctor===d)&&(!q||[r.text,r.en,r.doctor,r.branch,...r.topics].join(' ').toLowerCase().includes(q)));}
+function gmSetup(){
+ const root=$('#gmiRoot');root.dir=GM.lang==='ar'?'rtl':'ltr';
+ $('#gmiLanguage').textContent=GM.lang==='ar'?'English':'العربية';
+ $('#gmiTitle').textContent=gmT('ذكاء تقييمات Google Maps','Google Maps Intelligence');
+ $('#gmiSearch').placeholder=gmT('ابحث في التعليقات أو الأطباء','Search reviews or doctors');
+ $('#gmiSearchLabel').firstChild.textContent=gmT('بحث / Search','Search / بحث');
+ $('#gmiBranchLabel').firstChild.textContent=gmT('الفرع / Branch','Branch / الفرع');
+ $('#gmiDoctorLabel').firstChild.textContent=gmT('الطبيب / Doctor','Doctor / الطبيب');
+ $('#gmiDisclaimer').textContent=gmT('وضع معاينة ببيانات افتراضية فقط. لا يوجد اتصال فعلي بتقييمات Google Maps. يجب مراجعة سياسات Google قبل تخزين التقييمات وتحليلها.','Preview mode with fictional reviews only. No live Google Maps connection. Review Google data policies before retention and analysis.');
+ $('#gmiNav').innerHTML=gmTabs.map(x=>'<button type="button" data-gm="'+x[0]+'" class="'+(GM.tab===x[0]?'active':'')+'">'+gmT(x[1],x[2])+'</button>').join('');
+ $('#gmiNav').querySelectorAll('button').forEach(b=>b.onclick=()=>{GM.tab=b.dataset.gm;gmSetup();});
+ const lk=S.lk||{},branches=[...new Set([...(lk.branches||[]),...(GM.demo?GM.samples.map(x=>x.branch):[])])],docs=[...new Set([...(lk.doctors||[]).filter(x=>x.active!==false).map(x=>x.name),...(GM.demo?GM.samples.map(x=>x.doctor).filter(Boolean):[])])];
+ const oldB=$('#gmiBranch').value,oldD=$('#gmiDoctor').value;
+ $('#gmiBranch').innerHTML='<option value="">'+gmT('جميع الفروع','All branches')+'</option>'+branches.map(x=>'<option>'+esc(x)+'</option>').join('');
+ $('#gmiDoctor').innerHTML='<option value="">'+gmT('جميع الأطباء','All doctors')+'</option>'+docs.map(x=>'<option>'+esc(x)+'</option>').join('');
+ $('#gmiBranch').value=branches.includes(oldB)?oldB:'';$('#gmiDoctor').value=docs.includes(oldD)?oldD:'';
+ gmRender();
+}
+function gmCard(label,en,num){return '<div class="gmi-stat"><small>'+gmT(label,en)+'</small><strong>'+num+'</strong></div>';}
+function gmReview(r){
+ const label=r.sent==='positive'?gmT('إيجابي','Positive'):r.sent==='negative'?gmT('سلبي','Negative'):gmT('مختلط','Mixed');
+ return '<div class="gmi-row"><div class="gmi-meta"><span>★ '+r.rating+' / 5 · '+esc(r.branch)+' · '+esc(r.date)+'</span><span class="gmi-tag '+(r.sent==='negative'?'neg':r.sent==='mixed'?'mix':'')+'">'+label+'</span></div><p class="gmi-review">'+esc(gmT(r.text,r.en))+'</p><div class="gmi-meta"><span>'+esc(r.doctor||gmT('غير مرتبط بطبيب','No doctor mentioned'))+'</span><span>'+r.topics.map(t=>'<span class="gmi-tag">'+esc(t)+'</span>').join(' ')+'</span></div><div style="margin-top:9px"><button type="button" class="gmi-link" data-gmdetail="'+esc(r.id)+'">'+gmT('التفاصيل والتحليل','Review analysis')+'</button></div></div>';
+}
+function gmRender(){
+ const rows=gmRows(),pos=rows.filter(x=>x.sent==='positive').length,neg=rows.filter(x=>x.sent==='negative').length,mix=rows.filter(x=>x.sent==='mixed').length,total=rows.length;
+ let html='';
+ if(GM.tab==='overview'){
+ html='<div class="gmi-stats">'+gmCard('إجمالي التقييمات','Total Reviews',total)+gmCard('متوسط النجوم','Average Rating',total?(rows.reduce((a,x)=>a+x.rating,0)/total).toFixed(1):'—')+gmCard('تعليقات إيجابية','Positive Reviews',pos)+gmCard('تعليقات سلبية','Negative Reviews',neg)+'</div>';
+ html+='<div class="gmi-layout"><div class="gmi-panel"><h3>'+gmT('توزيع المشاعر','Sentiment distribution')+'</h3><div class="gmi-sent"><span style="width:'+(total?pos/total*100:0)+'%"></span><span style="width:'+(total?mix/total*100:0)+'%"></span><span style="width:'+(total?neg/total*100:0)+'%"></span></div><p class="gmi-note">'+gmT('إيجابي','Positive')+' '+pos+' · '+gmT('مختلط','Mixed')+' '+mix+' · '+gmT('سلبي','Negative')+' '+neg+'</p><h3>'+gmT('أكثر الموضوعات','Frequent Topics')+'</h3>'+[...new Set(rows.flatMap(r=>r.topics))].map(t=>{const n=rows.filter(r=>r.topics.includes(t)).length;return '<div class="gmi-row"><div class="gmi-meta"><span>'+esc(t)+'</span><b>'+n+'</b></div><div class="gmi-mini"><i style="width:'+(n/Math.max(1,total)*100)+'%"></i></div></div>';}).join('')+'</div><div class="gmi-panel"><h3>'+gmT('أحدث التعليقات','Recent reviews')+'</h3>'+rows.slice(0,3).map(gmReview).join('')+'</div></div>';
+ }else if(GM.tab==='doctors'){
+ const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))];html='<div class="gmi-panel"><h3>'+gmT('تحليل الإشارات إلى الأطباء','Doctor mentions analysis')+'</h3>'+docs.map(d=>{const rr=rows.filter(r=>r.doctor===d);return '<div class="gmi-row"><div class="gmi-meta"><b>'+esc(d)+'</b><span>'+rr.length+' '+gmT('تعليقات','reviews')+'</span></div><p class="gmi-note">'+gmT('إيجابي','Positive')+': '+rr.filter(r=>r.sent==='positive').length+' · '+gmT('سلبي','Negative')+': '+rr.filter(r=>r.sent==='negative').length+' · '+gmT('مختلط','Mixed')+': '+rr.filter(r=>r.sent==='mixed').length+'</p><button class="gmi-link" data-gmdoctor="'+esc(d)+'">'+gmT('عرض التعليقات','View reviews')+'</button></div>';}).join('')+'</div>';
+ }else if(GM.tab==='complaints'){
+ html='<div class="gmi-stats">'+gmCard('تعليقات سلبية','Negative reviews',neg)+gmCard('حالات مفتوحة','Open tasks',GM.tasks.filter(x=>x.status==='open').length)+gmCard('مغلقة','Closed tasks',GM.tasks.filter(x=>x.status==='closed').length)+gmCard('تحتاج مراجعة','Pending review',neg)+'</div><div class="gmi-panel section"><h3>'+gmT('متابعة الملاحظات','Follow-up actions')+'</h3>'+rows.filter(r=>r.sent==='negative').map(r=>gmReview(r)+'<button class="gmi-link" data-gmtask="'+esc(r.id)+'">'+gmT('إنشاء مهمة تجريبية','Create demo task')+'</button>').join('')+'</div>';
+ }else{
+ const filtered=GM.tab==='positive'?rows.filter(x=>x.sent==='positive'):GM.tab==='negative'?rows.filter(x=>x.sent==='negative'):rows;
+ html='<div class="gmi-panel"><h3>'+gmT('التعليقات المحللة','Analyzed reviews')+' ('+filtered.length+')</h3>'+filtered.map(gmReview).join('')+'</div>';
+ }
+ if(!rows.length)html='<div class="gmi-panel gmi-empty"><h3>'+gmT('لا توجد تقييمات متصلة حاليًا','No connected reviews yet')+'</h3><p>'+gmT('يمكنك معاينة الواجهة بتقييمات افتراضية، ولن تحفظ كبيانات فعلية.','Preview the interface with fictional reviews, never saved as real data.')+'</p><button class="btn" id="gmiDemo">'+gmT('تشغيل المعاينة التجريبية','Load demo reviews')+'</button></div>';
+ else html+='<p class="gmi-note"><button class="gmi-link" id="gmiDemo">'+gmT('إيقاف البيانات التجريبية','Clear demo reviews')+'</button></p>';
+ $('#gmiContent').innerHTML=html;
+ if($('#gmiDemo'))$('#gmiDemo').onclick=()=>{GM.demo=!GM.demo;GM.tasks=[];gmSetup();};
+ $('#gmiContent [data-gmdetail]').forEach(b=>b.onclick=()=>{let r=GM.samples.find(x=>x.id===b.dataset.gmdetail);if(!r)return;openModal('<h2>'+gmT('تحليل التعليق','Review analysis')+'</h2><p class="gmi-review">'+esc(gmT(r.text,r.en))+'</p><p class="muted small">'+esc(r.doctor||gmT('لم يذكر طبيب','No doctor'))+' · '+esc(r.branch)+'</p><p>'+r.topics.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</p><p class="muted small">'+gmT('بيانات افتراضية، لا يوجد رابط Google أصلي أو تحليل ذكاء اصطناعي فعلي.','Fictional example, no original Google URL or live AI analysis.')+'</p><button class="btn ghost" data-close>'+gmT('إغلاق','Close')+'</button>');});
+ $('#gmiContent [data-gmdoctor]').forEach(b=>b.onclick=()=>{$('#gmiDoctor').value=b.dataset.gmdoctor;GM.tab='reviews';gmSetup();});
+ $('#gmiContent [data-gmtask]').forEach(b=>b.onclick=()=>{if(!GM.tasks.some(x=>x.id===b.dataset.gmtask))GM.tasks.push({id:b.dataset.gmtask,status:'open'});gmRender();toast(gmT('تم إنشاء مهمة ضمن المعاينة فقط','Demo task created (not saved)'));});
+}
+$('#gmiLanguage').onclick=()=>{GM.lang=GM.lang==='ar'?'en':'ar';gmSetup();};
+['gmiSearch','gmiBranch','gmiDoctor'].forEach(id=>$('#'+id).addEventListener(id==='gmiSearch'?'input':'change',gmRender));
+
 </script>
 </body>
 </html>
