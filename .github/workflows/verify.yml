@@ -33,5 +33,9 @@ jobs:
           NODE
       - name: Run unit and API test suite
         run: npm test
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
       - name: Run end-to-end suite (project harness)
         run: npm run e2e
