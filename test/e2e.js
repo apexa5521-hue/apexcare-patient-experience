@@ -238,7 +238,7 @@ async function run() {
       await page.evaluate(() => window.scrollTo(0, 0));
       await shot('12-call-survey');
       await page.click('#exSave');
-      await page.waitForSelector('#toast.on:not(.err)');
+      await page.waitForFunction(() => { const t=document.querySelector('#toast.on:not(.err)'); return t && t.textContent.includes('إغلاق الاتصال'); }, { timeout: 10000 });
       assert.match(await page.innerText('#toast'), /إغلاق الاتصال/);
       assert.equal(await page.isHidden('#callBanner'), true);
       const call = db._store.tables.call_queue.find(c => c.file_no === `CALL-${tag}1`);
