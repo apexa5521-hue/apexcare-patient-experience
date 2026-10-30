@@ -35,11 +35,16 @@ test('a nurse named in the comment is kept as written, unverified', () => {
   ]);
 });
 
-test('a receptionist named after the role word is kept, and the role word alone still counts', () => {
+test('reception and customer service never take a following word as a name', () => {
   assert.deepEqual(summary('موظفة الاستقبال منى تعاملت بشكل ممتاز'), [
     ['staff', '', 'role-only'],
-    ['reception', 'منى', 'as-written']
+    ['reception', '', 'role-only']
   ]);
+});
+
+test('English words after a title are not names, and verbs after a role are not names', () => {
+  assert.deepEqual(summary('الممرضة Wadha كانت ممتازة'), [['nurse', '', 'role-only']]);
+  assert.deepEqual(summary('الاستقبال تفاجأت انه'), [['reception', '', 'role-only']]);
 });
 
 test('a role with no name is role-only, and adjectives or verbs are never taken as names', () => {
