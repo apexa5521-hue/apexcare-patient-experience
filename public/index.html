@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f6b63">
-<title>تجربة المريض | Apex Care</title>
+<title>PatieMed | Patient Experience & Satisfaction</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -410,7 +410,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 #appView{--apex-side:224px}
 #appView header.top .wrap:has(nav.tabs){position:fixed;z-index:30;inset-inline-start:0;top:70px;bottom:0;width:var(--apex-side);max-width:none;margin:0;padding:0;background:#fff;border-inline-end:1px solid var(--line);overflow-y:auto}
 #appView nav.tabs{padding:22px 12px;display:flex;flex-direction:column;gap:7px;overflow:visible;align-items:stretch}
-#appView nav.tabs::before{content:"APEX CARE / WORKSPACE";font-size:10px;font-weight:700;letter-spacing:1px;color:#89a29d;padding:4px 10px 13px}
+#appView nav.tabs::before{content:"PATIEMED / WORKSPACE";font-size:10px;font-weight:700;letter-spacing:1px;color:#89a29d;padding:4px 10px 13px}
 #appView nav.tabs button{min-height:46px;width:100%;padding:11px 13px;display:flex;align-items:center;text-align:start;gap:11px;border-radius:11px;font-size:13px;white-space:normal;line-height:1.5;transition:background .16s,color .16s}
 #appView nav.tabs button::before{content:"◈";flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;color:#849e99;font-size:17px}
 #appView nav.tabs button[data-tab=add]::before{content:"＋"}
@@ -577,6 +577,50 @@ body{background:linear-gradient(145deg,#f1faff 0%,#f9fcff 55%,#f4faff 100%);colo
 .modal .dialog{border-color:#dcecf5;box-shadow:0 20px 60px rgba(35,103,143,.18)}
 :focus-visible{outline-color:#4bbce9}
 @media(max-width:720px){.login .card{padding:24px;border-radius:18px}#appView .apex-page-hero{background:#e9f7fd!important}}
+
+/* PatieMed approved 2026 identity: login, wordmark and desktop/mobile UI */
+.pm-logo{display:flex;align-items:center;gap:11px;direction:ltr;justify-content:center}
+.pm-logo-word{display:flex;flex-direction:column;align-items:flex-start;line-height:1.18;white-space:nowrap;direction:ltr}
+.pm-logo-word b{font-weight:800;font-size:clamp(24px,2.4vw,33px);letter-spacing:-1px;color:#103d75;font-family:system-ui,Arial,sans-serif}
+.pm-logo-word b em{font-style:normal;color:#1c9fdc}
+.pm-logo-word small{color:#7589a3;font-size:10px;font-family:system-ui,Arial,sans-serif;letter-spacing:.03px}
+.pm-symbol{width:55px;height:55px;flex:none;display:grid;place-items:center;border-radius:16px 19px 15px 19px;background:linear-gradient(142deg,#54d0fa,#1a92dc 55%,#073d88);color:white;font-family:system-ui,sans-serif;font-size:39px;line-height:1;font-style:italic;font-weight:900;box-shadow:0 8px 17px rgba(20,142,202,.17)}
+.patiemed-login{background:radial-gradient(circle at 88% 22%,#d9f1ff 0%,transparent 40%),linear-gradient(115deg,#f9fdff,#eef8ff);display:block;padding:0}
+.pm-login-layout{width:100%;max-width:1600px;margin:0 auto;min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(24px,4vw,80px);padding:clamp(24px,4vw,62px)}
+.pm-landing{height:100%;min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.pm-logo-large{align-self:flex-start;margin-bottom:auto}
+.pm-landing-copy{width:100%;max-width:660px;margin:auto;text-align:center}
+.pm-eyebrow{display:inline-block;padding:8px 17px;border-radius:40px;background:#e4f5fe;color:#187fc2!important;font-weight:600!important;font-size:13px!important;margin:0 0 22px!important}
+.pm-landing h2{font-size:clamp(33px,4vw,60px);font-weight:800;line-height:1.32;letter-spacing:-1.5px;color:#102e62}
+.pm-landing h2 span{color:#1288e8}
+.pm-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:38px 0 20px}
+.pm-features>div{display:flex;flex-direction:column;align-items:center;gap:7px}
+.pm-features span{display:grid;place-items:center;background:#e1f4ff;color:#168fd6;font-size:23px;width:54px;height:54px;border-radius:17px}
+.pm-features b{font-size:12px;color:#153d70}
+.pm-features small{font-size:11px;color:#6f8ba6}
+.pm-showcase{text-align:initial;margin-top:30px;background:#fff;border:1px solid #deedf8;border-radius:20px;padding:22px 23px 12px;transform:rotate(-2deg);box-shadow:0 18px 45px rgba(34,131,177,.10)}
+.pm-showcase-title{display:flex;justify-content:space-between;color:#214d86;font-size:13px;font-weight:700}
+.pm-showcase-title span+span{font:11px system-ui;color:#8aa7bc}
+.pm-showcase-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.pm-showcase-stats>div{background:#f2faff;border-radius:13px;padding:14px}
+.pm-showcase-stats small{display:block;color:#658aa2;font-size:11px}
+.pm-showcase-stats strong{display:block;font-size:25px;color:#103f78}
+.pm-showcase-stats i{font-size:15px;color:#f4b034}
+.pm-showcase svg{display:block;width:100%;height:105px}
+.pm-login-side{display:flex;align-items:center;justify-content:center}
+.patiemed-login .pm-login-card{width:100%;max-width:540px;padding:clamp(28px,4vw,55px);border-radius:24px;box-shadow:0 20px 55px rgba(30,111,163,.10);border:1px solid #e7f1f9;background:#fff}
+.patiemed-login .pm-login-card h1{font-size:clamp(24px,2.4vw,33px);font-weight:800;color:#102e62;text-align:center;margin:42px 0 7px}
+.patiemed-login .pm-login-card .lead{margin:0 0 35px;color:#73869b;text-align:center}
+.patiemed-login .pm-login-card label{color:#22426a;font-weight:700;font-size:13px}
+.patiemed-login .pm-login-card input{text-align:right;direction:rtl;border:1px solid #d9e8f4;border-radius:11px;min-height:51px;background:#fbfdff}
+.patiemed-login .pm-login-card input:focus{border-color:#55b9ec}
+.patiemed-login .pm-login-card button{min-height:52px;border-radius:11px;font-size:16px;margin-top:13px}
+.pm-app-brand .pm-symbol{width:36px;height:36px;font-size:25px;border-radius:10px}
+.pm-app-brand .pm-logo-word b{font-size:19px;letter-spacing:-.6px}
+.pm-app-brand .pm-logo-word small{font-size:8px}
+#appView nav.tabs::before{content:"PATIEMED / WORKSPACE"}
+@media(max-width:870px){.pm-login-layout{grid-template-columns:1fr;gap:16px;padding:20px}.pm-landing{min-height:0}.pm-logo-large{margin:0 auto 16px}.pm-landing-copy{margin:0}.pm-landing h2{font-size:32px}.pm-features,.pm-showcase{display:none}.pm-login-card{max-width:520px!important}.pm-login-card h1{margin-top:26px!important}.pm-login-side{padding-bottom:22px}}
+@media(max-width:430px){.pm-login-layout{padding:15px}.pm-logo-word b{font-size:25px}.pm-symbol{width:46px;height:46px;font-size:31px}.pm-landing h2{font-size:26px}.pm-eyebrow{font-size:11px!important;margin-bottom:11px!important}.patiemed-login .pm-login-card{padding:24px 21px}.pm-app-brand .pm-logo-word small{display:none}}
 </style>
 </head>
 <body>
@@ -589,25 +633,46 @@ body{background:linear-gradient(145deg,#f1faff 0%,#f9fcff 55%,#f4faff 100%);colo
 </svg>
 
 <!-- ===== Login ===== -->
-<section id="loginView" class="login">
-  <div class="card">
-    <div class="brand"><div class="mark"><svg><use href="#i-mark"/></svg></div><div><b>نظام تجربة المريض</b><small>مجمع Apex Care · بريدة وعنيزة</small></div></div>
-    <h1>تسجيل الدخول</h1>
-    <p class="lead">استخدم اسم المستخدم الذي سلّمته لك الإدارة.</p>
-    <div id="loginMsg" class="alert hidden" role="alert"></div>
-    <form id="loginForm" class="grid" novalidate>
-      <div class="field"><label for="lgUser">اسم المستخدم</label><input type="text" id="lgUser" class="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
-      <div class="field"><label for="lgPass">كلمة المرور</label><input type="password" id="lgPass" class="ltr" autocomplete="current-password" required></div>
-      <button class="btn block" type="submit">دخول</button>
-    </form>
+<section id="loginView" class="login patiemed-login">
+ <div class="pm-login-layout">
+  <aside class="pm-landing" aria-label="نبذة عن باتيميد">
+   <div class="pm-logo pm-logo-large"><span class="pm-symbol" aria-hidden="true">P</span><span class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></span></div>
+   <div class="pm-landing-copy">
+     <p class="pm-eyebrow">استمع · افهم · طوّر باستمرار</p>
+     <h2>حوّل آراء مرضاك<br><span>إلى تجربة أفضل</span></h2>
+     <div class="pm-features">
+       <div><span aria-hidden="true">▥</span><b>تقارير ولوحات بيانات</b><small>رؤى واضحة لتحسين التجربة</small></div>
+       <div><span aria-hidden="true">◉</span><b>تقييمات المرضى</b><small>متابعة الآراء ورضا المرضى</small></div>
+       <div><span aria-hidden="true">✓</span><b>تحسين جودة الرعاية</b><small>من خلال صوت المريض</small></div>
+     </div>
+     <div class="pm-showcase" aria-hidden="true">
+       <div class="pm-showcase-title"><span>نظرة عامة</span><span>Patient Insights</span></div>
+       <div class="pm-showcase-stats"><div><small>رضا المرضى</small><strong>92%</strong></div><div><small>تجارب المرضى</small><strong>1,248</strong></div><div><small>متوسط التقييم</small><strong>4.6 <i>★</i></strong></div></div>
+       <svg viewBox="0 0 530 122" role="presentation" preserveAspectRatio="none"><defs><linearGradient id="pmGraph" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#59bdef" stop-opacity=".23"/><stop offset="1" stop-color="#59bdef" stop-opacity="0"/></linearGradient></defs><path d="M0 93 Q45 91 80 76 T165 69 T252 51 T340 48 T435 25 T530 15 L530 122 L0 122Z" fill="url(#pmGraph)"/><path d="M0 93 Q45 91 80 76 T165 69 T252 51 T340 48 T435 25 T530 15" fill="none" stroke="#229de5" stroke-width="3" stroke-linecap="round"/></svg>
+     </div>
+   </div>
+  </aside>
+  <div class="pm-login-side">
+   <div class="card pm-login-card">
+     <div class="pm-logo"><span class="pm-symbol" aria-hidden="true">P</span><span class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></span></div>
+     <h1>مرحباً بك مجدداً</h1>
+     <p class="lead">سجّل دخولك للمتابعة في PatieMed</p>
+     <div id="loginMsg" class="alert hidden" role="alert"></div>
+     <form id="loginForm" class="grid" novalidate>
+       <div class="field"><label for="lgUser">اسم المستخدم</label><input type="text" id="lgUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="أدخل اسم المستخدم" required></div>
+       <div class="field"><label for="lgPass">كلمة المرور</label><input type="password" id="lgPass" autocomplete="current-password" placeholder="أدخل كلمة المرور" required></div>
+       <button class="btn block" type="submit">تسجيل الدخول</button>
+     </form>
+   </div>
   </div>
+ </div>
 </section>
 
 <!-- ===== App ===== -->
 <section id="appView" class="hidden">
   <header class="top">
     <div class="wrap bar">
-      <div class="brand"><div class="mark"><svg><use href="#i-mark"/></svg></div><div><b>تجربة المريض</b><small>Apex Care</small></div></div>
+      <div class="brand pm-app-brand"><div class="pm-symbol" aria-hidden="true">P</div><div class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></div></div>
       <div class="who">
         <div class="who-name"><b id="whoName"></b><span id="whoRole"></span></div>
         <button class="btn ghost sm" id="btnPw" type="button">كلمة المرور</button>
@@ -629,7 +694,7 @@ body{background:linear-gradient(145deg,#f1faff 0%,#f9fcff 55%,#f4faff 100%);colo
   </header>
 
   <main class="wrap">
-<div class="apex-page-hero" id="apexPageHero" aria-live="polite"><div class="apex-hero-copy"><span class="apex-kicker">APEX CARE <span class="apex-sep">/</span> PATIENT EXPERIENCE</span><h1 id="apexHeroTitle">تسجيل تجربة</h1><p id="apexHeroSub">تجربة موحدة لمتابعة جودة الخدمة ورضا المرضى</p></div><div class="apex-hero-mark" aria-hidden="true">✦</div></div>
+<div class="apex-page-hero" id="apexPageHero" aria-live="polite"><div class="apex-hero-copy"><span class="apex-kicker">PATIEMED <span class="apex-sep">/</span> PATIENT EXPERIENCE</span><h1 id="apexHeroTitle">تسجيل تجربة</h1><p id="apexHeroSub">تجربة موحدة لمتابعة جودة الخدمة ورضا المرضى</p></div><div class="apex-hero-mark" aria-hidden="true">✦</div></div>
     <!-- Record experience -->
     <section data-pane="add" role="tabpanel">
       <div class="form-shell">
