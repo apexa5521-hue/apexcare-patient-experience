@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0f6b63">
+<meta name="theme-color" content="#eef9ff">
 <title>PatieMed | Patient Experience & Satisfaction</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -621,6 +621,85 @@ body{background:linear-gradient(145deg,#f1faff 0%,#f9fcff 55%,#f4faff 100%);colo
 #appView nav.tabs::before{content:"PATIEMED / WORKSPACE"}
 @media(max-width:870px){.pm-login-layout{grid-template-columns:1fr;gap:16px;padding:20px}.pm-landing{min-height:0}.pm-logo-large{margin:0 auto 16px}.pm-landing-copy{margin:0}.pm-landing h2{font-size:32px}.pm-features,.pm-showcase{display:none}.pm-login-card{max-width:520px!important}.pm-login-card h1{margin-top:26px!important}.pm-login-side{padding-bottom:22px}}
 @media(max-width:430px){.pm-login-layout{padding:15px}.pm-logo-word b{font-size:25px}.pm-symbol{width:46px;height:46px;font-size:31px}.pm-landing h2{font-size:26px}.pm-eyebrow{font-size:11px!important;margin-bottom:11px!important}.patiemed-login .pm-login-card{padding:24px 21px}.pm-app-brand .pm-logo-word small{display:none}}
+
+/* PatieMed all-page design release — intentionally preserves existing data, IDs and JS routes */
+#appView{--pm-primary:#1d9de5;--pm-ink:#12396d;--pm-border:#ddeefa;--pm-panel:#fff}
+#appView main.wrap{background:transparent}
+#appView header.top .bar{background:rgba(255,255,255,.97);border-bottom:1px solid #eaf2fa}
+#appView header.top .who .btn{background:#fff;color:#376b94;border:1px solid #dfedf7;border-radius:11px}
+#appView header.top .who .btn:hover{background:#e9f7ff;border-color:#bde4fa}
+#appView header.top .who-name b{font-weight:700;color:#1a4677}
+#appView header.top .who-name span{color:#8aa0b3}
+#appView header.top .wrap:has(nav.tabs){background:linear-gradient(180deg,#fff 0%,#f9fcff 100%);box-shadow:4px 0 18px rgba(29,108,169,.035)}
+#appView nav.tabs{gap:8px}
+#appView nav.tabs button{font-size:13px;border:1px solid transparent;min-height:47px;border-radius:12px;color:#5b7895}
+#appView nav.tabs button:hover{background:#f0f9ff;color:#1479bc}
+#appView nav.tabs button[aria-selected=true]{background:linear-gradient(90deg,#e4f5ff,#f2faff);border:1px solid #cfeafa;color:#086fba;box-shadow:inset 3px 0 #249deb;font-weight:700}
+#appView nav.tabs button[aria-selected=true]::before{background:#ceeefd;color:#0e8bd7}
+#appView .apex-page-hero{border:1px solid #dbeefa!important;background:linear-gradient(108deg,#e5f5ff,#f6fbff 65%,white)!important;border-radius:20px;padding:25px 28px;min-height:134px}
+#appView .apex-page-hero h1{font-size:clamp(23px,2vw,29px);color:#103b73}
+#appView .apex-page-hero p{color:#6b89a4}
+#appView .apex-hero-mark{background:linear-gradient(140deg,#ddf3ff,#c7e9fa);color:#1a96d9;border-radius:17px}
+#appView [data-pane]>.section-head,#appView [data-pane] .form-shell .section-head{background:#fff!important;border:1px solid #e2eff8;box-shadow:0 4px 14px rgba(30,114,166,.025);padding:15px 19px;border-radius:16px}
+#appView [data-pane] h2,#appView [data-pane] h3{color:#1c477c}
+#appView [data-pane] .card,#appView [data-pane] .tile,#appView [data-pane] .rev{background:white;border:1px solid #e1eef7;border-radius:18px;box-shadow:0 5px 22px rgba(33,110,163,.045)}
+#appView [data-pane] .tile{position:relative;overflow:hidden}
+#appView [data-pane] .tile::before{content:"";position:absolute;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,#e7f7ff,transparent 71%);right:-15px;top:-19px;pointer-events:none}
+#appView [data-pane] .tile .v{color:#153b75;letter-spacing:-.7px}
+#appView [data-pane] .tile .l{color:#547d9d}
+#appView [data-pane] .tile .s{color:#728faa}
+#appView [data-pane] .step-n{background:linear-gradient(150deg,#e1f5ff,#caeafa);color:#127ebf}
+#appView [data-pane] .step-title{color:#214e81}
+#appView [data-pane] .step-body{border-color:#e9f1f8}
+#appView [data-pane] .field>label,#appView [data-pane] .field>.label{color:#2b567f}
+#appView [data-pane] .field .hint{color:#8098ac}
+#appView [data-pane] .seg{background:#edf8fe;border-color:#d9eaf6}
+#appView [data-pane] .seg [aria-checked=true]{color:#147cb8}
+#appView [data-pane] input,#appView [data-pane] select,#appView [data-pane] textarea{border-color:#dceaf5;border-radius:10px;background:#fcfeff}
+#appView [data-pane] input:focus,#appView [data-pane] select:focus,#appView [data-pane] textarea:focus{background:#fff;border-color:#67c3ef;box-shadow:0 0 0 3px rgba(87,186,233,.14)}
+#appView [data-pane] .btn:not(.ghost):not(.quiet){background:linear-gradient(120deg,#38b5f0,#158cdb);color:#fff}
+#appView [data-pane] .btn:not(.ghost):not(.quiet):hover{background:#167fc5}
+#appView [data-pane] .btn.ghost{border-color:#d8eaf7;background:#fff;color:#2788c6}
+#appView [data-pane] .btn.ghost:hover{background:#edf9ff}
+#appView [data-pane] .tbl-wrap{border:1px solid #dfedf7;border-radius:15px;overflow:auto;background:#fff}
+#appView [data-pane] th{background:#eaf6ff!important;color:#396888;font-size:12px}
+#appView [data-pane] td{border-color:#edf3f9}
+#appView [data-pane] tbody tr:hover td{background:#f7fcff}
+#appView [data-pane] .filters{gap:10px}
+#appView [data-pane] .count-line{color:#6a8ca5}
+#appView [data-pane] .count-line::before{background:#33b3ed}
+#appView [data-pane] .rev-insight-head{background:linear-gradient(110deg,#e8f6ff,#fff)!important;border-color:#dbeefa}
+#appView [data-pane] .rev-overview-cards .rev-metric{border-top-color:#67c9ec}
+#appView [data-pane] .rev-overview-cards .rev-metric:nth-child(2){border-top-color:#e99898}
+#appView [data-pane] .rev-overview-cards .rev-metric:nth-child(3){border-top-color:#f2ce77}
+#appView [data-pane] .rev-analysis-columns .card{min-width:0}
+#appView [data-pane] .rev-doctor-card{border-color:#deebf6;background:#fbfdff}
+#appView [data-pane] .rev-labels span{background:#e9f7ff;color:#2a80b6}
+#appView [data-pane] .rev-insight-controls input,#appView [data-pane] .rev-insight-controls select{min-width:0}
+#appView [data-pane] .rev-topic-track i{background:linear-gradient(90deg,#83d9f5,#219ddc)}
+#appView [data-pane] .rev.low{border-inline-start:4px solid #e58b91}
+#appView [data-pane] .reply{border-radius:12px}
+#toast{background:#fff!important;color:#245679!important;border:1px solid #d9ebf7!important;border-inline-start:4px solid #32aee9!important;border-radius:14px!important;box-shadow:0 14px 42px rgba(29,109,170,.16)!important}
+#toast.err{background:#fff6f6!important;border-color:#f2d8d8!important;border-inline-start-color:#d97474!important;color:#9f3f50!important}
+.modal{background:rgba(19,55,99,.40)}
+.modal .dialog{background:#fff;border:1px solid #dbeaf6;border-radius:19px;box-shadow:0 24px 60px rgba(20,74,125,.18)}
+.modal .dialog h2{color:#194b7f}
+#appView .badge:not(.hidden){border-radius:20px}
+@media(max-width:860px){#appView .apex-page-hero{min-height:0}#appView [data-pane] .g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){
+ #appView nav.tabs{gap:5px}
+ #appView nav.tabs button{min-height:41px;border-radius:10px;font-size:12px}
+ #appView nav.tabs button[aria-selected=true]{box-shadow:inset 0 -2px #249deb}
+ #appView .apex-page-hero{padding:16px 15px;border-radius:14px}
+ #appView .apex-page-hero h1{font-size:21px}
+ #appView [data-pane]>.section-head{padding:12px 14px}
+ #appView [data-pane] .card,#appView [data-pane] .tile{border-radius:14px}
+ #appView [data-pane] .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #appView .rev-analysis-columns{grid-template-columns:1fr}
+ #appView .rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:390px){#appView [data-pane] .g4{gap:8px}#appView [data-pane] .tile{padding:12px}#appView .apex-hero-mark{display:none}}
+@media(prefers-reduced-motion:reduce){#appView *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
