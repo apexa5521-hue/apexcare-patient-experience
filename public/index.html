@@ -737,6 +737,40 @@ body{background:#f2f9ff}
 #appView [data-pane] .btn.ghost{color:#187ebd}
 #appView [data-pane] input:focus,#appView [data-pane] select:focus,#appView [data-pane] textarea:focus{border-color:#4bb4ed;box-shadow:0 0 0 3px #e0f3ff}
 @media(max-width:720px){#appView nav.tabs button[aria-selected=true]{box-shadow:inset 0 -3px #168ef0}#appView [data-pane] .grid.g4{gap:9px}.patiemed-login .pm-login-card{box-shadow:0 10px 35px rgba(29,110,164,.09)}}
+
+/* PatieMed October 2026 — approved reference UI: calm sky, white surfaces and crisp icons. */
+#appView{background:linear-gradient(145deg,#eaf7ff,#f6fbff 58%,#eef8ff);color:#12366a}
+#appView header.top .bar{min-height:78px}
+#appView .pm-app-brand .pm-symbol{background:linear-gradient(140deg,#40c8ee,#168dd8 55%,#123c88);box-shadow:0 3px 9px #b8dff5}
+#appView .pm-app-brand .pm-logo-word b{font-size:21px;letter-spacing:-.65px}
+#appView header.top .wrap:has(nav.tabs){background:#fff}
+#appView nav.tabs{padding:26px 13px;gap:9px}
+#appView nav.tabs button{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:13px;line-height:1.5;font-weight:650}
+#appView nav.tabs button::before{font-size:19px;width:31px;height:31px;background:#f1f8fe;color:#326ca8;border-radius:9px}
+#appView nav.tabs button[data-tab=add]::before{content:"✚"}
+#appView nav.tabs button[data-tab=cases]::before{content:"☑"}
+#appView nav.tabs button[data-tab=calls]::before{content:"☎"}
+#appView nav.tabs button[data-tab=log]::before{content:"▤"}
+#appView nav.tabs button[data-tab=complaints]::before{content:"⚑"}
+#appView nav.tabs button[data-tab=reviews]::before{content:"☆";font-size:25px}
+#appView nav.tabs button[data-tab=kpi]::before{content:"▥"}
+#appView nav.tabs button[data-tab=admin]::before{content:"⚙"}
+#appView nav.tabs button[aria-selected=true]{background:#dff1ff;border-color:#cce7ff;box-shadow:inset 4px 0 #208df2}
+#appView nav.tabs button[aria-selected=true]::before{background:#cbe9ff;color:#0577ce}
+#appView .apex-page-hero{border-radius:19px;background:linear-gradient(105deg,#e4f4ff,#fff)!important}
+#appView .apex-page-hero h1{font-weight:800;font-size:clamp(23px,2.4vw,31px)}
+#appView [data-pane] .card,#appView [data-pane] .tile{border-radius:17px;border:1px solid #dcecf8;background:white}
+#appView [data-pane] .tile .v{font-size:clamp(24px,2.5vw,33px);font-weight:800;color:#133b79}
+#appView [data-pane] .section-head{border-radius:15px}
+#appView [data-pane] th{background:#ebf6ff!important;color:#335e86}
+#appView [data-pane] .rev-insight-head{background:#eff9ff!important}
+#appView [data-pane] .rev-insight-tabs button{border-radius:11px}
+#appView [data-pane] .rev-overview-cards .rev-metric{border-top:3px solid #52baf2}
+#appView [data-pane] .rev-doctor-card{border-radius:12px}
+#appView [data-pane] .rev-labels span{border:1px solid #d5eaf9}
+#appView [data-pane] .btn:not(.ghost):not(.quiet){background:linear-gradient(120deg,#26b6ed,#087de7)}
+#appView [data-pane] .btn:not(.ghost):not(.quiet):hover{background:#087fda}
+@media(max-width:720px){#appView nav.tabs{padding:6px 8px;gap:5px}#appView nav.tabs button{padding:8px 10px;gap:5px}#appView nav.tabs button::before{width:22px;height:22px;font-size:14px}#appView nav.tabs button[aria-selected=true]{box-shadow:inset 0 -3px #208df2}#appView .apex-page-hero h1{font-size:21px}}
 </style>
 </head>
 <body>
