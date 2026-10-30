@@ -468,7 +468,13 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}.rev-person-more>summary{cursor:pointer;color:var(--muted);font-size:12px}
+.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
+.rev-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.rev-doc{cursor:pointer;padding:16px}.rev-doc:hover{border-color:#8fd0c6}
+.rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
+.rev-doc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;font-size:12px}.rev-doc-metrics b{display:block;font-size:16px;color:var(--ink);margin:2px 0}
+.rev-doc-metrics small{display:block}
+.doc-good{color:#0b7a4b}.doc-bad{color:#b4262e}.rev-person-more>summary{cursor:pointer;color:var(--muted);font-size:12px}
 @media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
 
 /* Clinical design system across all existing operational tabs, without modifying behaviors. */
@@ -848,6 +854,7 @@ body{background:#f2f9ff}
         <button role="tab" data-tab="complaints" aria-selected="false">الشكاوى<span class="badge hidden" id="openBadge"></span></button>
         <button role="tab" data-tab="reviews" aria-selected="false">تقييمات قوقل</button>
         <button role="tab" data-tab="kpi" aria-selected="false" data-perm="analytics">مؤشرات الأداء</button>
+        <button role="tab" data-tab="doctors" aria-selected="false" data-perm="analytics">تقييم الطبيب</button>
         <button role="tab" data-tab="admin" aria-selected="false" data-perm="manageSetup">الإدارة</button>
       </nav>
     </div>
@@ -990,6 +997,12 @@ body{background:#f2f9ff}
       <div id="kpiBody" class="stack" style="margin-top:16px"></div>
     </section>
 
+    <section data-pane="doctors" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>تقييم الطبيب</h2><p class="muted small">كل طبيب مقارنة بمتوسط أطباء فرعه. تجمع التجارب والشكاوى وتعليقات قوقل التي تذكره</p></div></div>
+      <div class="card pad"><form class="filters" id="docFilters"></form></div>
+      <div id="docBody" class="stack" style="margin-top:16px"></div>
+    </section>
+
     <!-- Admin -->
     <section data-pane="admin" role="tabpanel" class="hidden">
       <div class="stack">
@@ -1032,6 +1045,7 @@ const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'ماي�
 /* ---------- formatting ---------- */
 const nf = new Intl.NumberFormat('en-US');
 const n0 = v => (v === null || v === undefined ? '–' : nf.format(v));
+const pct1 = v => (v === null || v === undefined ? '–' : `${nf.format(Math.round(v * 10) / 10)}٪`);
 const n1 = v => (v === null || v === undefined ? '–' : (Math.round(v * 10) / 10).toFixed(1));
 // Percent signs and signs (+/−) flip in RTL text; isolate them as LTR.
 const pc = v => (v === null || v === undefined ? '–' : `<span dir="ltr">${Math.round(v)}%</span>`);
@@ -1274,6 +1288,7 @@ function showTab(t) {
   if (t === 'reviews') loadReviews();
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
+  if (t === 'doctors') loadDoctors();
   if (t === 'admin') loadAdmin();
   if (t === 'add') setTimeout(() => $('#exFile').focus({ preventScroll: true }), 30);
 }
@@ -1467,6 +1482,7 @@ function buildFilters() {
   filterForm('#revFilters', ['period', 'from', 'to', 'branch', 'rating', 'replied', 'revStatus'], loadReviews);
   filterForm('#coFilters', ['period', 'from', 'to', 'status', 'branch', 'doctorId', 'fileNo'], loadComplaints);
   filterForm('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'visitType', 'sentiment', 'channel'], loadKpi);
+  filterForm('#docFilters', ['period', 'from', 'to', 'branch'], loadDoctors);
 }
 
 /* ---------- log ---------- */
@@ -2255,6 +2271,83 @@ function casesSection(cs) {
     </div></div>`;
 }
 
+/* ---------- doctor evaluation ---------- */
+// Each doctor against the average of doctors in the same branch. Negative share: lower is better; rating: higher is better.
+function docDelta(v, base, higherIsBetter, unit = '') {
+  if (v == null || base == null) return '<span class="muted">—</span>';
+  const diff = v - base;
+  if (Math.abs(diff) < 0.05) return '<span class="muted">≈ المتوسط</span>';
+  const good = higherIsBetter ? diff > 0 : diff < 0;
+  return `<span class="${good ? 'doc-good' : 'doc-bad'} ltr num">${diff > 0 ? '▲' : '▼'} ${Math.abs(diff).toFixed(1)}${unit}</span>`;
+}
+function docAgg(list) {
+  const total = list.reduce((a, d) => a + d.total, 0), neg = list.reduce((a, d) => a + d.neg, 0);
+  const rated = list.filter(d => d.avgDoctor != null);
+  return { total, negPct: total ? (neg / total) * 100 : null, avgDoctor: rated.length ? rated.reduce((a, d) => a + d.avgDoctor, 0) / rated.length : null };
+}
+function docModal(d) {
+  const items = d.reviews;
+  openModal('<h2 id="modalTitle">' + esc(d.ar || d.name) + '</h2><p class="muted small">' + esc(d.name) + (d.specialty ? ' · ' + esc(d.specialty) : '') + ' · ' + items.length + ' تعليق في قوقل</p>' +
+    (items.length ? items.map(x => '<article class="card rev"><div class="rev-head">' + roStars(x.rating, 14) + '<span class="pill p-off">' + esc(x.branch || '—') + '</span><span class="when ltr num">' + esc(x.createdAt) + '</span></div><p class="txt">' + (x.comment ? esc(x.comment) : 'تقييم بدون نص') + '</p></article>').join('') : '<p class="muted small">لا توجد تعليقات في تقييمات قوقل تذكره في هذه الفترة</p>') +
+    '<div class="actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>', { closable: true });
+}
+async function loadDoctors() {
+  const body = $('#docBody');
+  body.innerHTML = '<div class="grid g4">' + '<div class="card tile"><div class="skeleton" style="width:60%"></div><div class="skeleton" style="height:30px;margin-top:12px"></div></div>'.repeat(4) + '</div>';
+  try {
+    const f = readFilters('#docFilters');
+    const [{ kpis: k }, reviews] = await Promise.all([
+      api('GET', `/kpis${qs(f)}`),
+      api('GET', `/reviews${qs({ from: f.from, to: f.to, branch: f.branch })}`).then(x => x.rows || []).catch(() => null)
+    ]);
+    const byId = new Map(S.lk.doctors.map(d => [d.id, d]));
+    const aliases = revDoctorAliases();
+    const mentions = new Map();
+    (reviews || []).forEach(x => revFindDoctors(revTokens(x.comment), aliases).forEach(h => {
+      if (!mentions.has(h.name)) mentions.set(h.name, []);
+      mentions.get(h.name).push(x);
+    }));
+    const rows = k.doctors.map(d => ({ ...d, ar: (byId.get(d.id) || {}).name_ar || '', reviews: mentions.get(d.name) || [] }));
+    if (!rows.length) { body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات لأطباء في هذه الفترة</b>جرّب فترة أوسع أو امسح الفلاتر.</div></div>'; return; }
+    const all = docAgg(rows);
+    const reliable = rows.filter(d => !d.smallSample);
+    const best = reliable.filter(d => d.avgDoctor != null).sort((a, b) => b.avgDoctor - a.avgDoctor)[0];
+    const worst = reliable.slice().sort((a, b) => (b.negPct ?? -1) - (a.negPct ?? -1))[0];
+    const tile = (label, value, note = '') => '<div class="card tile"><small class="muted">' + label + '</small><div class="v num">' + value + '</div>' + (note ? '<small class="muted">' + note + '</small>' : '') + '</div>';
+    const cards = rows.map(d => {
+      const peers = docAgg(rows.filter(x => x.branch === d.branch));
+      const gAvg = d.reviews.length ? d.reviews.reduce((a, x) => a + Number(x.rating || 0), 0) / d.reviews.length : null;
+      return '<article class="card rev-doc" role="button" tabindex="0" data-doc="' + esc(d.name) + '">' +
+        '<div class="rev-doc-head"><div><b>' + esc(d.ar || d.name) + '</b><small class="ltr muted">' + esc(d.name) + '</small></div>' +
+        (d.specialty ? '<span class="pill p-off">' + esc(d.specialty) + '</span>' : '') + '</div>' +
+        '<div class="rev-doc-metrics">' +
+        '<div><small class="muted">الزيارات</small><b class="num">' + n0(d.total) + '</b></div>' +
+        '<div><small class="muted">نسبة السلبي</small><b class="num">' + (d.negPct == null ? '—' : pct1(d.negPct)) + '</b>' + docDelta(d.negPct, peers.negPct, false, '٪') + '</div>' +
+        '<div><small class="muted">متوسط الطبيب</small><b class="num">' + (d.avgDoctor == null ? '—' : d.avgDoctor.toFixed(2)) + ' ★</b>' + docDelta(d.avgDoctor, peers.avgDoctor, true) + '</div>' +
+        '<div><small class="muted">الشكاوى</small><b class="num">' + n0(d.complaints) + '</b></div>' +
+        '<div><small class="muted">تعليقات قوقل</small><b class="num">' + (reviews ? n0(d.reviews.length) : '—') + '</b>' + (gAvg == null ? '' : '<small class="muted">متوسط ' + gAvg.toFixed(1) + ' ★</small>') + '</div>' +
+        '</div>' + (d.smallSample ? '<p class="muted small">عينة صغيرة، النتيجة تقريبية</p>' : '') + '</article>';
+    }).join('');
+    body.innerHTML =
+      '<div class="grid g4">' +
+        tile('الأطباء في الفترة', n0(rows.length)) +
+        tile('نسبة السلبي للكل', all.negPct == null ? '—' : pct1(all.negPct), 'من ' + n0(all.total) + ' زيارة') +
+        tile('أعلى متوسط طبيب', best ? best.avgDoctor.toFixed(2) + ' ★' : '—', best ? (best.ar || best.name) : 'لا يكفي العدد') +
+        tile('أعلى نسبة سلبي', worst && worst.negPct != null ? pct1(worst.negPct) : '—', worst ? (worst.ar || worst.name) : 'لا يكفي العدد') +
+      '</div>' +
+      (reviews ? '' : '<div class="card pad"><p class="muted small">تعليقات قوقل غير متاحة الآن، وتظهر الأرقام الأخرى.</p></div>') +
+      '<div class="rev-doc-grid">' + cards + '</div>';
+    $$('#docBody [data-doc]').forEach(c => {
+      const d = rows.find(x => x.name === c.dataset.doc);
+      const open = () => docModal(d);
+      c.onclick = open;
+      c.onkeydown = e => { if (e.key === 'Enter') open(); };
+    });
+  } catch (e) {
+    body.innerHTML = '<div class="card"><div class="empty"><b>تعذّر تحميل تقييم الأطباء</b>' + esc(e.message) + '</div></div>';
+  }
+}
+
 async function loadKpi() {
   const body = $('#kpiBody');
   body.innerHTML = '<div class="grid g4">' + '<div class="card tile"><div class="skeleton" style="width:60%"></div><div class="skeleton" style="height:30px;margin-top:12px"></div></div>'.repeat(4) + '</div>';
@@ -2497,6 +2590,7 @@ const apexPages={
  log:['سجل التجارب','تصفح وتصفية السجلات / Experience Log'],
  complaints:['إدارة الشكاوى','متابعة البلاغات وتصنيفها / Complaints'],
  reviews:['ذكاء تقييمات Google Maps','تحليل التقييمات ومتابعة الملاحظات / Reviews Intelligence'],
+ doctors:['تقييم الطبيب','مقارنة كل طبيب بمتوسط فرعه / Doctor Evaluation'],
  kpi:['مؤشرات الأداء','قراءة اتجاهات الجودة / Performance Analytics'],
  admin:['إدارة النظام','الأطباء والفروع والصلاحيات / Administration']
 };
