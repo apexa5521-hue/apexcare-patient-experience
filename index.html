@@ -114,6 +114,54 @@ tr:last-child td{border-bottom:0}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:13px;margin:3px;background:#fff}
 .chip.off{opacity:.5;text-decoration:line-through}
 .chip button{border:0;background:none;cursor:pointer;color:var(--muted);padding:0}
+
+/* Google Maps Intelligence — isolated visual module */
+.gmi{--gm:#0f766e;color:var(--ink)}.gmi-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(110deg,#e5f4f2,#fff);padding:20px;border:1px solid var(--line);border-radius:16px}
+.gmi-head h2{font-size:21px;margin:0 0 5px}.gmi-en{display:block;color:var(--muted);font-size:11px;font-weight:400}.gmi-bar{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}.gmi-bar button{border:1px solid var(--line);padding:9px 12px;border-radius:10px;background:#fff;color:var(--muted);cursor:pointer;font:inherit;font-size:12px}.gmi-bar button.active{background:var(--brand-soft);border-color:var(--brand);color:var(--brand);font-weight:700}
+.gmi-filters{display:flex;gap:9px;flex-wrap:wrap;align-items:end;margin-bottom:14px}.gmi-filters label{flex:1;min-width:135px;font-size:12px;color:var(--muted)}.gmi-filters input,.gmi-filters select{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff;margin-top:4px}
+.gmi-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.gmi-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.gmi-stat strong{font-size:26px;display:block;margin:6px 0;color:var(--ink)}.gmi-stat small{font-size:12px;color:var(--muted)}.gmi-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.gmi-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}.gmi-panel h3{font-size:15px;margin-bottom:12px}
+.gmi-sent{display:flex;height:14px;border-radius:20px;overflow:hidden;background:#eef1f5;margin:18px 0}.gmi-sent span:nth-child(1){background:#159f75}.gmi-sent span:nth-child(2){background:#f4be48}.gmi-sent span:nth-child(3){background:#d95f57}.gmi-row{padding:12px 0;border-bottom:1px solid var(--line)}.gmi-row:last-child{border:0}.gmi-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}.gmi-tag{border-radius:20px;padding:4px 9px;background:var(--brand-soft);color:var(--brand);font-size:11px}.gmi-tag.neg{background:#fdeee6;color:#b45309}.gmi-tag.mix{background:#fff6d9;color:#916500}.gmi-review{margin:8px 0;line-height:1.9;font-size:13px}.gmi-empty{text-align:center;padding:32px 12px;color:var(--muted)}.gmi-link{border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--brand);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer}.gmi-note{font-size:12px;color:var(--muted);margin:12px 0;line-height:1.8}.gmi-mini{height:9px;background:#e8efed;border-radius:20px;overflow:hidden;margin-top:7px}.gmi-mini i{display:block;background:#149784;height:100%}.gmi[dir=ltr]{text-align:left}.gmi[dir=ltr] .gmi-head{direction:ltr}
+@media(max-width:760px){.gmi-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.gmi-layout{grid-template-columns:1fr}.gmi-head{padding:14px}.gmi-head h2{font-size:18px}.gmi-stat{padding:12px}.gmi-stat strong{font-size:21px}.gmi-bar{overflow:auto;flex-wrap:nowrap}.gmi-bar button{flex:none}.gmi-panel{padding:12px}}
+
+/* Apex Care visual system v2 — presentation-only refinement of existing pages. */
+:root{--bg:#f3f7f7;--card:#ffffff;--ink:#152e34;--muted:#607781;--line:#e1eceb;--brand:#087e78;--brand-2:#086963;--brand-soft:#e4f4f1;--radius:16px;--shadow:0 3px 18px rgba(18,64,67,.035)}
+html{scroll-behavior:smooth}body{line-height:1.6}header.top{background:rgba(255,255,255,.97);box-shadow:0 2px 14px rgba(20,55,60,.035)}header.top .wrap{max-width:1440px}nav.tabs{max-width:1440px;gap:5px}nav.tabs button{font-weight:600;padding:12px 15px;border-radius:10px 10px 0 0;transition:background .16s,color .16s}nav.tabs button:hover{background:var(--brand-soft);color:var(--brand)}nav.tabs button.on{background:linear-gradient(180deg,#ebf8f5,#fff);border-bottom-width:3px}
+.wrap{max-width:1440px;padding:18px 22px}.card{border-radius:16px;box-shadow:var(--shadow)}.stat{min-height:112px}h2,h3{letter-spacing:-.25px}button,.btn{transition:filter .15s,transform .15s}.btn:hover{filter:brightness(.96)}.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #86d4cc;outline-offset:2px}
+.tbl-wrap{border-radius:12px;scrollbar-width:thin}th{background:#f4f9f8}tbody tr:hover td{background:#fbfefd}input,textarea,select{max-width:100%}
+@media(max-width:760px){.wrap{padding:12px}.card{padding:14px}nav.tabs{padding:0 8px}.gmi-filters label{min-width:calc(50% - 6px)}.gmi-head .gmi-en{font-size:10px}header.top .logo b{font-size:14px}header.top .who{font-size:11px}nav.tabs button{padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
+/* Unified Apex Care 2026 clinical dashboard redesign */
+#appView{--nav-width:224px;min-height:100vh;background:radial-gradient(ellipse at 90% 0%,#e6f3f1 0%,#f3f7f7 38%,#f3f7f7 100%)}
+#appView header.top{position:sticky;top:0;z-index:30;min-height:70px;border-bottom:1px solid var(--line);box-shadow:0 1px 8px rgba(12,70,66,.035)}
+#appView header.top .wrap{margin:0;max-width:100%;padding:10px 26px;min-height:69px}
+#appView header.top .logo .mark{border-radius:12px;background:linear-gradient(135deg,#0f766e,#16a6a0);box-shadow:0 6px 16px rgba(15,118,110,.15)}
+#appView header.top .logo b{font-size:16px}
+#appView nav.tabs{position:fixed;top:70px;bottom:0;right:0;left:auto;width:var(--nav-width);max-width:none;padding:24px 12px;display:flex;flex-direction:column;overflow-y:auto;gap:7px;background:#fff;border-left:1px solid var(--line);box-shadow:-3px 0 14px rgba(12,64,62,.02);z-index:25}
+#appView nav.tabs:before{content:"WORKSPACE / مساحة العمل";display:block;color:#98aaa7;font-size:10px;font-weight:700;letter-spacing:.8px;padding:0 12px 12px}
+#appView nav.tabs button{width:100%;display:flex;align-items:center;gap:12px;border:1px solid transparent;border-radius:11px;padding:12px 13px;text-align:start;white-space:normal;font-size:13px;line-height:1.6;background:transparent}
+#appView nav.tabs button:before{content:"◈";display:inline-grid;place-items:center;flex:none;width:26px;height:26px;border-radius:7px;font-size:17px;color:#8caaa5}
+#appView nav.tabs button[data-tab=add]:before{content:"＋"}#appView nav.tabs button[data-tab=log]:before{content:"☷"}#appView nav.tabs button[data-tab=gmi]:before{content:"◎"}#appView nav.tabs button[data-tab=complaints]:before{content:"◇"}#appView nav.tabs button[data-tab=kpi]:before{content:"▥"}#appView nav.tabs button[data-tab=admin]:before{content:"⚙"}
+#appView nav.tabs button.on{background:#e5f5f2;color:#0b726b;border-color:#cae8e3;font-weight:700;box-shadow:none}
+#appView nav.tabs button.on:before{background:#c9eae5;color:#08786e}
+#appView main.wrap{max-width:none;margin-right:var(--nav-width);margin-left:0;padding:28px clamp(16px,3vw,42px);min-height:calc(100vh - 70px)}
+#appView .page-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+#appView .page-intro h1{font-size:clamp(21px,2vw,29px);line-height:1.3;color:#123a38;letter-spacing:-.7px;margin:5px 0}
+#appView .page-intro p{margin:0;color:#718983;font-size:13px}
+#appView .eyebrow{font-size:10px;color:#0e897f;font-weight:700;letter-spacing:1px}
+#appView .page-icon{border:1px solid #d1ebe6;color:#0f766e;background:#e9f8f5;border-radius:15px;padding:12px 19px;font-size:23px}
+#appView .card{border-radius:17px;border-color:#e0eae8;box-shadow:0 5px 20px rgba(12,65,63,.035)}
+#appView .stat{position:relative;overflow:hidden}#appView .stat .v{letter-spacing:-.6px}#appView .stat:before{content:"";display:block;position:absolute;inset-inline-start:0;top:20px;bottom:20px;width:3px;background:#8ecfc4;border-radius:3px}
+#appView .btn:not(.ghost){background:linear-gradient(135deg,#0c887f,#0e766f)}#appView .btn{border-radius:10px}
+#appView table{font-size:12.5px}#appView th{background:#f2f8f6;color:#537a74}#appView td{padding:12px 11px}
+#appView .gmi-head{background:linear-gradient(110deg,#e0f3ee,#fff 80%);border-radius:17px}
+#appView .gmi-panel,#appView .gmi-stat{box-shadow:0 5px 20px rgba(12,65,63,.035)}
+#appView .gmi-stats{gap:13px}#appView .gmi-stat strong{font-size:28px}
+#appView[dir=ltr] nav.tabs{right:auto;left:0;border-left:0;border-right:1px solid var(--line)}
+#appView[dir=ltr] main.wrap{margin-left:var(--nav-width);margin-right:0}
+#appView[dir=ltr] nav.tabs button{text-align:left}
+@media(max-width:980px){#appView{--nav-width:190px}#appView nav.tabs{padding:18px 8px}#appView main.wrap{padding:18px 15px}}
+@media(max-width:700px){#appView header.top{min-height:62px}#appView header.top .wrap{padding:8px 12px;min-height:61px}#appView nav.tabs,#appView[dir=ltr] nav.tabs{position:sticky;top:61px;right:auto;left:auto;bottom:auto;width:100%;padding:6px 9px;display:flex;flex-direction:row;overflow-x:auto;gap:6px;border:0;border-bottom:1px solid var(--line);box-shadow:none;scrollbar-width:thin}#appView nav.tabs:before{display:none}#appView nav.tabs button{width:auto;flex:none;padding:8px 10px;font-size:11px;border-radius:9px;gap:6px}#appView nav.tabs button:before{width:20px;height:20px;font-size:14px}#appView main.wrap,#appView[dir=ltr] main.wrap{margin:0;padding:14px 12px}#appView .page-intro{margin-bottom:15px}#appView .page-intro h1{font-size:21px}#appView .page-intro p{font-size:11px}#appView .page-icon{display:none}#appView header.top .who{font-size:10px}#appView .gmi-stats{gap:8px}#appView .gmi-stat strong{font-size:21px}}
 </style>
 </head>
 <body>
@@ -135,18 +183,18 @@ tr:last-child td{border-bottom:0}
   <header class="top">
     <div class="wrap">
       <div class="logo" style="margin:0"><div class="mark">A</div><div><b>تجربة المريض</b><small>Apex Care</small></div></div>
-      <div class="who"><div id="whoName"></div><button class="btn ghost sm" id="btnPw">كلمة المرور</button> <button class="btn ghost sm" id="btnOut">خروج</button></div>
+      <div class="who"><button type="button" class="btn ghost sm" id="globalLang" aria-label="Switch language">EN</button> <div id="whoName"></div><button class="btn ghost sm" id="btnPw">كلمة المرور</button> <button class="btn ghost sm" id="btnOut">خروج</button></div>
     </div>
-    <nav class="tabs" id="tabs">
+    <nav class="tabs" id="tabs" aria-label="Main navigation">
       <button data-tab="add" class="on">تسجيل تجربة</button>
       <button data-tab="log">السجل</button>
-      <button data-tab="complaints">الشكاوى <span class="badge hidden" id="openBadge"></span></button>
+      <button data-tab="gmi">Google Maps <span style="font-size:11px;opacity:.75">Intelligence</span></button><button data-tab="complaints">الشكاوى <span class="badge hidden" id="openBadge"></span></button>
       <button data-tab="kpi" data-admin>مؤشرات الأداء</button>
       <button data-tab="admin" data-admin>الإدارة</button>
     </nav>
   </header>
 
-  <main class="wrap">
+  <main class="wrap"><div class="page-intro" id="pageIntro"><div><span class="eyebrow">APEX CARE / PATIENT EXPERIENCE</span><h1 id="pageHeading">تسجيل تجربة</h1><p id="pageSubtitle">إدارة تجربة المرضى وتحسين جودة الخدمة</p></div><span class="page-icon" id="pageIcon" aria-hidden="true">✦</span></div>
 
     <!-- تسجيل تجربة -->
     <div data-pane="add" class="card">
@@ -198,6 +246,13 @@ tr:last-child td{border-bottom:0}
       </div>
     </div>
 
+<div data-pane="gmi" class="hidden gmi" id="gmiRoot" dir="rtl">
+  <div class="gmi-head"><div><h2 id="gmiTitle">ذكاء تقييمات Google Maps</h2><span class="gmi-en">Google Maps Intelligence · Apex Care Patient Experience</span></div><button type="button" class="gmi-link" id="gmiLanguage">English / العربية</button></div>
+  <nav class="gmi-bar" id="gmiNav" aria-label="Google Maps Intelligence"></nav>
+  <div class="gmi-filters"><label id="gmiSearchLabel">بحث / Search<input id="gmiSearch" type="search" placeholder="ابحث في التعليقات أو أسماء الأطباء"></label><label id="gmiBranchLabel">الفرع / Branch<select id="gmiBranch"><option value="">جميع الفروع</option></select></label><label id="gmiDoctorLabel">الطبيب / Doctor<select id="gmiDoctor"><option value="">جميع الأطباء</option></select></label></div>
+  <div id="gmiContent" aria-live="polite"></div>
+  <p class="gmi-note" id="gmiDisclaimer">التقييمات المعروضة تجريبية فقط. لم يتم ربط Google Maps بعد؛ لا توجد بيانات حقيقية في هذه الشاشة.</p>
+</div>
     <!-- المؤشرات -->
     <div data-pane="kpi" class="hidden">
       <div class="card"><div class="filters" id="kpiFilters" style="margin:0"></div></div>
@@ -328,6 +383,7 @@ async function enter() {
   const r = await api('lookups'); S.lk = r.lookups;
   buildForm(); buildFilters();
   showTab('add');
+  apexLanguageSet(apexUiLang);
   refreshComplaintsBadge();
 }
 
@@ -369,6 +425,8 @@ function showTab(t) {
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
   if (t === 'admin') loadAdmin();
+  if (t === 'gmi') gmSetup();
+  apexPageTitle(t);
 }
 
 /* ===== نموذج التسجيل ===== */
@@ -656,6 +714,123 @@ function userModal(u) {
     });
   };
 }
+
+/* Google Maps Intelligence UI: no backend mutations or Google credential handling. */
+const GM={
+ lang:'ar',tab:'overview',demo:false,
+ samples:[
+ {id:'sample-1',branch:'بريدة',doctor:'د. أحمد العتيبي',rating:5,date:'2026-10-20',sent:'mixed',doctorSentiment:'positive',topics:['الطبيب','الانتظار'],text:'الدكتور أحمد ممتاز وشرح لي كل شيء، لكن انتظرت طويلاً قبل الدخول.',en:'The doctor explained everything clearly, but the waiting time was long.'},
+ {id:'sample-2',branch:'عنيزة',doctor:'د. سارة محمد',rating:2,date:'2026-10-18',sent:'negative',topics:['التواصل'],text:'لم يتم شرح العلاج بالشكل الكافي.',en:'The treatment was not explained clearly enough.'},
+ {id:'sample-3',branch:'بريدة',doctor:'',rating:5,date:'2026-10-15',sent:'positive',topics:['الاستقبال','النظافة'],text:'الاستقبال لطيف والعيادة نظيفة جدًا.',en:'Friendly reception and a very clean clinic.'},
+ {id:'sample-4',branch:'عنيزة',doctor:'د. خالد عبدالله',rating:4,date:'2026-10-10',sent:'positive',topics:['شرح العلاج'],text:'الدكتور خالد محترم ويشرح الخيارات بوضوح.',en:'Dr Khalid explains the options clearly.'}
+ ],
+ tasks:[], page:1
+};
+const gmT=(a,e)=>GM.lang==='ar'?a:e;
+const gmTabs=[['overview','نظرة عامة','Overview'],['reviews','جميع التعليقات','All Reviews'],['doctors','تقييمات الأطباء','Doctors'],['positive','الإيجابية','Positive'],['negative','السلبية','Negative'],['complaints','مركز المتابعة','Follow-up']];
+/* Conservative Arabic doctor matching: do not attribute ambiguous first names. */
+function gmNormalize(s){
+ return String(s||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+ .replace(/[ًٌٍَُِّْـ]/g,'')
+ .replace(/(?:الدكتور|الدكتوره|دكتور|دكتوره|د[./]|dr[.]?)/gi,' ')
+ .replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+}
+function gmIdentifyDoctor(review,doctors){
+ const message=' '+gmNormalize(review.text||review.en)+' ';
+ const entries=doctors.map(d=>{const name=typeof d==='string'?d:d.name;const aliases=[name,...(typeof d==='object'&&Array.isArray(d.aliases)?d.aliases:[])].map(gmNormalize).filter(x=>x.split(' ').length>=2);return {name,aliases};});
+ const matches=entries.filter(d=>d.aliases.some(a=>message.includes(' '+a+' ')));
+ return matches.length===1?{name:matches[0].name,confidence:'high'}:{name:'',confidence:matches.length?'ambiguous':'none'};
+}
+function gmDoctorSentiment(r){if(r.doctorSentiment)return r.doctorSentiment;return r.topics.includes('الانتظار')&&r.sent==='mixed'?'positive':r.sent;}
+function gmDoctorSummary(rr){
+ const count=rr.length,valid=rr.filter(r=>Number(r.rating)>=1&&Number(r.rating)<=5),avg=valid.length?(valid.reduce((n,r)=>n+Number(r.rating),0)/valid.length).toFixed(2):'—';
+ const positive=rr.filter(r=>gmDoctorSentiment(r)==='positive').length,negative=rr.filter(r=>gmDoctorSentiment(r)==='negative').length,mixed=rr.filter(r=>gmDoctorSentiment(r)==='mixed').length;
+ return {count,avg,positive,negative,mixed,ratio:count?Math.round(100*positive/count):0};
+}
+function gmMonth(d){return /^\d{4}-\d{2}/.test(d||'')?d.slice(0,7):'';}
+function gmRows(){let rows=GM.demo?GM.samples:[];const q=($('#gmiSearch').value||'').trim().toLowerCase(),b=$('#gmiBranch').value,d=$('#gmiDoctor').value;return rows.filter(r=>(!b||r.branch===b)&&(!d||r.doctor===d)&&(!q||[r.text,r.en,r.doctor,r.branch,...r.topics].join(' ').toLowerCase().includes(q)));}
+function gmSetup(){
+ const root=$('#gmiRoot');root.dir=GM.lang==='ar'?'rtl':'ltr';
+ $('#gmiLanguage').textContent=GM.lang==='ar'?'English':'العربية';
+ $('#gmiTitle').textContent=gmT('ذكاء تقييمات Google Maps','Google Maps Intelligence');
+ $('#gmiSearch').placeholder=gmT('ابحث في التعليقات أو الأطباء','Search reviews or doctors');
+ $('#gmiSearchLabel').firstChild.textContent=gmT('بحث / Search','Search / بحث');
+ $('#gmiBranchLabel').firstChild.textContent=gmT('الفرع / Branch','Branch / الفرع');
+ $('#gmiDoctorLabel').firstChild.textContent=gmT('الطبيب / Doctor','Doctor / الطبيب');
+ $('#gmiDisclaimer').textContent=gmT('وضع معاينة ببيانات افتراضية فقط. لا يوجد اتصال فعلي بتقييمات Google Maps. يجب مراجعة سياسات Google قبل تخزين التقييمات وتحليلها.','Preview mode with fictional reviews only. No live Google Maps connection. Review Google data policies before retention and analysis.');
+ $('#gmiNav').innerHTML=gmTabs.map(x=>'<button type="button" data-gm="'+x[0]+'" class="'+(GM.tab===x[0]?'active':'')+'">'+gmT(x[1],x[2])+'</button>').join('');
+ $('#gmiNav').querySelectorAll('button').forEach(b=>b.onclick=()=>{GM.tab=b.dataset.gm;gmSetup();});
+ const lk=S.lk||{},branches=[...new Set([...(lk.branches||[]),...(GM.demo?GM.samples.map(x=>x.branch):[])])],docs=[...new Set([...(lk.doctors||[]).filter(x=>x.active!==false).map(x=>x.name),...(GM.demo?GM.samples.map(x=>x.doctor).filter(Boolean):[])])];
+ const oldB=$('#gmiBranch').value,oldD=$('#gmiDoctor').value;
+ $('#gmiBranch').innerHTML='<option value="">'+gmT('جميع الفروع','All branches')+'</option>'+branches.map(x=>'<option>'+esc(x)+'</option>').join('');
+ $('#gmiDoctor').innerHTML='<option value="">'+gmT('جميع الأطباء','All doctors')+'</option>'+docs.map(x=>'<option>'+esc(x)+'</option>').join('');
+ $('#gmiBranch').value=branches.includes(oldB)?oldB:'';$('#gmiDoctor').value=docs.includes(oldD)?oldD:'';
+ gmRender();
+}
+function gmCard(label,en,num){return '<div class="gmi-stat"><small>'+gmT(label,en)+'</small><strong>'+num+'</strong></div>';}
+function gmReview(r){
+ const label=r.sent==='positive'?gmT('إيجابي','Positive'):r.sent==='negative'?gmT('سلبي','Negative'):gmT('مختلط','Mixed');
+ return '<div class="gmi-row"><div class="gmi-meta"><span>★ '+r.rating+' / 5 · '+esc(r.branch)+' · '+esc(r.date)+'</span><span class="gmi-tag '+(r.sent==='negative'?'neg':r.sent==='mixed'?'mix':'')+'">'+label+'</span></div><p class="gmi-review">'+esc(gmT(r.text,r.en))+'</p><div class="gmi-meta"><span>'+esc(r.doctor||gmT('غير مرتبط بطبيب','No doctor mentioned'))+'</span><span>'+r.topics.map(t=>'<span class="gmi-tag">'+esc(t)+'</span>').join(' ')+'</span></div><div style="margin-top:9px"><button type="button" class="gmi-link" data-gmdetail="'+esc(r.id)+'">'+gmT('التفاصيل والتحليل','Review analysis')+'</button></div></div>';
+}
+function gmRender(){
+ const rows=gmRows(),pos=rows.filter(x=>x.sent==='positive').length,neg=rows.filter(x=>x.sent==='negative').length,mix=rows.filter(x=>x.sent==='mixed').length,total=rows.length;
+ let html='';
+ if(GM.tab==='overview'){
+ html='<div class="gmi-stats">'+gmCard('إجمالي التقييمات','Total Reviews',total)+gmCard('متوسط النجوم','Average Rating',total?(rows.reduce((a,x)=>a+x.rating,0)/total).toFixed(1):'—')+gmCard('تعليقات إيجابية','Positive Reviews',pos)+gmCard('تعليقات سلبية','Negative Reviews',neg)+'</div>';
+ html+='<div class="gmi-layout"><div class="gmi-panel"><h3>'+gmT('توزيع المشاعر','Sentiment distribution')+'</h3><div class="gmi-sent"><span style="width:'+(total?pos/total*100:0)+'%"></span><span style="width:'+(total?mix/total*100:0)+'%"></span><span style="width:'+(total?neg/total*100:0)+'%"></span></div><p class="gmi-note">'+gmT('إيجابي','Positive')+' '+pos+' · '+gmT('مختلط','Mixed')+' '+mix+' · '+gmT('سلبي','Negative')+' '+neg+'</p><h3>'+gmT('أكثر الموضوعات','Frequent Topics')+'</h3>'+[...new Set(rows.flatMap(r=>r.topics))].map(t=>{const n=rows.filter(r=>r.topics.includes(t)).length;return '<div class="gmi-row"><div class="gmi-meta"><span>'+esc(t)+'</span><b>'+n+'</b></div><div class="gmi-mini"><i style="width:'+(n/Math.max(1,total)*100)+'%"></i></div></div>';}).join('')+'</div><div class="gmi-panel"><h3>'+gmT('أحدث التعليقات','Recent reviews')+'</h3>'+rows.slice(0,3).map(gmReview).join('')+'</div></div>';
+ }else if(GM.tab==='doctors'){
+ const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))];
+ html='<div class="gmi-panel"><h3>'+gmT('بطاقة مؤشرات الأطباء','Doctor review scorecards')+'</h3><p class="gmi-note">'+gmT('متوسط النجوم خاص بالتعليقات التي تذكر الطبيب فقط، وليس تقييمًا سريريًا أو مهنيًا.','Star averages are based only on reviews mentioning the doctor and are not clinical performance assessments.')+'</p>'+docs.map(d=>{
+ const rr=rows.filter(r=>r.doctor===d),s=gmDoctorSummary(rr),months=[...new Set(rr.map(x=>gmMonth(x.date)).filter(Boolean))].sort().reverse(),latest=months[0],previous=months[1],recent=rr.filter(x=>gmMonth(x.date)===latest),prior=rr.filter(x=>gmMonth(x.date)===previous);
+ return '<div class="gmi-row"><div class="gmi-meta"><b>'+esc(d)+'</b><span>★ '+s.avg+' / 5 · '+s.count+' '+gmT('إشارة','mentions')+'</span></div>'+
+ '<div class="gmi-stats" style="margin-top:10px">'+gmCard('إيجابي للطبيب','Doctor positive',s.positive)+gmCard('سلبي للطبيب','Doctor negative',s.negative)+gmCard('مختلط للطبيب','Doctor mixed',s.mixed)+gmCard('نسبة الإيجابية','Positive share',s.ratio+'%')+'</div>'+
+ '<p class="gmi-note">'+gmT('آخر شهر','Latest month')+': '+esc(latest||'—')+' ('+recent.length+') · '+gmT('الشهر السابق','Previous month')+': '+esc(previous||'—')+' ('+prior.length+')</p>'+
+ '<button class="gmi-link" data-gmdoctor="'+esc(d)+'">'+gmT('عرض تعليقات الطبيب','View doctor reviews')+'</button></div>';
+ }).join('')+'</div>';
+ }else if(GM.tab==='complaints'){
+ html='<div class="gmi-stats">'+gmCard('تعليقات سلبية','Negative reviews',neg)+gmCard('حالات مفتوحة','Open tasks',GM.tasks.filter(x=>x.status==='open').length)+gmCard('مغلقة','Closed tasks',GM.tasks.filter(x=>x.status==='closed').length)+gmCard('تحتاج مراجعة','Pending review',neg)+'</div><div class="gmi-panel section"><h3>'+gmT('متابعة الملاحظات','Follow-up actions')+'</h3>'+rows.filter(r=>r.sent==='negative').map(r=>gmReview(r)+'<button class="gmi-link" data-gmtask="'+esc(r.id)+'">'+gmT('إنشاء مهمة تجريبية','Create demo task')+'</button>').join('')+'</div>';
+ }else{
+ const filtered=GM.tab==='positive'?rows.filter(x=>x.sent==='positive'):GM.tab==='negative'?rows.filter(x=>x.sent==='negative'):rows;
+ html='<div class="gmi-panel"><h3>'+gmT('التعليقات المحللة','Analyzed reviews')+' ('+filtered.length+')</h3>'+filtered.map(gmReview).join('')+'</div>';
+ }
+ if(!rows.length)html='<div class="gmi-panel gmi-empty"><h3>'+gmT('لا توجد تقييمات متصلة حاليًا','No connected reviews yet')+'</h3><p>'+gmT('يمكنك معاينة الواجهة بتقييمات افتراضية، ولن تحفظ كبيانات فعلية.','Preview the interface with fictional reviews, never saved as real data.')+'</p><button class="btn" id="gmiDemo">'+gmT('تشغيل المعاينة التجريبية','Load demo reviews')+'</button></div>';
+ else html+='<p class="gmi-note"><button class="gmi-link" id="gmiDemo">'+gmT('إيقاف البيانات التجريبية','Clear demo reviews')+'</button></p>';
+ $('#gmiContent').innerHTML=html;
+ if($('#gmiDemo'))$('#gmiDemo').onclick=()=>{GM.demo=!GM.demo;GM.tasks=[];gmSetup();};
+ $('#gmiContent [data-gmdetail]').forEach(b=>b.onclick=()=>{let r=GM.samples.find(x=>x.id===b.dataset.gmdetail);if(!r)return;openModal('<h2>'+gmT('تحليل التعليق','Review analysis')+'</h2><p class="gmi-review">'+esc(gmT(r.text,r.en))+'</p><p class="muted small">'+esc(r.doctor||gmT('لم يذكر طبيب','No doctor'))+' · '+esc(r.branch)+'</p><p>'+r.topics.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</p><p class="muted small">'+gmT('بيانات افتراضية، لا يوجد رابط Google أصلي أو تحليل ذكاء اصطناعي فعلي.','Fictional example, no original Google URL or live AI analysis.')+'</p><button class="btn ghost" data-close>'+gmT('إغلاق','Close')+'</button>');});
+ $('#gmiContent [data-gmdoctor]').forEach(b=>b.onclick=()=>{$('#gmiDoctor').value=b.dataset.gmdoctor;GM.tab='reviews';gmSetup();});
+ $('#gmiContent [data-gmtask]').forEach(b=>b.onclick=()=>{if(!GM.tasks.some(x=>x.id===b.dataset.gmtask))GM.tasks.push({id:b.dataset.gmtask,status:'open'});gmRender();toast(gmT('تم إنشاء مهمة ضمن المعاينة فقط','Demo task created (not saved)'));});
+}
+$('#gmiLanguage').onclick=()=>apexLanguageSet(apexUiLang==='ar'?'en':'ar');
+['gmiSearch','gmiBranch','gmiDoctor'].forEach(id=>$('#'+id).addEventListener(id==='gmiSearch'?'input':'change',gmRender));
+
+
+/* Unified navigation language; existing operational form data and dynamic backend strings remain untouched. */
+let apexUiLang='ar';
+const apexNames={"add":["تسجيل تجربة","New Experience","clipboard-plus"],"log":["السجل","Experience Log","list"],"gmi":["تقييمات Google","Google Reviews","map-pin"],"complaints":["الشكاوى","Complaints","message-square-warning"],"kpi":["مؤشرات الأداء","Analytics","chart-no-axes-combined"],"admin":["الإدارة","Administration","settings"]};
+const apexSubs={ar:'إدارة تجربة المرضى وتحسين جودة الخدمة',en:'Patient experience operations and quality insights'};
+const apexLegacy={
+ 'تسجيل تجربة مريض':'Register Patient Experience','مؤشرات الأطباء':'Doctor Metrics','المستخدمون':'Users','الأطباء':'Doctors','إدارة الشكاوى':'Complaint Management',
+ 'إجمالي التجارب':'Total Experiences','إيجابية':'Positive','سلبية':'Negative','مؤشرات الأداء':'Performance Indicators','متوسط إغلاق الشكوى (ساعة)':'Average Complaint Closure (hours)',
+ 'رقم الملف':'File Number','رقم الجوال':'Mobile Number','الفرع':'Branch','الطبيب':'Doctor','تاريخ الزيارة':'Visit Date','الوقت':'Time',
+ 'نوع الزيارة':'Visit Type','حفظ':'Save','إضافة':'Add','إلغاء':'Cancel','جديد':'New','مزامنة':'Sync','تصدير CSV':'Export CSV',
+ 'اسم المستخدم':'Username','الاسم':'Name','الدور':'Role','التصنيف':'Category','كلمة المرور':'Password','خروج':'Log Out','شكوى جديدة':'New Complaint',
+ 'الخريطة الحرارية للتجارب السلبية (اليوم × الساعة)':'Negative Experiences Heatmap (Day × Hour)'
+};
+const apexTranslations=[];
+function apexLanguageSet(lang){
+ apexUiLang=lang;const app=$('#appView');app.dir=lang==='ar'?'rtl':'ltr';document.documentElement.dir=app.dir;document.documentElement.lang=lang;
+ $('#globalLang').textContent=lang==='ar'?'EN':'عربي';
+ document.querySelectorAll('#tabs button[data-tab]').forEach(b=>{const x=apexNames[b.dataset.tab];if(!x)return;const badge=b.querySelector('.badge');b.textContent=x[lang==='ar'?0:1];if(badge)b.appendChild(badge);});
+ if(!apexTranslations.length)document.querySelectorAll('[data-pane] h2,[data-pane] h3').forEach(el=>{if(el.closest('#gmiRoot'))return;apexTranslations.push([el,el.textContent.trim(),el.innerHTML]);});
+ apexTranslations.forEach(([el,ar,original])=>{if(!el.isConnected)return;if(lang==='ar'){if(el.dataset.apexTranslated==='yes'){el.textContent=ar;el.dataset.apexTranslated='no';}}else if(apexLegacy[ar]){el.textContent=apexLegacy[ar];el.dataset.apexTranslated='yes';}});
+ if(typeof GM!=='undefined'){GM.lang=lang;if(!$('#gmiRoot').classList.contains('hidden'))gmSetup();}
+ const active=$('#tabs button.on')?.dataset.tab||'add';apexPageTitle(active);
+}
+function apexPageTitle(tab){
+ const x=apexNames[tab]||apexNames.add;$('#pageHeading').textContent=x[apexUiLang==='ar'?0:1];$('#pageSubtitle').textContent=apexSubs[apexUiLang];$('#pageIcon').textContent=({add:'＋',log:'☷',gmi:'◎',complaints:'◇',kpi:'▥',admin:'⚙'})[tab]||'✦';
+}
+$('#globalLang').onclick=()=>apexLanguageSet(apexUiLang==='ar'?'en':'ar');
 </script>
 </body>
 </html>
