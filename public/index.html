@@ -2466,7 +2466,7 @@ async function loadAdmin() {
         <td>${esc(x.branch || 'الكل')}</td><td>${act(x.active)}${x.mustChange ? ' <span class="pill p-prog">بانتظار تغيير كلمة المرور</span>' : ''}</td><td class="ltr num small">${esc(x.lastLogin || '—')}</td>
         <td><button class="btn ghost sm" type="button" data-u="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>';
     $('#docTable').innerHTML = S.adm.doctors.length ? `<thead><tr><th>الطبيب</th><th>التخصص</th><th>الفرع</th><th>الحالة</th><th></th></tr></thead><tbody>` +
-      S.adm.doctors.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.specialty)}</td><td>${esc(x.branch)}</td><td>${act(x.active)}</td><td><button class="btn ghost sm" type="button" data-d="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>'
+      S.adm.doctors.map(x => `<tr><td>${x.name_ar ? `<b>${esc(x.name_ar)}</b>` : '<span class="muted">بدون اسم عربي</span>'}<br><small class="muted ltr">${esc(x.name)}</small></td><td>${esc(x.specialty)}</td><td>${esc(x.branch)}</td><td>${act(x.active)}</td><td><button class="btn ghost sm" type="button" data-d="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>'
       : emptyRow('لا يوجد أطباء بعد', 'أضف الأطباء ليظهروا في نموذج التسجيل.');
     $('#catTable').innerHTML = `<thead><tr><th>التصنيف</th><th>النوع</th><th>الحالة</th><th></th></tr></thead><tbody>` +
       S.adm.categories.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.type)}</td><td>${act(x.active)}</td><td><button class="btn ghost sm" type="button" data-c="${esc(x.id)}">تعديل</button></td></tr>`).join('') + '</tbody>';
@@ -2541,7 +2541,10 @@ function userModal(u) {
 function doctorModal(d) {
   openModal(`<h2 id="modalTitle">${d ? 'تعديل طبيب' : 'إضافة طبيب'}</h2>
     <form id="dForm" class="grid" novalidate>
-      <div class="field"><label for="dName">اسم الطبيب</label><input type="text" id="dName" name="name" maxlength="80" value="${esc(d?.name)}" placeholder="مثال: د. سارة العتيبي"></div>
+      <div class="grid g2">
+        <div class="field"><label for="dNameAr">الاسم بالعربي</label><input type="text" id="dNameAr" name="name_ar" maxlength="80" value="${esc(d?.name_ar)}" placeholder="مثال: سارة العتيبي"><small class="muted">يظهر في بطاقات تقييم الطبيب، ويُستخدم للتعرف عليه في تعليقات قوقل</small></div>
+        <div class="field"><label for="dName">الاسم بالإنجليزي</label><input type="text" id="dName" name="name" class="ltr" maxlength="80" value="${esc(d?.name)}" placeholder="Dr. Sara Al-Otaibi"><small class="muted">يُستخدم للتعرف عليه في التعليقات الإنجليزية</small></div>
+      </div>
       <div class="grid g2">
         <div class="field"><label for="dSpec">التخصص</label><select id="dSpec" name="specialty">${opt(S.lk.specialties, undefined, d?.specialty)}</select></div>
         <div class="field"><label for="dBranch">الفرع</label><select id="dBranch" name="branch">${opt([...S.lk.branches, 'الكل'], undefined, d?.branch)}</select></div>
@@ -2553,7 +2556,7 @@ function doctorModal(d) {
     e.preventDefault();
     const f = e.target;
     busy(e.submitter, async () => {
-      const body = { name: f.name.value.trim(), specialty: f.specialty.value, branch: f.branch.value };
+      const body = { name: f.name.value.trim(), name_ar: f.name_ar.value.trim(), specialty: f.specialty.value, branch: f.branch.value };
       if (d) body.active = f.active.checked;
       await api(d ? 'PATCH' : 'POST', d ? `/admin/doctors/${d.id}` : '/admin/doctors', body);
       closeModal(); toast(d ? 'تم الحفظ' : 'تمت إضافة الطبيب');

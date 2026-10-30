@@ -183,6 +183,10 @@ async function run() {
 
       await page.click('#tabs button[data-tab=admin]');
       await page.waitForSelector('#docTable td:has-text("د. منى السالم")');
+      await page.click('#docTable tr:has-text("د. منى السالم") button[data-d]');
+      await page.fill('#dNameAr', `منى السالم ${vp.name}`);
+      await page.click('#dForm button[type=submit]');
+      await page.waitForSelector(`#docTable td:has-text("منى السالم ${vp.name}")`);
       await page.click('#newUser');
       await page.fill('#uUser', `staff.${vp.name}`);
       await page.fill('#uName', 'موظفة الاستقبال');
