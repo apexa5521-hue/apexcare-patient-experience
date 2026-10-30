@@ -396,6 +396,58 @@ a.tel:hover{text-decoration:underline}
 @media(max-width:560px){.src-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.src-grid .tile .v{font-size:24px}}
 .skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,#efede8 0,#f7f6f3 50%,#efede8 100%);background-size:200% 100%;animation:sk 1.2s infinite}
 @keyframes sk{to{background-position:-200% 0}}
+
+/* Apex Care 2026 — approved clinical redesign for the actual Render application.
+   Presentation only: all existing routes, IDs, access roles, OAuth and Supabase remain untouched. */
+:root{--bg:#f3f7f7;--surface:#fff;--surface-2:#f7fbfa;--ink:#153039;--ink-2:#3a5960;--muted:#68818a;--line:#e0ecea;--line-2:#edf3f2;--brand:#0b7973;--brand-ink:#07665f;--brand-soft:#e3f5f1;--focus:#0b7973;--r-lg:17px;--sh:0 5px 22px rgba(17,74,72,.045)}
+body{background:radial-gradient(ellipse at 92% 0%,#e7f4f1 0%,#f3f7f7 45%,#f3f7f7 100%);color:var(--ink)}
+.card{box-shadow:var(--sh);border-color:var(--line)}
+.btn:not(.ghost):not(.quiet){background:linear-gradient(125deg,#0b8e83,#0c756d)}
+.btn:not(.ghost):not(.quiet):hover{background:#096b63}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(12,135,126,.13)}
+header.top{background:rgba(255,255,255,.97);box-shadow:0 2px 15px rgba(16,70,68,.045)}
+header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
+#appView{--apex-side:224px}
+#appView header.top .wrap:has(nav.tabs){position:fixed;z-index:30;inset-inline-start:0;top:70px;bottom:0;width:var(--apex-side);max-width:none;margin:0;padding:0;background:#fff;border-inline-end:1px solid var(--line);overflow-y:auto}
+#appView nav.tabs{padding:22px 12px;display:flex;flex-direction:column;gap:7px;overflow:visible;align-items:stretch}
+#appView nav.tabs::before{content:"APEX CARE / WORKSPACE";font-size:10px;font-weight:700;letter-spacing:1px;color:#89a29d;padding:4px 10px 13px}
+#appView nav.tabs button{min-height:46px;width:100%;padding:11px 13px;display:flex;align-items:center;text-align:start;gap:11px;border-radius:11px;font-size:13px;white-space:normal;line-height:1.5;transition:background .16s,color .16s}
+#appView nav.tabs button::before{content:"◈";flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;color:#849e99;font-size:17px}
+#appView nav.tabs button[data-tab=add]::before{content:"＋"}
+#appView nav.tabs button[data-tab=cases]::before{content:"▣"}
+#appView nav.tabs button[data-tab=calls]::before{content:"☏"}
+#appView nav.tabs button[data-tab=log]::before{content:"☷"}
+#appView nav.tabs button[data-tab=complaints]::before{content:"◇"}
+#appView nav.tabs button[data-tab=reviews]::before{content:"◎"}
+#appView nav.tabs button[data-tab=kpi]::before{content:"▥"}
+#appView nav.tabs button[data-tab=admin]::before{content:"⚙"}
+#appView nav.tabs button[aria-selected=true]{background:#e5f5f1;color:#086f67;font-weight:700}
+#appView nav.tabs button[aria-selected=true]::before{background:#ccece5;color:#087d71}
+#appView nav.tabs button[aria-selected=true]::after{display:none}
+#appView main.wrap{max-width:none;margin-inline-start:var(--apex-side);padding:24px clamp(16px,3vw,42px) 70px;min-height:calc(100vh - 70px)}
+#appView .section-head h2{font-size:clamp(19px,1.7vw,25px);letter-spacing:-.35px}
+#appView .form-shell{max-width:1040px}
+#appView .form-shell .card{border-radius:18px}
+#appView .step-n{background:#dcf2ed;color:#08776b;width:32px;height:32px}
+#appView .step-title{color:#214b47}
+#appView th{background:#f1f8f6;color:#4a746d}
+#appView tbody tr:hover td{background:#fbfefd}
+#appView .badge{font-size:11px}
+#appView .tabs button[hidden]{display:none}
+@media(max-width:1000px){#appView{--apex-side:188px}#appView nav.tabs{padding:16px 8px}#appView main.wrap{padding-inline:18px}}
+@media(max-width:720px){
+ #appView header.top .bar{padding:8px 12px;min-height:61px}
+ #appView header.top .wrap:has(nav.tabs){position:sticky;top:61px;bottom:auto;inset-inline-start:auto;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;border:0;border-bottom:1px solid var(--line);z-index:30}
+ #appView nav.tabs{padding:6px 8px;flex-direction:row;gap:5px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+ #appView nav.tabs::before{display:none}
+ #appView nav.tabs button{width:auto;flex:none;padding:8px 11px;min-height:39px;white-space:nowrap;font-size:11.5px;gap:6px;border-radius:9px}
+ #appView nav.tabs button::before{width:19px;height:19px;font-size:13px}
+ #appView main.wrap{margin-inline-start:0;padding:15px 12px 55px}
+ #appView .step-n{width:26px;height:26px}
+ #appView .section-head h2{font-size:20px}
+}
+@media(prefers-reduced-motion:reduce){#appView nav.tabs button{transition:none}}
+
 </style>
 </head>
 <body>
