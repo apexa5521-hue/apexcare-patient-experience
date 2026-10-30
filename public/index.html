@@ -516,6 +516,67 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 #appView [data-pane] .btn.ghost:hover{background:#edf8f5}
 @media(min-width:1100px){#appView [data-pane] .g4{gap:17px}#appView .rev-analysis-columns{gap:17px}}
 @media(max-width:720px){#appView .apex-page-hero{padding:17px;border-radius:14px;margin-bottom:13px}#appView .apex-page-hero h1{font-size:20px}#appView .apex-page-hero p{font-size:11px}#appView .apex-hero-mark{width:40px;height:40px;font-size:20px;border-radius:11px}#appView .apex-kicker{font-size:9px}#appView .rev-insight-head{padding:13px}#appView [data-pane]>.section-head{padding:11px 13px}#appView [data-pane]>.section-head h2{font-size:16px}}
+
+/* Apex Care SKY / WHITE design system v3 — overrides prior teal visual layer.
+   No routes, forms, data handling, permission checks or Google integration changes. */
+:root{
+ --bg:#f5fbff;--surface:#ffffff;--surface-2:#f8fcff;--ink:#23404f;--ink-2:#3b6277;--muted:#728f9e;
+ --line:#dceaf2;--line-2:#eaf3f8;--brand:#249fd5;--brand-ink:#167fb5;--brand-soft:#eaf7fd;--focus:#44b9e8;
+ --pos:#248668;--pos-soft:#eaf8f2;--neg:#bb564d;--neg-soft:#fff0ed;--warn:#916b23;--warn-soft:#fff8e6;
+ --info:#278abe;--info-soft:#eaf7fd;--danger:#ba4b4b;--danger-soft:#fff0f0;
+ --c-neg:#ca7770;--c-rest:#b9d8e7;--c-single:#5bbce7;--c-grid:#e7f2f8;
+ --h0:#f3faff;--h1:#dff2fc;--h2:#bde5f7;--h3:#92d3f2;--h4:#60bee9;--h5:#309bd1;
+ --sh:0 5px 22px rgba(50,124,164,.055);--sh-lg:0 16px 48px rgba(33,97,136,.15)
+}
+body{background:linear-gradient(145deg,#f1faff 0%,#f9fcff 55%,#f4faff 100%);color:var(--ink)}
+.login{background:radial-gradient(circle at 80% 10%,#daf1fd 0%,transparent 42%),radial-gradient(circle at 10% 90%,#eaf7fd 0%,transparent 40%),#f7fcff}
+.login .card{max-width:425px;padding:34px;border:1px solid #d8ecf7;border-radius:22px;box-shadow:0 18px 55px rgba(54,139,178,.1)}
+.login .brand{justify-content:center;gap:13px}.login .mark{width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#67c8ef,#229bd2);box-shadow:0 8px 24px rgba(46,167,214,.19)}
+.login h1{text-align:center;color:#244c60;font-size:23px;margin-top:27px}.login p.lead{text-align:center;color:#748d9a}
+.login input{border-color:#dbeef7;background:#fbfeff}.login .btn.block{min-height:49px}
+#appView{background:linear-gradient(155deg,#eef9ff,#f7fcff 54%,#f5faff)}
+#appView header.top{background:rgba(255,255,255,.98);border-bottom-color:#e1eff6;box-shadow:0 3px 14px rgba(44,120,159,.045)}
+#appView header.top .wrap:has(nav.tabs){background:#fff;border-inline-end-color:#deedf5}
+#appView nav.tabs button{color:#678496}
+#appView nav.tabs button::before{color:#78aac3}
+#appView nav.tabs button:hover{background:#f0faff;color:#167fb5}
+#appView nav.tabs button[aria-selected=true]{background:#e7f6fe;color:#177fae;border-color:#ceeafa}
+#appView nav.tabs button[aria-selected=true]::before{background:#d5f0fc;color:#208fbd}
+#appView .apex-page-hero,#appView [data-pane]>.section-head,#appView .form-shell .section-head,#appView .rev-insight-head{
+ background:linear-gradient(115deg,#e6f6fe 0%,#f7fcff 66%,#fff 100%)!important;border-color:#d7eefa;box-shadow:0 6px 22px rgba(44,122,164,.04)
+}
+#appView .apex-page-hero::after{background:radial-gradient(circle,rgba(82,189,233,.14),transparent 69%)}
+#appView .apex-page-hero h1,#appView [data-pane]>.section-head h2,#appView .form-shell .section-head h2{color:#23546b}
+#appView .apex-kicker{color:#279acb}
+#appView .apex-page-hero p{color:#7394a4}
+#appView .apex-hero-mark{background:#d8effb;color:#208fbe}
+#appView .card,#appView [data-pane] .card,#appView [data-pane] .tile{border-color:#deedf6;background:#fff;box-shadow:0 6px 20px rgba(44,121,160,.045)}
+#appView [data-pane] th{background:#ebf7fe;color:#39718b}
+#appView [data-pane] tbody tr:hover td{background:#f6fbfe}
+#appView [data-pane] input,#appView [data-pane] select,#appView [data-pane] textarea{border-color:#dceaf3;background:#fff}
+#appView [data-pane] input:focus,#appView [data-pane] select:focus,#appView [data-pane] textarea:focus{border-color:#58bde7;box-shadow:0 0 0 3px #e6f6fd}
+#appView [data-pane] .btn:not(.ghost):not(.quiet),.login .btn:not(.ghost):not(.quiet){background:linear-gradient(125deg,#51bce9,#209bd2);border-color:transparent;color:#fff}
+#appView [data-pane] .btn:not(.ghost):not(.quiet):hover,.login .btn:not(.ghost):not(.quiet):hover{background:#1887ba}
+#appView [data-pane] .btn.ghost{background:#fff;color:#2a8dbc;border-color:#d4eaf5}
+#appView [data-pane] .btn.ghost:hover{background:#eff9fe}
+#appView [data-pane] .seg{background:#ecf7fd;border-color:#dceef8}
+#appView [data-pane] .step-n{background:#dff2fc;color:#268dbd}
+#appView [data-pane] .step-title{color:#356779}
+#appView .rev-insight-tabs button.on{background:#e4f5fd;color:#1b8dbf;border-color:#b9e4f7}
+#appView .rev-metric{border-top-color:#7dcdea}
+#appView .rev-doctor-card{background:#fbfeff;border-color:#dceef7}
+#appView .rev-doctor-card strong{color:#248cba}
+#appView .rev-labels span{background:#e8f7ff;color:#267fae}
+#appView .rev-topic-track{background:#e9f5fb}#appView .rev-topic-track i{background:#49b5e5}
+#appView .rev-insight-head h3{color:#2b6d8a}
+#appView .rev-insight-head .pill{background:#ecf8fe;color:#297fa9}
+#toast{background:#fff;color:#2a617c;border:1px solid #cdeaf8;border-inline-start:4px solid #57bde7;box-shadow:0 12px 35px rgba(29,113,156,.17);font-weight:500}
+#toast.err{background:#fff6f5;color:#9e4141;border-color:#f5d9d5;border-inline-start-color:#db7773}
+.alert{background:#edf8fe;color:#377e9f;border:1px solid #d6edf9}
+.modal{background:rgba(27,67,91,.36)}
+.modal .dialog{border-color:#dcecf5;box-shadow:0 20px 60px rgba(35,103,143,.18)}
+:focus-visible{outline-color:#4bbce9}
+@media(max-width:720px){.login .card{padding:24px;border-radius:18px}#appView .apex-page-hero{background:#e9f7fd!important}}
 </style>
 </head>
 <body>
