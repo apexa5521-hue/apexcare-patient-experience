@@ -1817,9 +1817,15 @@ const REV_POS=['ممتاز','رائع','شكرا','محترم','لطيف','مر�
 const REV_NEG=['سيئ','سيء','اسوء','تأخر','انتظار','طويل','ما انصح','غالي','غير محترم','شكوى','الم','مشكله','إهمال','اهمال','poor','bad','worst','rude','late','waiting','expensive'];
 const REV_TOPICS=[['انتظار / Waiting',['انتظار','تأخير','تاخر','موعد','waiting','late']],['استقبال / Reception',['استقبال','موظف','reception']],['أسعار / Prices',['سعر','اسعار','غالي','فاتوره','price','expensive']],['شرح العلاج / Explanation',['شرح','يوضح','توضيح','explain']],['نظافة / Cleanliness',['نظاف','تعقيم','clean','steril']],['تعامل / Care',['تعامل','اخلاق','احترام','اسلوب','rude','kind']]];
 function revClassify(x){
- const txt=revNorm(x.comment),has=(terms)=>terms.some(w=>txt.includes(revNorm(w)));
- const pos=has(REV_POS),neg=has(REV_NEG),topics=REV_TOPICS.filter(t=>has(t[1])).map(t=>t[0]);
- return {sent:!txt?'unclassified':pos&&neg?'mixed':pos?'positive':neg?'negative':'unclassified',topics};
+ const txt=revNorm(x.comment);
+ if(!txt)return {sent:'unclassified',topics:[]};
+ // Match words or multiword phrases at token boundaries, avoiding partial-word matches.
+ const has=(terms)=>terms.some(w=>{const q=revNorm(w);return q&&(' '+txt+' ').includes(' '+q+' ');});
+ const explicitNeg=has(['ما انصح','لا انصح','غير جيد','غير ممتاز','not good','not recommended','not recommend']);
+ const positive=has(REV_POS)&&!explicitNeg;
+ const negative=has(REV_NEG)||explicitNeg;
+ const topics=REV_TOPICS.filter(t=>t[1].some(w=>{const q=revNorm(w);return q&&(' '+txt+' ').includes(' '+q+' ');})).map(t=>t[0]);
+ return {sent:positive&&negative?'mixed':positive?'positive':negative?'negative':'unclassified',topics};
 }
 function revDoctors(){return (S.lk&&Array.isArray(S.lk.doctors)?S.lk.doctors:[]).filter(d=>d&&d.name&&d.active!==false);}
 function revDoctorMatch(x){
@@ -1836,13 +1842,12 @@ function revInsightBlock(rows){
  const count=s=>rows.filter(x=>x.analysis.sent===s).length;
  const groups=[['positive','إيجابي / Positive'],['negative','سلبي / Negative'],['mixed','مختلط / Mixed'],['unclassified','غير مصنف / Unclassified']];
  const doctorRows=rows.filter(x=>x.doctorMatch.name),names=[...new Set(doctorRows.map(x=>x.doctorMatch.name))];
- const selected=REV_I.doctor?doctorRows.filter(x=>x.doctorMatch.name===REV_I.doctor):doctorRows;
  const docCards=names.map(d=>{const dr=doctorRows.filter(x=>x.doctorMatch.name===d),rated=dr.filter(x=>Number(x.rating)>0),avg=rated.length?(rated.reduce((a,x)=>a+Number(x.rating),0)/rated.length).toFixed(2):'—';
  return '<div class="rev-doctor-card"><b>'+esc(d)+'</b><strong>★ '+avg+' / 5</strong><span>'+dr.length+' إشارات · '+dr.filter(x=>x.analysis.sent==='positive').length+' إيجابي · '+dr.filter(x=>x.analysis.sent==='negative').length+' سلبي</span><button type="button" class="btn ghost sm" data-dr="'+esc(d)+'">عرض التعليقات</button></div>';}).join('');
  const topicCounts=REV_TOPICS.map(t=>[t[0],rows.filter(x=>x.analysis.topics.includes(t[0])).length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]);
  return '<div class="rev-overview-cards">'+groups.map(g=>'<div class="card rev-metric"><small>'+g[1]+'</small><strong>'+count(g[0])+'</strong></div>').join('')+'</div>'+
  '<div class="rev-analysis-columns"><section class="card pad"><h3>أبرز مواضيع التقييمات / Topics</h3>'+ (topicCounts.length?topicCounts.map(t=>'<div class="rev-topic"><span>'+esc(t[0])+'</span><div class="rev-topic-track"><i style="width:'+(100*t[1]/Math.max(1,rows.length))+'%"></i></div><b>'+t[1]+'</b></div>').join(''):'<p class="muted small">لا توجد موضوعات محددة</p>')+'</section>'+
- '<section class="card pad"><h3>تحليل الأطباء / Doctor Mentions</h3><p class="muted small">مطابقة الاسم الكامل فقط؛ لا تُنسب الإشارات الغامضة إلى طبيب</p><div class="rev-doctor-cards">'+(docCards||'<p class="muted small">لا توجد أسماء أطباء مؤكدة في التعليقات المعروضة</p>')+'</div></section></div>'+
+ '<section class="card pad"><h3>تحليل الأطباء / Doctor Mentions</h3><p class="muted small">مطابقة الاسم الكامل فقط؛ لا تُنسب الإشارات الغامضة إلى طبيب. النجوم تخص التقييم بالكامل، وقد تتعلق بغير الطبيب.</p><div class="rev-doctor-cards">'+(docCards||'<p class="muted small">لا توجد أسماء أطباء مؤكدة في التعليقات المعروضة</p>')+'</div></section></div>'+
  '<div class="rev-insight-controls"><input id="revInsightSearch" type="search" placeholder="بحث عن كلمة أو اسم / Search comments" value="'+esc(REV_I.search)+'"><select id="revInsightDoctor" aria-label="Doctor filter"><option value="">كل الأطباء / All doctors</option>'+names.map(n=>'<option value="'+esc(n)+'" '+(REV_I.doctor===n?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>';
 }
 function revDrawInsight(rows){
@@ -1855,7 +1860,7 @@ function revDrawInsight(rows){
  $('#revInsightDashboard [data-dr]').forEach(b=>b.onclick=()=>{REV_I.doctor=b.dataset.dr;REV_I.view='doctors';revDrawInsight(S.reviews||[]);});
  const filtered=analysed.filter(x=>(REV_I.view==='all'||REV_I.view==='doctors'||x.analysis.sent===REV_I.view)&&
  (REV_I.view!=='doctors'||!!x.doctorMatch.name)&&(!REV_I.doctor||x.doctorMatch.name===REV_I.doctor)&&(!REV_I.search||revNorm(x.comment+' '+x.doctorMatch.name).includes(revNorm(REV_I.search))));
- $('#revCount').textContent=filtered.length+' تقييم ضمن الفلاتر / Filtered reviews';
+ $('#revCount').textContent=filtered.length+' تقييم ضمن الفلاتر من آخر '+rows.length+' تقييم محمّل / Loaded reviews';
  $('#revList').innerHTML=filtered.length?filtered.map(x=>'<article class="card rev '+(x.rating<=2?'low':'')+'"><div class="rev-head">'+roStars(x.rating,16)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span>'+revPill(x.status)+'<span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p><div class="rev-labels"><span>'+esc(({positive:'إيجابي',negative:'سلبي',mixed:'مختلط',unclassified:'غير مصنف'})[x.analysis.sent])+'</span>'+x.analysis.topics.map(t=>'<span>'+esc(t)+'</span>').join('')+(x.doctorMatch.name?'<span>د. '+esc(x.doctorMatch.name)+'</span>':'')+'</div>'+(x.reply?'<div class="reply"><small>ردّ المجمع</small>'+esc(x.reply)+'</div>':'')+(x.note?'<p class="small muted">'+esc(x.note)+'</p>':'')+(has('handleCases')?'<div class="tools">'+(x.reply?'':'<button class="btn sm" type="button" data-reply="'+esc(x.id)+'">رد على قوقل</button>')+'<button class="btn ghost sm" type="button" data-follow="'+esc(x.id)+'">متابعة</button></div>':'')+'</article>').join(''):'<div class="card pad"><p class="muted">لا توجد تعليقات مطابقة للتصنيف المختار</p></div>';
  $('#revList [data-reply]').forEach(b=>b.onclick=()=>replyModal(S.reviews.find(x=>x.id===b.dataset.reply)));
  $('#revList [data-follow]').forEach(b=>b.onclick=()=>followModal(S.reviews.find(x=>x.id===b.dataset.follow)));
