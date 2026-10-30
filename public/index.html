@@ -459,6 +459,8 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-doctor-cards{display:grid;gap:8px}.rev-doctor-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px;border:1px solid var(--line);padding:11px;border-radius:11px}.rev-doctor-card strong{color:var(--brand);font-size:16px}.rev-doctor-card span{font-size:11px;color:var(--muted)}.rev-doctor-card button{justify-self:end}
 .rev-insight-controls{display:flex;gap:9px;margin:12px 0}.rev-insight-controls input{flex:2}.rev-insight-controls select{flex:1}
 .rev-labels{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.rev-labels span{font-size:11px;color:#0e756e;background:#e6f5f2;border-radius:20px;padding:4px 9px}
+.rev-person-row{display:grid;grid-template-columns:170px 80px 1fr;gap:10px;align-items:start;padding:11px 0;border-top:1px solid var(--line-2);font-size:12px}.rev-person-row b{color:var(--ink)}.rev-person-row>span{color:var(--muted)}
+@media(max-width:750px){.rev-person-row{grid-template-columns:1fr;gap:4px}}
 @media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
 
 /* Clinical design system across all existing operational tabs, without modifying behaviors. */
@@ -1908,7 +1910,65 @@ function revDoctorMatch(x){
  });
  return matches.length===1?{name:matches[0].name,confidence:'explicit-full-name'}:{name:'',confidence:matches.length?'ambiguous':'not-found'};
 }
-function revInsightRows(rows){return rows.map(x=>({...x,analysis:revClassify(x),doctorMatch:revDoctorMatch(x)}));}
+// People mentioned in a comment: staff by role (doctor, nurse, reception, customer service, other staff).
+// Names are taken only as written in the comment; they are not verified unless they match the doctors list.
+const REV_ROLES=[
+ {kind:'doctor',label:'طبيب / Doctor',words:['دكتور','دكتوره','الدكتور','الدكتوره','dr']},
+ {kind:'nurse',label:'ممرض / Nurse',words:['ممرض','ممرضه','الممرض','الممرضه','nurse']},
+ {kind:'customer_service',label:'خدمة العملاء / Customer service',words:['خدمه العملاء','خدمه عملاء']},
+ {kind:'reception',label:'الاستقبال / Reception',words:['استقبال','الاستقبال','reception']},
+ {kind:'staff',label:'موظف / Staff',words:['موظف','موظفه','موظفين','الموظف','الموظفه','الاستاذ','الاستاذه','الاخ','الاخت','السيد','السيده']}
+];
+const REV_NOT_NAMES=new Set(['د','و','مع','من','في','على','كان','كانت','كانو','جدا','جداً','ما','لا','ممتاز','ممتازه','رائع','رائعه','شكرا','ابي','تعامل','تعاملت','تعاملو','عندي','لي','انا','هو','هي','كل','ان','بس','لكن','اللي','الي','عند','طيب','تم','حيث','بعد','قبل','لطيف','لطيفه','لطيفة','جيد','جيده','سيء','سيئ','سيئه','رديء','ردو','رد','ردوا','محترم','محترمه','مهذب','متأخر','تأخر','بطيء','ساعدني','ساعدوني','اعطاني','شرح','the','was','is','and','with']);
+function revPeople(x){
+ const words=String(x.comment||'').split(/\s+/).map(w=>({raw:w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,''),n:revNorm(w)})).filter(w=>w.n);
+ const tokens=words.map(w=>w.n);
+ const roleWords=new Set(REV_ROLES.flatMap(r=>r.words.flatMap(w=>revNorm(w).split(' '))));
+ const found=[];
+ REV_ROLES.forEach(role=>role.words.forEach(w=>{
+   const p=revNorm(w).split(' ').filter(Boolean);
+   for(let i=0;i+p.length<=tokens.length;i++) if(p.every((t,k)=>tokens[i+k]===t)) found.push({role,end:i+p.length});
+ }));
+ found.sort((a,b)=>a.end-b.end);
+ const dirDoctors=revDoctors().map(d=>({name:d.name,full:revNorm(d.name).replace(/^(?:دكتور|دكتوره|الدكتور|الدكتوره|د|dr) /,'').split(' ').filter(Boolean)}));
+ const people=[];
+ const seen=new Set();
+ const add=(p)=>{const key=p.kind+'|'+p.name;if(!seen.has(key)){seen.add(key);people.push(p);}};
+ found.forEach(({role,end})=>{
+   // A name is the word right after the role word (two words for a doctor, to match full names),
+   // unless that word is itself a role word or common filler.
+   const cand=[];
+   for(let j=end;j<words.length&&cand.length<(role.kind==='doctor'?2:1);j++){
+     if(roleWords.has(tokens[j])||REV_NOT_NAMES.has(tokens[j])||tokens[j].length<2||/^\d+$/.test(tokens[j]))break;
+     cand.push(j);
+   }
+   const candNorm=cand.map(j=>tokens[j]);
+   const raw=cand.map(j=>words[j].raw).join(' ');
+   if(role.kind==='doctor'&&candNorm.length){
+     const exact=dirDoctors.find(d=>d.full.length===candNorm.length&&d.full.every((t,k)=>t===candNorm[k]));
+     if(exact) return add({kind:'doctor',label:role.label,name:exact.name,confidence:'directory'});
+     const first=dirDoctors.filter(d=>d.full[0]===candNorm[0]);
+     if(candNorm.length===1&&first.length===1) return add({kind:'doctor',label:role.label,name:first[0].name,confidence:'first-name'});
+   }
+   add({kind:role.kind,label:role.label,name:raw,confidence:raw?'as-written':'role-only'});
+ });
+ const full=revDoctorMatch(x);
+ if(full.name) add({kind:'doctor',label:REV_ROLES[0].label,name:full.name,confidence:'directory'});
+ return people;
+}
+function revInsightRows(rows){return rows.map(x=>({...x,analysis:revClassify(x),doctorMatch:revDoctorMatch(x),people:revPeople(x)}));}
+function peopleBlock(rows){
+ const mentions=rows.flatMap(x=>(x.people||[]).map(p=>({...p,sent:x.analysis.sent})));
+ const body=REV_ROLES.map(role=>{
+   const list=mentions.filter(m=>m.kind===role.kind);
+   if(!list.length) return '';
+   const byName=new Map();
+   list.forEach(m=>{const k=m.name||'(بدون اسم)';const e=byName.get(k)||{n:0,pos:0,neg:0,confidence:m.confidence};e.n++;if(m.sent==='positive')e.pos++;if(m.sent==='negative')e.neg++;byName.set(k,e);});
+   const chips=[...byName.entries()].sort((a,b)=>b[1].n-a[1].n).map(([name,e])=>'<span class="rev-labels"><span>'+esc(name)+(e.confidence==='directory'?' ✓':'')+' × '+e.n+' · '+e.pos+' إيجابي · '+e.neg+' سلبي</span></span>').join('');
+   return '<div class="rev-person-row"><b>'+esc(role.label)+'</b><span>'+list.length+' إشارة</span><div>'+chips+'</div></div>';
+ }).join('');
+ return '<section class="card pad rev-people"><h3>الأشخاص المذكورون / People mentioned</h3><p class="muted small">الأطباء المعتمدون من القائمة يظهرون بعلامة ✓. باقي الأسماء كما كُتبت في التعليق وغير مؤكدة، ولا تُنسب إلى موظف محدد.</p>'+(body||'<p class="muted small">لا توجد أسماء أو مسميات وظيفية في التعليقات المعروضة</p>')+'</section>';
+}
 function revInsightBlock(rows){
  const count=s=>rows.filter(x=>x.analysis.sent===s).length;
  const groups=[['positive','إيجابي / Positive'],['negative','سلبي / Negative'],['mixed','مختلط / Mixed'],['unclassified','غير مصنف / Unclassified']];
@@ -1919,6 +1979,7 @@ function revInsightBlock(rows){
  return '<div class="rev-overview-cards">'+groups.map(g=>'<div class="card rev-metric"><small>'+g[1]+'</small><strong>'+count(g[0])+'</strong></div>').join('')+'</div>'+
  '<div class="rev-analysis-columns"><section class="card pad"><h3>أبرز مواضيع التقييمات / Topics</h3>'+ (topicCounts.length?topicCounts.map(t=>'<div class="rev-topic"><span>'+esc(t[0])+'</span><div class="rev-topic-track"><i style="width:'+(100*t[1]/Math.max(1,rows.length))+'%"></i></div><b>'+t[1]+'</b></div>').join(''):'<p class="muted small">لا توجد موضوعات محددة</p>')+'</section>'+
  '<section class="card pad"><h3>تحليل الأطباء / Doctor Mentions</h3><p class="muted small">مطابقة الاسم الكامل فقط؛ لا تُنسب الإشارات الغامضة إلى طبيب. النجوم تخص التقييم بالكامل، وقد تتعلق بغير الطبيب.</p><div class="rev-doctor-cards">'+(docCards||'<p class="muted small">لا توجد أسماء أطباء مؤكدة في التعليقات المعروضة</p>')+'</div></section></div>'+
+ peopleBlock(rows)+
  '<div class="rev-insight-controls"><input id="revInsightSearch" type="search" placeholder="بحث عن كلمة أو اسم / Search comments" value="'+esc(REV_I.search)+'"><select id="revInsightDoctor" aria-label="Doctor filter"><option value="">كل الأطباء / All doctors</option>'+names.map(n=>'<option value="'+esc(n)+'" '+(REV_I.doctor===n?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>';
 }
 function revDrawInsight(rows){
@@ -1932,7 +1993,7 @@ function revDrawInsight(rows){
  const filtered=analysed.filter(x=>(REV_I.view==='all'||REV_I.view==='doctors'||x.analysis.sent===REV_I.view)&&
  (REV_I.view!=='doctors'||!!x.doctorMatch.name)&&(!REV_I.doctor||x.doctorMatch.name===REV_I.doctor)&&(!REV_I.search||revNorm(x.comment+' '+x.doctorMatch.name).includes(revNorm(REV_I.search))));
  $('#revCount').textContent=filtered.length+' تقييم ضمن الفلاتر من آخر '+rows.length+' تقييم محمّل / Loaded reviews';
- $('#revList').innerHTML=filtered.length?filtered.map(x=>'<article class="card rev '+(x.rating<=2?'low':'')+'"><div class="rev-head">'+roStars(x.rating,16)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span>'+revPill(x.status)+'<span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p><div class="rev-labels"><span>'+esc(({positive:'إيجابي',negative:'سلبي',mixed:'مختلط',unclassified:'غير مصنف'})[x.analysis.sent])+'</span>'+x.analysis.topics.map(t=>'<span>'+esc(t)+'</span>').join('')+(x.doctorMatch.name?'<span>د. '+esc(x.doctorMatch.name)+'</span>':'')+'</div>'+(x.reply?'<div class="reply"><small>ردّ المجمع</small>'+esc(x.reply)+'</div>':'')+(x.note?'<p class="small muted">'+esc(x.note)+'</p>':'')+(has('handleCases')?'<div class="tools">'+(x.reply?'':'<button class="btn sm" type="button" data-reply="'+esc(x.id)+'">رد على قوقل</button>')+'<button class="btn ghost sm" type="button" data-follow="'+esc(x.id)+'">متابعة</button></div>':'')+'</article>').join(''):'<div class="card pad"><p class="muted">لا توجد تعليقات مطابقة للتصنيف المختار</p></div>';
+ $('#revList').innerHTML=filtered.length?filtered.map(x=>'<article class="card rev '+(x.rating<=2?'low':'')+'"><div class="rev-head">'+roStars(x.rating,16)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span>'+revPill(x.status)+'<span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p><div class="rev-labels"><span>'+esc(({positive:'إيجابي',negative:'سلبي',mixed:'مختلط',unclassified:'غير مصنف'})[x.analysis.sent])+'</span>'+x.analysis.topics.map(t=>'<span>'+esc(t)+'</span>').join('')+(x.people||[]).map(p=>'<span>'+esc(p.label.split(' / ')[0])+(p.name?': '+esc(p.name):'')+'</span>').join('')+'</div>'+(x.reply?'<div class="reply"><small>ردّ المجمع</small>'+esc(x.reply)+'</div>':'')+(x.note?'<p class="small muted">'+esc(x.note)+'</p>':'')+(has('handleCases')?'<div class="tools">'+(x.reply?'':'<button class="btn sm" type="button" data-reply="'+esc(x.id)+'">رد على قوقل</button>')+'<button class="btn ghost sm" type="button" data-follow="'+esc(x.id)+'">متابعة</button></div>':'')+'</article>').join(''):'<div class="card pad"><p class="muted">لا توجد تعليقات مطابقة للتصنيف المختار</p></div>';
  $$('#revList [data-reply]').forEach(b=>b.onclick=()=>replyModal(S.reviews.find(x=>x.id===b.dataset.reply)));
  $$('#revList [data-follow]').forEach(b=>b.onclick=()=>followModal(S.reviews.find(x=>x.id===b.dataset.follow)));
 }
