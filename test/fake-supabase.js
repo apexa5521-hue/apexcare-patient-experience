@@ -14,7 +14,7 @@ const SCHEMA = {
     defaults: () => ({ branch: null, active: true, must_change: true, created_at: new Date().toISOString(), last_login: null })
   },
   doctors: {
-    cols: ['id', 'name', 'specialty', 'branch', 'active'],
+    cols: ['id', 'name', 'name_ar', 'specialty', 'branch', 'active'],
     unique: ['name'],
     defaults: () => ({ active: true })
   },

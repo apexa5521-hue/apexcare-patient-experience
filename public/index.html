@@ -468,7 +468,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.rev-person-more>summary{cursor:pointer;color:var(--muted);font-size:12px}
+.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}.rev-person-more>summary{cursor:pointer;color:var(--muted);font-size:12px}
 @media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
 
 /* Clinical design system across all existing operational tabs, without modifying behaviors. */
@@ -1909,15 +1909,8 @@ function revClassify(x){
  return {sent:positive&&negative?'mixed':positive?'positive':negative?'negative':'unclassified',topics};
 }
 function revDoctors(){return (S.lk&&Array.isArray(S.lk.doctors)?S.lk.doctors:[]).filter(d=>d&&d.name&&d.active!==false);}
-function revDoctorMatch(x){
- const text=' '+revNorm(x.comment)+' ';
- const matches=revDoctors().filter(d=>{
- const full=revNorm(d.name).replace(/^(?:دكتور|دكتوره|الدكتور|الدكتوره|د|dr) /,'');
- const tokens=full.split(' ').filter(Boolean);
- return tokens.length>=2&&text.includes(' '+tokens.join(' ')+' ');
- });
- return matches.length===1?{name:matches[0].name,confidence:'explicit-full-name'}:{name:'',confidence:matches.length?'ambiguous':'not-found'};
-}
+function revTokens(text){return revNorm(text).split(' ').filter(Boolean);}
+const REV_TITLES=new Set(['دكتور','دكتوره','الدكتور','الدكتوره','د','dr']);
 // People mentioned in a comment: staff by role (doctor, nurse, reception, customer service, other staff).
 // Names are taken only as written in the comment; they are not verified unless they match the doctors list.
 const REV_ROLES=[
@@ -1928,63 +1921,108 @@ const REV_ROLES=[
  {kind:'staff',label:'موظف / Staff',named:true,words:['موظف','موظفه','موظفين','الموظف','الموظفه','الاستاذ','الاستاذه','الاخ','الاخت','السيد','السيده']}
 ];
 const REV_NOT_NAMES=new Set(['د','و','مع','من','في','على','كان','كانت','كانو','جدا','جداً','ما','لا','ممتاز','ممتازه','رائع','رائعه','شكرا','ابي','تعامل','تعاملت','تعاملو','عندي','لي','انا','هو','هي','كل','ان','بس','لكن','اللي','الي','عند','طيب','تم','حيث','بعد','قبل','لطيف','لطيفه','لطيفة','جيد','جيده','سيء','سيئ','سيئه','رديء','ردو','رد','ردوا','محترم','محترمه','مهذب','متأخر','تأخر','بطيء','ساعدني','ساعدوني','اعطاني','شرح','the','was','is','and','with']);
+// Doctor aliases: English name, Arabic name, and first name. A first name counts only when no other doctor shares it.
+function revDoctorAliases(){
+ const docs=revDoctors().map(d=>{
+   const en=revTokens(d.name).filter(t=>!REV_TITLES.has(t));
+   const ar=revTokens(d.name_ar||'').filter(t=>!REV_TITLES.has(t));
+   return {doc:d,names:[en,ar].filter(n=>n.length),spec:revTokens(d.specialty||'').filter(t=>t!=='اسنان'),firsts:[...new Set([en[0],ar[0]].filter(Boolean))]};
+ });
+ const count=new Map();
+ docs.forEach(a=>a.firsts.forEach(f=>count.set(f,(count.get(f)||0)+1)));
+ docs.forEach(a=>{a.firsts=a.firsts.filter(f=>count.get(f)===1&&a.names.some(n=>n.length>=2));});
+ return docs;
+}
+// Finds doctors from the list in the comment tokens. Full names match anywhere; a one-word name only after a title;
+// a first name only after a title or next to the doctor's specialty word.
+function revFindDoctors(tokens,aliases){
+ const hits=new Map();
+ const add=(a,confidence,pos)=>{if(!hits.has(a.doc.name))hits.set(a.doc.name,{name:a.doc.name,confidence,pos});};
+ aliases.forEach(a=>a.names.forEach(nm=>{
+   if(nm.length<2)return;
+   for(let i=0;i+nm.length<=tokens.length;i++) if(nm.every((t,k)=>tokens[i+k]===t)){add(a,'directory',i);return;}
+ }));
+ aliases.forEach(a=>a.names.forEach(nm=>{
+   if(nm.length!==1)return;
+   for(let i=1;i<tokens.length;i++) if(REV_TITLES.has(tokens[i-1])&&tokens[i]===nm[0]){add(a,'title',i);return;}
+ }));
+ aliases.forEach(a=>a.firsts.forEach(f=>{
+   for(let i=0;i<tokens.length;i++){
+     if(tokens[i]!==f)continue;
+     const titled=i>0&&REV_TITLES.has(tokens[i-1]);
+     const specNear=a.spec.length>0&&tokens.slice(Math.max(0,i-2),i+3).some(t=>a.spec.includes(t));
+     if(titled||specNear){add(a,'first-name',i);return;}
+   }
+ }));
+ return [...hits.values()];
+}
+function revDoctorMatch(x){
+ const hits=revFindDoctors(revTokens(x.comment),revDoctorAliases());
+ if(hits.length===1) return {name:hits[0].name,confidence:hits[0].confidence};
+ return {name:'',confidence:hits.length?'ambiguous':'not-found'};
+}
 function revPeople(x){
- const words=String(x.comment||'').split(/\s+/).map(w=>({raw:w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,''),n:revNorm(w)})).filter(w=>w.n);
+ // One entry per word: punctuation and hyphens split words, so each entry is a single token.
+ const words=String(x.comment||'').split(/[^\p{L}\p{N}]+/u).filter(Boolean).map(w=>({raw:w,n:revNorm(w)})).filter(w=>w.n);
  const tokens=words.map(w=>w.n);
  const roleWords=new Set(REV_ROLES.flatMap(r=>r.words.flatMap(w=>revNorm(w).split(' '))));
+ const aliases=revDoctorAliases();
+ const docHits=revFindDoctors(tokens,aliases);
+ const people=[];
+ const seen=new Set();
+ const add=p=>{const key=p.kind+'|'+p.name;if(!seen.has(key)){seen.add(key);people.push(p);}};
+ docHits.forEach(h=>add({kind:'doctor',label:REV_ROLES[0].label,name:h.name,confidence:h.confidence}));
  const found=[];
  REV_ROLES.forEach(role=>role.words.forEach(w=>{
    const p=revNorm(w).split(' ').filter(Boolean);
    for(let i=0;i+p.length<=tokens.length;i++) if(p.every((t,k)=>tokens[i+k]===t)) found.push({role,end:i+p.length});
  }));
  found.sort((a,b)=>a.end-b.end);
- const dirDoctors=revDoctors().map(d=>({name:d.name,full:revNorm(d.name).replace(/^(?:دكتور|دكتوره|الدكتور|الدكتوره|د|dr) /,'').split(' ').filter(Boolean)}));
- const people=[];
- const seen=new Set();
- const add=(p)=>{const key=p.kind+'|'+p.name;if(!seen.has(key)){seen.add(key);people.push(p);}};
  found.forEach(({role,end})=>{
    // A name is the word right after the role word (two words for a doctor, to match full names),
-   // unless that word is itself a role word or common filler.
+   // unless that word is itself a role word or common filler. Only roles that take a name, and only Arabic words.
    const cand=[];
    for(let j=end;role.named&&j<words.length&&cand.length<(role.kind==='doctor'?2:1);j++){
-     // Arabic letters only: English words and numbers are never taken as names.
-     if(!/^[\u0621-\u064A]+$/.test(tokens[j])||roleWords.has(tokens[j])||REV_NOT_NAMES.has(tokens[j])||tokens[j].length<3)break;
+     if(!/^[ء-ي]+$/.test(tokens[j])||roleWords.has(tokens[j])||REV_NOT_NAMES.has(tokens[j])||tokens[j].length<3)break;
      cand.push(j);
    }
    const candNorm=cand.map(j=>tokens[j]);
    const raw=cand.map(j=>words[j].raw).join(' ');
-   if(role.kind==='doctor'&&candNorm.length){
-     const exact=dirDoctors.find(d=>d.full.length===candNorm.length&&d.full.every((t,k)=>t===candNorm[k]));
-     if(exact) return add({kind:'doctor',label:role.label,name:exact.name,confidence:'directory'});
-     const first=dirDoctors.filter(d=>d.full[0]===candNorm[0]);
-     if(candNorm.length===1&&first.length===1) return add({kind:'doctor',label:role.label,name:first[0].name,confidence:'first-name'});
-   }
+   // A doctor from the list is already added above, so the same name is not repeated as unverified.
+   if(role.kind==='doctor'&&candNorm.length&&aliases.some(a=>a.names.some(nm=>nm.length===1?nm[0]===candNorm[0]:(nm.length===candNorm.length&&nm.every((t,k)=>t===candNorm[k])))||a.firsts.includes(candNorm[0]))) return;
+   // A bare title next to a doctor already found in the list is not a separate mention.
+   if(role.kind==='doctor'&&!raw&&docHits.length) return;
    add({kind:role.kind,label:role.label,name:raw,confidence:raw?'as-written':'role-only'});
  });
- const full=revDoctorMatch(x);
- if(full.name) add({kind:'doctor',label:REV_ROLES[0].label,name:full.name,confidence:'directory'});
  return people;
 }
 function revInsightRows(rows){return rows.map(x=>({...x,analysis:revClassify(x),doctorMatch:revDoctorMatch(x),people:revPeople(x)}));}
 function peopleBlock(rows){
  const mentions=rows.flatMap(x=>(x.people||[]).map(p=>({...p,sent:x.analysis.sent})));
  if(!mentions.length) return '<section class="card pad rev-people"><h3>الأشخاص المذكورون / People mentioned</h3><p class="muted small">لا توجد أسماء أو مسميات وظيفية في التعليقات المعروضة</p></section>';
- const card=([name,e])=>'<div class="rev-person-card'+(e.verified?' verified':'')+'"><b>'+esc(name)+(e.verified?' ✓':'')+'</b><span>'+e.n+' إشارة</span><small>'+e.pos+' إيجابي · '+e.neg+' سلبي</small></div>';
+ const card=kind=>([name,e])=>'<div class="rev-person-card clickable'+(e.verified?' verified':'')+'" role="button" tabindex="0" data-kind="'+esc(kind)+'" data-person="'+esc(name)+'"><b>'+esc(name)+(e.verified?' ✓':'')+'</b><span>'+e.n+' إشارة</span><small>'+e.pos+' إيجابي · '+e.neg+' سلبي</small></div>';
  const sections=REV_ROLES.map(role=>{
    const list=mentions.filter(m=>m.kind===role.kind);
    if(!list.length) return '';
    const byName=new Map();
-   list.forEach(m=>{const k=m.name||'';const e=byName.get(k)||{n:0,pos:0,neg:0,verified:false};e.n++;if(m.sent==='positive')e.pos++;if(m.sent==='negative')e.neg++;if(m.confidence==='directory'||m.confidence==='first-name')e.verified=true;byName.set(k,e);});
+   list.forEach(m=>{const k=m.name||'';const e=byName.get(k)||{n:0,pos:0,neg:0,verified:false};e.n++;if(m.sent==='positive')e.pos++;if(m.sent==='negative')e.neg++;if(['directory','title','first-name'].includes(m.confidence))e.verified=true;byName.set(k,e);});
    const named=[...byName.entries()].filter(([k])=>k).sort((a,b)=>b[1].n-a[1].n);
    const repeated=named.filter(([,e])=>e.n>1||e.verified), once=named.filter(([,e])=>e.n===1&&!e.verified);
    const none=byName.get('')||null;
    const pos=list.filter(m=>m.sent==='positive').length, neg=list.filter(m=>m.sent==='negative').length;
    return '<details class="rev-person-role" open><summary><b>'+esc(role.label)+'</b><span>'+list.length+' إشارة · '+pos+' إيجابي · '+neg+' سلبي</span></summary>'+
-     (repeated.length?'<div class="rev-person-grid">'+repeated.map(card).join('')+'</div>':'')+
-     (once.length?'<details class="rev-person-more"><summary>أسماء وردت مرة واحدة ('+once.length+')</summary><div class="rev-person-grid">'+once.map(card).join('')+'</div></details>':'')+
+     (repeated.length?'<div class="rev-person-grid">'+repeated.map(card(role.kind)).join('')+'</div>':'')+
+     (once.length?'<details class="rev-person-more"><summary>أسماء وردت مرة واحدة ('+once.length+')</summary><div class="rev-person-grid">'+once.map(card(role.kind)).join('')+'</div></details>':'')+
      (none?'<p class="muted small">'+none.n+' إشارة بدون اسم، مثل «الممرضة» أو «الاستقبال» دون اسم</p>':'')+'</details>';
  }).join('');
- return '<section class="card pad rev-people"><h3>الأشخاص المذكورون / People mentioned</h3><p class="muted small">الأطباء المعتمدون من القائمة يظهرون بعلامة ✓. باقي الأسماء كما كُتبت في التعليق وغير مؤكدة، ولا تُنسب إلى موظف محدد. الأسماء التي وردت مرة واحدة تُعرض منفصلة لأن بعضها قد يكون كلمة وليس اسماً.</p>'+sections+'</section>';
+ return '<section class="card pad rev-people"><h3>الأشخاص المذكورون / People mentioned</h3><p class="muted small">الأطباء المعتمدون من القائمة يظهرون بعلامة ✓. باقي الأسماء كما كُتبت في التعليق وغير مؤكدة، ولا تُنسب إلى موظف محدد. اضغط على الاسم لرؤية التعليقات التي ذُكر فيها.</p>'+sections+'</section>';
+}
+function personModal(kind,name,rows){
+ const label=(REV_ROLES.find(r=>r.kind===kind)||{label:''}).label;
+ const items=rows.filter(x=>(x.people||[]).some(p=>p.kind===kind&&p.name===name));
+ openModal('<h2 id="modalTitle">'+esc(name)+'</h2><p class="muted small">'+esc(label)+' · '+items.length+' تعليق</p>'+
+   items.map(x=>'<article class="card rev"><div class="rev-head">'+roStars(x.rating,14)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span><span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p></article>').join('')+
+   '<div class="actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>', { closable: true });
 }
 function revInsightBlock(rows){
  const count=s=>rows.filter(x=>x.analysis.sent===s).length;
@@ -2002,6 +2040,7 @@ function revInsightBlock(rows){
 function revDrawInsight(rows){
  const analysed=revInsightRows(rows);
  $('#revInsightDashboard').innerHTML=revInsightBlock(analysed);
+ $$('#revInsightDashboard .rev-person-card[data-person]').forEach(c=>{const open=()=>personModal(c.dataset.kind,c.dataset.person,analysed);c.onclick=open;c.onkeydown=e=>{if(e.key==='Enter')open();};});
  const buttons=$$('#revInsightTabs [data-view]');buttons.forEach(b=>{b.classList.toggle('on',b.dataset.view===REV_I.view);b.onclick=()=>{REV_I.view=b.dataset.view;revDrawInsight(S.reviews||[]);};});
  const search=$('#revInsightSearch'),doc=$('#revInsightDoctor');
  if(search)search.oninput=()=>{REV_I.search=search.value;revDrawInsight(S.reviews||[]);const el=$('#revInsightSearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}};

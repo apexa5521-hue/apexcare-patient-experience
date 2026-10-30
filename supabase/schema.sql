@@ -24,7 +24,8 @@ alter table app_users add constraint app_users_role_check check (role in ('staff
 create table if not exists doctors (
   id uuid primary key default gen_random_uuid(),
   name text unique not null,
-  specialty text not null check (specialty in ('أسنان','جلدية')),
+  name_ar text,                                              -- Arabic name, used to match review comments
+  specialty text not null check (specialty in ('أسنان','جلدية','أسنان عامة','تقويم','أسنان أطفال','تركيبات','علاج عصب','جراحة الفم','زراعة')),
   branch text not null check (branch in ('بريدة','عنيزة','الكل')),
   active boolean not null default true
 );

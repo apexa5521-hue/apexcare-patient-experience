@@ -36,7 +36,7 @@ test('row level security is enabled on every table, with no policies', () => {
 
 test('no patient-name field exists in the database, UI or sheet integration', () => {
   for (const cols of Object.values(tablesFromSql())) {
-    assert.equal(cols.some(c => /patient|name_ar|full_name/.test(c)), false, cols.join(','));
+    assert.equal(cols.some(c => /patient|full_name/.test(c)), false, cols.join(','));
   }
   const ui = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
   assert.equal(/name=["'](patientName|patient_name)/.test(ui), false);

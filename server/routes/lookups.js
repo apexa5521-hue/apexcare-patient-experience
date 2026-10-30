@@ -6,7 +6,7 @@ const V = require('../validate');
 
 async function activeLookups(db) {
   const [doctors, categories] = await Promise.all([
-    must(db.from('doctors').select('id,name,specialty,branch').eq('active', true).order('name')),
+    must(db.from('doctors').select('id,name,name_ar,specialty,branch').eq('active', true).order('name')),
     must(db.from('categories').select('id,name,type').eq('active', true).order('name'))
   ]);
   return {

@@ -3,7 +3,7 @@
 const { z } = require('zod');
 
 const BRANCHES = ['بريدة', 'عنيزة'];
-const SPECIALTIES = ['أسنان', 'جلدية'];
+const SPECIALTIES = ['أسنان','جلدية','أسنان عامة','تقويم','أسنان أطفال','تركيبات','علاج عصب','جراحة الفم','زراعة'];
 const VISIT_TYPES = ['كشف', 'إجراء', 'كشف وإجراء'];
 const SENTIMENTS = ['إيجابية', 'سلبية', 'محايدة'];
 const SEVERITIES = ['بسيطة', 'متوسطة', 'عالية'];
@@ -138,6 +138,7 @@ const userUpdateSchema = z.object({
 
 const doctorSchema = z.object({
   name: z.string({ error: 'أدخل اسم الطبيب' }).trim().min(1, 'أدخل اسم الطبيب').max(80),
+  name_ar: z.string().trim().max(80).optional(),
   specialty: oneOf(SPECIALTIES, 'التخصص'),
   branch: oneOf([...BRANCHES, 'الكل'], 'الفرع'),
   active: z.boolean().optional()

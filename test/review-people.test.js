@@ -12,21 +12,35 @@ const vm = require('node:vm');
 const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 const from = html.indexOf('function revNorm(');
 const to = html.indexOf('function revInsightBlock(');
-const ctx = { S: { lk: { doctors: [{ name: 'د. بسام المالكي', active: true }, { name: 'د. صالح الصدراني', active: true }] } } };
+const DOCTORS = [
+  { name: 'Dr. Bassem Al-Malhem', name_ar: 'بسام الملحم', specialty: 'أسنان أطفال', active: true },
+  { name: 'Dr. Saleh Al-Awfi', name_ar: 'صالح العوفي', specialty: 'أسنان عامة', active: true },
+  { name: 'Dr. Mohammed Al-Bati', name_ar: 'محمد الباتي', specialty: 'أسنان عامة', active: true },
+  { name: 'Dr. Mohammed Al-Habib', name_ar: 'محمد الحبيب', specialty: 'أسنان عامة', active: true },
+  { name: 'Dr. Wadaha', name_ar: 'وضاحة', specialty: 'أسنان', active: true }
+];
+const ctx = { S: { lk: { doctors: DOCTORS } } };
 vm.runInNewContext(html.slice(from, to), ctx);
 const people = (comment) => JSON.parse(JSON.stringify(ctx.revPeople({ comment })));
 const summary = (comment) => people(comment).map(p => [p.kind, p.name, p.confidence]);
 
-test('a doctor from the directory is matched by full name and marked as directory', () => {
-  assert.deepEqual(summary('الدكتور بسام المالكي ممتاز جداً'), [
-    ['doctor', 'د. بسام المالكي', 'directory']
-  ]);
+test('a doctor from the list is matched by Arabic full name, or by English full name', () => {
+  assert.deepEqual(summary('الدكتور بسام الملحم ممتاز جداً'), [['doctor', 'Dr. Bassem Al-Malhem', 'directory']]);
+  assert.deepEqual(summary('Dr. Bassem Al-Malhem was great'), [['doctor', 'Dr. Bassem Al-Malhem', 'directory']]);
 });
 
-test('a first name alone matches the one doctor who has it', () => {
-  assert.deepEqual(summary('الدكتور صالح شرح لي كل شي'), [
-    ['doctor', 'د. صالح الصدراني', 'first-name']
-  ]);
+test('a first name matches only when it is unique and used with a title or the specialty word', () => {
+  assert.deepEqual(summary('بسام اطفال ممتاز'), [['doctor', 'Dr. Bassem Al-Malhem', 'first-name']]);
+  assert.deepEqual(summary('الدكتور صالح شرح لي كل شي'), [['doctor', 'Dr. Saleh Al-Awfi', 'first-name']]);
+});
+
+test('a shared first name (Mohammed) is never assigned to one doctor', () => {
+  assert.deepEqual(summary('الدكتور محمد ممتاز'), [['doctor', 'محمد', 'as-written']]);
+});
+
+test('a one-word name is matched only after a title, so the ordinary word «وضاحة» is not a doctor', () => {
+  assert.deepEqual(summary('الدكتورة وضاحة شرحت'), [['doctor', 'Dr. Wadaha', 'title']]);
+  assert.deepEqual(summary('وضاحة اتحمست'), []);
 });
 
 test('a nurse named in the comment is kept as written, unverified', () => {
@@ -83,13 +97,13 @@ test('the reviews insight panel renders the people section from real comment row
   vm.runInNewContext(page.slice(start, end), panel);
   const rows = [
     { comment: 'الممرضة سارة كانت لطيفة', rating: 5 },
-    { comment: 'الدكتور بسام المالكي ممتاز', rating: 5 },
+    { comment: 'الدكتور بسام الملحم ممتاز', rating: 5 },
     { comment: 'خدمة العملاء ما ردوا علي', rating: 1 },
     { comment: '', rating: 4 }
   ].map(r => ({ ...r, branch: 'بريدة', createdAt: '', status: 'جديد', reply: '' }));
   const html = panel.revInsightBlock(panel.revInsightRows(rows));
   assert.match(html, /الأشخاص المذكورون/);
   assert.match(html, /سارة/);
-  assert.match(html, /بسام المالكي ✓/);
+  assert.match(html, /Dr\. Bassem Al-Malhem ✓/);
   assert.match(html, /خدمة العملاء/);
 });
