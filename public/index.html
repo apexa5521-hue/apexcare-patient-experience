@@ -448,6 +448,18 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 }
 @media(prefers-reduced-motion:reduce){#appView nav.tabs button{transition:none}}
 
+
+.rev-insight-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:17px 20px;background:linear-gradient(105deg,#dff4ee,#fff);border:1px solid var(--line);border-radius:17px;margin-bottom:12px}
+.rev-insight-head h3{font-size:18px;color:#14564e}.rev-insight-head p{margin:5px 0 0}
+.rev-insight-tabs{display:flex;gap:7px;overflow-x:auto;padding:3px 0 13px}.rev-insight-tabs button{flex:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff;color:var(--muted);font:inherit;font-size:12px}
+.rev-insight-tabs button.on{background:var(--brand-soft);color:var(--brand);border-color:#b8dfd7;font-weight:700}
+.rev-overview-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:13px}.rev-metric{padding:16px}.rev-metric small{display:block;font-size:11px;color:var(--muted)}.rev-metric strong{display:block;margin-top:8px;font-size:26px;color:var(--ink)}
+.rev-analysis-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}.rev-analysis-columns h3{margin-bottom:12px}
+.rev-topic{display:grid;grid-template-columns:125px 1fr 28px;gap:9px;align-items:center;font-size:12px;margin:12px 0}.rev-topic-track{height:9px;background:#eaf2f0;border-radius:12px;overflow:hidden}.rev-topic-track i{display:block;height:100%;background:#0d9586;border-radius:10px}
+.rev-doctor-cards{display:grid;gap:8px}.rev-doctor-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px;border:1px solid var(--line);padding:11px;border-radius:11px}.rev-doctor-card strong{color:var(--brand);font-size:16px}.rev-doctor-card span{font-size:11px;color:var(--muted)}.rev-doctor-card button{justify-self:end}
+.rev-insight-controls{display:flex;gap:9px;margin:12px 0}.rev-insight-controls input{flex:2}.rev-insight-controls select{flex:1}
+.rev-labels{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.rev-labels span{font-size:11px;color:#0e756e;background:#e6f5f2;border-radius:20px;padding:4px 9px}
+@media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
 </style>
 </head>
 <body>
@@ -597,6 +609,9 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
         <div class="row" id="revActions"></div></div>
       <div id="revSetup" class="hidden"></div>
       <div id="revMain" class="hidden">
+        <div class="rev-insight-head"><div><h3>ذكاء تقييمات Google Maps <span class="muted small">Google Reviews Intelligence</span></h3><p class="muted small">تصنيف استرشادي للنصوص وإشارات الأطباء، لا يُعد تقييمًا للكفاءة المهنية</p></div><span class="pill p-off">تحليل أولي / Preliminary</span></div>
+        <div class="rev-insight-tabs" id="revInsightTabs" role="group" aria-label="Review analytics sections"><button type="button" data-view="all" class="on">جميع التقييمات / All</button><button type="button" data-view="positive">إيجابية / Positive</button><button type="button" data-view="negative">سلبية / Negative</button><button type="button" data-view="mixed">مختلطة / Mixed</button><button type="button" data-view="doctors">حسب الطبيب / Doctors</button></div>
+        <div id="revInsightDashboard"></div>
         <div class="grid g3" id="revTiles" style="margin-bottom:14px"></div>
         <div class="card pad"><form class="filters" id="revFilters"></form></div>
         <div class="count-line" id="revCount" aria-live="polite"></div>
@@ -1531,6 +1546,59 @@ function revSetupHtml(g) {
     <div class="actions" style="margin-top:16px"><button class="btn" type="button" id="gConnect" ${g.configured ? '' : 'disabled'}>ربط حساب قوقل</button></div>
     ${g.configured ? `<details class="tv"><summary>خطوات الإعداد</summary>${steps}</details>` : ''}</div>`;
 }
+
+/* Google Reviews Intelligence — conservative, transparent client-side text signals.
+   Does not mutate backend records, does not assert clinical performance or AI accuracy. */
+const REV_I={view:'all',doctor:'',search:''};
+function revNorm(v){return String(v||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ًٌٍَُِّْـ]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();}
+const REV_POS=['ممتاز','رائع','شكرا','محترم','لطيف','مريح','ممتازه','احتراف','مبدع','افضل','جميل','انصح','perfect','excellent','great','good','kind','professional','recommend'];
+const REV_NEG=['سيئ','سيء','اسوء','تأخر','انتظار','طويل','ما انصح','غالي','غير محترم','شكوى','الم','مشكله','إهمال','اهمال','poor','bad','worst','rude','late','waiting','expensive'];
+const REV_TOPICS=[['انتظار / Waiting',['انتظار','تأخير','تاخر','موعد','waiting','late']],['استقبال / Reception',['استقبال','موظف','reception']],['أسعار / Prices',['سعر','اسعار','غالي','فاتوره','price','expensive']],['شرح العلاج / Explanation',['شرح','يوضح','توضيح','explain']],['نظافة / Cleanliness',['نظاف','تعقيم','clean','steril']],['تعامل / Care',['تعامل','اخلاق','احترام','اسلوب','rude','kind']]];
+function revClassify(x){
+ const txt=revNorm(x.comment),has=(terms)=>terms.some(w=>txt.includes(revNorm(w)));
+ const pos=has(REV_POS),neg=has(REV_NEG),topics=REV_TOPICS.filter(t=>has(t[1])).map(t=>t[0]);
+ return {sent:!txt?'unclassified':pos&&neg?'mixed':pos?'positive':neg?'negative':'unclassified',topics};
+}
+function revDoctors(){return (S.lk&&Array.isArray(S.lk.doctors)?S.lk.doctors:[]).filter(d=>d&&d.name&&d.active!==false);}
+function revDoctorMatch(x){
+ const text=' '+revNorm(x.comment)+' ';
+ const matches=revDoctors().filter(d=>{
+ const full=revNorm(d.name).replace(/^(?:دكتور|دكتوره|الدكتور|الدكتوره|د|dr) /,'');
+ const tokens=full.split(' ').filter(Boolean);
+ return tokens.length>=2&&text.includes(' '+tokens.join(' ')+' ');
+ });
+ return matches.length===1?{name:matches[0].name,confidence:'explicit-full-name'}:{name:'',confidence:matches.length?'ambiguous':'not-found'};
+}
+function revInsightRows(rows){return rows.map(x=>({...x,analysis:revClassify(x),doctorMatch:revDoctorMatch(x)}));}
+function revInsightBlock(rows){
+ const count=s=>rows.filter(x=>x.analysis.sent===s).length;
+ const groups=[['positive','إيجابي / Positive'],['negative','سلبي / Negative'],['mixed','مختلط / Mixed'],['unclassified','غير مصنف / Unclassified']];
+ const doctorRows=rows.filter(x=>x.doctorMatch.name),names=[...new Set(doctorRows.map(x=>x.doctorMatch.name))];
+ const selected=REV_I.doctor?doctorRows.filter(x=>x.doctorMatch.name===REV_I.doctor):doctorRows;
+ const docCards=names.map(d=>{const dr=doctorRows.filter(x=>x.doctorMatch.name===d),rated=dr.filter(x=>Number(x.rating)>0),avg=rated.length?(rated.reduce((a,x)=>a+Number(x.rating),0)/rated.length).toFixed(2):'—';
+ return '<div class="rev-doctor-card"><b>'+esc(d)+'</b><strong>★ '+avg+' / 5</strong><span>'+dr.length+' إشارات · '+dr.filter(x=>x.analysis.sent==='positive').length+' إيجابي · '+dr.filter(x=>x.analysis.sent==='negative').length+' سلبي</span><button type="button" class="btn ghost sm" data-dr="'+esc(d)+'">عرض التعليقات</button></div>';}).join('');
+ const topicCounts=REV_TOPICS.map(t=>[t[0],rows.filter(x=>x.analysis.topics.includes(t[0])).length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]);
+ return '<div class="rev-overview-cards">'+groups.map(g=>'<div class="card rev-metric"><small>'+g[1]+'</small><strong>'+count(g[0])+'</strong></div>').join('')+'</div>'+
+ '<div class="rev-analysis-columns"><section class="card pad"><h3>أبرز مواضيع التقييمات / Topics</h3>'+ (topicCounts.length?topicCounts.map(t=>'<div class="rev-topic"><span>'+esc(t[0])+'</span><div class="rev-topic-track"><i style="width:'+(100*t[1]/Math.max(1,rows.length))+'%"></i></div><b>'+t[1]+'</b></div>').join(''):'<p class="muted small">لا توجد موضوعات محددة</p>')+'</section>'+
+ '<section class="card pad"><h3>تحليل الأطباء / Doctor Mentions</h3><p class="muted small">مطابقة الاسم الكامل فقط؛ لا تُنسب الإشارات الغامضة إلى طبيب</p><div class="rev-doctor-cards">'+(docCards||'<p class="muted small">لا توجد أسماء أطباء مؤكدة في التعليقات المعروضة</p>')+'</div></section></div>'+
+ '<div class="rev-insight-controls"><input id="revInsightSearch" type="search" placeholder="بحث عن كلمة أو اسم / Search comments" value="'+esc(REV_I.search)+'"><select id="revInsightDoctor" aria-label="Doctor filter"><option value="">كل الأطباء / All doctors</option>'+names.map(n=>'<option value="'+esc(n)+'" '+(REV_I.doctor===n?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>';
+}
+function revDrawInsight(rows){
+ const analysed=revInsightRows(rows);
+ $('#revInsightDashboard').innerHTML=revInsightBlock(analysed);
+ const buttons=$('#revInsightTabs [data-view]');buttons.forEach(b=>{b.classList.toggle('on',b.dataset.view===REV_I.view);b.onclick=()=>{REV_I.view=b.dataset.view;revDrawInsight(S.reviews||[]);};});
+ const search=$('#revInsightSearch'),doc=$('#revInsightDoctor');
+ if(search)search.oninput=()=>{REV_I.search=search.value;revDrawInsight(S.reviews||[]);const el=$('#revInsightSearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}};
+ if(doc)doc.onchange=()=>{REV_I.doctor=doc.value;revDrawInsight(S.reviews||[]);};
+ $('#revInsightDashboard [data-dr]').forEach(b=>b.onclick=()=>{REV_I.doctor=b.dataset.dr;REV_I.view='doctors';revDrawInsight(S.reviews||[]);});
+ const filtered=analysed.filter(x=>(REV_I.view==='all'||REV_I.view==='doctors'||x.analysis.sent===REV_I.view)&&
+ (REV_I.view!=='doctors'||!!x.doctorMatch.name)&&(!REV_I.doctor||x.doctorMatch.name===REV_I.doctor)&&(!REV_I.search||revNorm(x.comment+' '+x.doctorMatch.name).includes(revNorm(REV_I.search))));
+ $('#revCount').textContent=filtered.length+' تقييم ضمن الفلاتر / Filtered reviews';
+ $('#revList').innerHTML=filtered.length?filtered.map(x=>'<article class="card rev '+(x.rating<=2?'low':'')+'"><div class="rev-head">'+roStars(x.rating,16)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span>'+revPill(x.status)+'<span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p><div class="rev-labels"><span>'+esc(({positive:'إيجابي',negative:'سلبي',mixed:'مختلط',unclassified:'غير مصنف'})[x.analysis.sent])+'</span>'+x.analysis.topics.map(t=>'<span>'+esc(t)+'</span>').join('')+(x.doctorMatch.name?'<span>د. '+esc(x.doctorMatch.name)+'</span>':'')+'</div>'+(x.reply?'<div class="reply"><small>ردّ المجمع</small>'+esc(x.reply)+'</div>':'')+(x.note?'<p class="small muted">'+esc(x.note)+'</p>':'')+(has('handleCases')?'<div class="tools">'+(x.reply?'':'<button class="btn sm" type="button" data-reply="'+esc(x.id)+'">رد على قوقل</button>')+'<button class="btn ghost sm" type="button" data-follow="'+esc(x.id)+'">متابعة</button></div>':'')+'</article>').join(''):'<div class="card pad"><p class="muted">لا توجد تعليقات مطابقة للتصنيف المختار</p></div>';
+ $('#revList [data-reply]').forEach(b=>b.onclick=()=>replyModal(S.reviews.find(x=>x.id===b.dataset.reply)));
+ $('#revList [data-follow]').forEach(b=>b.onclick=()=>followModal(S.reviews.find(x=>x.id===b.dataset.follow)));
+}
+
 async function loadReviews() {
   try {
     const r = await api('GET', `/reviews${qs(readFilters('#revFilters'))}`);
@@ -1563,6 +1631,7 @@ async function loadReviews() {
         ${x.note ? `<p class="small muted" style="margin:10px 0 0">ملاحظة المتابعة: ${esc(x.note)}${x.handledBy ? ` — <span class="ltr">${esc(x.handledBy)}</span>` : ''}</p>` : ''}
         ${has('handleCases') ? `<div class="tools">${x.reply ? '' : `<button class="btn sm" type="button" data-reply="${esc(x.id)}">رد على قوقل</button>`}<button class="btn ghost sm" type="button" data-follow="${esc(x.id)}">متابعة</button></div>` : ''}
       </article>`).join('') : '<div class="card"><div class="empty"><b>لا توجد تقييمات</b>لا شيء يطابق الفلاتر الحالية.</div></div>';
+    revDrawInsight(r.rows);
     $$('#revList [data-reply]').forEach(b => b.onclick = () => replyModal(S.reviews.find(x => x.id === b.dataset.reply)));
     $$('#revList [data-follow]').forEach(b => b.onclick = () => followModal(S.reviews.find(x => x.id === b.dataset.follow)));
   } catch (e) { if (!e.silent) { $('#revSetup').classList.remove('hidden'); $('#revSetup').innerHTML = `<div class="card"><div class="empty"><b>تعذّر تحميل التقييمات</b>${esc(e.message)}</div></div>`; } }
