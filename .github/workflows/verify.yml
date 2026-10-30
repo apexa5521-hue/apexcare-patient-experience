@@ -1,0 +1,37 @@
+name: PatieMed verification
+on:
+  push:
+    branches:
+      - claude/trusting-newton-7vl73u
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate server and client syntax
+        run: |
+          node --check server/index.js
+          node - <<'NODE'
+          const fs = require('fs');
+          const html=fs.readFileSync('public/index.html','utf8');
+          const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)];
+          if (!scripts.length) throw new Error('No client JS found');
+          for(const [,code] of scripts) new Function(code);
+          const required=['loginForm','appView','tabs','revMain','revList','caseList','kpiBody'];
+          for(const id of required) if(!html.includes('id="'+id+'"')) throw new Error('Required UI element missing: '+id);
+          console.log('Client scripts and critical UI elements: OK');
+          NODE
+      - name: Run unit and API test suite
+        run: npm test
+      - name: Run end-to-end suite (project harness)
+        run: npm run e2e
