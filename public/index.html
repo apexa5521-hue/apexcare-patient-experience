@@ -1924,7 +1924,7 @@ function revInsightBlock(rows){
 function revDrawInsight(rows){
  const analysed=revInsightRows(rows);
  $('#revInsightDashboard').innerHTML=revInsightBlock(analysed);
- const buttons=$('#revInsightTabs [data-view]');buttons.forEach(b=>{b.classList.toggle('on',b.dataset.view===REV_I.view);b.onclick=()=>{REV_I.view=b.dataset.view;revDrawInsight(S.reviews||[]);};});
+ const buttons=$$('#revInsightTabs [data-view]');buttons.forEach(b=>{b.classList.toggle('on',b.dataset.view===REV_I.view);b.onclick=()=>{REV_I.view=b.dataset.view;revDrawInsight(S.reviews||[]);};});
  const search=$('#revInsightSearch'),doc=$('#revInsightDoctor');
  if(search)search.oninput=()=>{REV_I.search=search.value;revDrawInsight(S.reviews||[]);const el=$('#revInsightSearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}};
  if(doc)doc.onchange=()=>{REV_I.doctor=doc.value;revDrawInsight(S.reviews||[]);};
