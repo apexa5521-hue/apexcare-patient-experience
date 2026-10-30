@@ -821,8 +821,8 @@ const apexTranslations=[];
 function apexLanguageSet(lang){
  apexUiLang=lang;const app=$('#appView');app.dir=lang==='ar'?'rtl':'ltr';document.documentElement.dir=app.dir;document.documentElement.lang=lang;
  $('#globalLang').textContent=lang==='ar'?'EN':'عربي';
- $('#tabs button[data-tab]').forEach(b=>{const x=apexNames[b.dataset.tab];if(!x)return;const badge=b.querySelector('.badge');b.textContent=x[lang==='ar'?0:1];if(badge)b.appendChild(badge);});
- if(!apexTranslations.length)$('[data-pane] h2,[data-pane] h3').forEach(el=>{if(el.closest('#gmiRoot'))return;apexTranslations.push([el,el.textContent.trim(),el.innerHTML]);});
+ document.querySelectorAll('#tabs button[data-tab]').forEach(b=>{const x=apexNames[b.dataset.tab];if(!x)return;const badge=b.querySelector('.badge');b.textContent=x[lang==='ar'?0:1];if(badge)b.appendChild(badge);});
+ if(!apexTranslations.length)document.querySelectorAll('[data-pane] h2,[data-pane] h3').forEach(el=>{if(el.closest('#gmiRoot'))return;apexTranslations.push([el,el.textContent.trim(),el.innerHTML]);});
  apexTranslations.forEach(([el,ar,original])=>{if(!el.isConnected)return;if(lang==='ar'){if(el.dataset.apexTranslated==='yes'){el.textContent=ar;el.dataset.apexTranslated='no';}}else if(apexLegacy[ar]){el.textContent=apexLegacy[ar];el.dataset.apexTranslated='yes';}});
  if(typeof GM!=='undefined'){GM.lang=lang;if(!$('#gmiRoot').classList.contains('hidden'))gmSetup();}
  const active=$('#tabs button.on')?.dataset.tab||'add';apexPageTitle(active);
