@@ -729,7 +729,12 @@ const GM={
 const gmT=(a,e)=>GM.lang==='ar'?a:e;
 const gmTabs=[['overview','نظرة عامة','Overview'],['reviews','جميع التعليقات','All Reviews'],['doctors','تقييمات الأطباء','Doctors'],['positive','الإيجابية','Positive'],['negative','السلبية','Negative'],['complaints','مركز المتابعة','Follow-up']];
 /* Conservative Arabic doctor matching: do not attribute ambiguous first names. */
-function gmNormalize(s){return String(s||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ـ|[ًٌٍَُِّْ]/g,'').replace(/(?:دكتور(?:ة)?|الدكتور(?:ة)?|د\\s*[./\\\\]|dr\\.?)/gi,' ').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ');}
+function gmNormalize(s){
+ return String(s||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+ .replace(/[ًٌٍَُِّْـ]/g,'')
+ .replace(/(?:الدكتور|الدكتوره|دكتور|دكتوره|د[./]|dr[.]?)/gi,' ')
+ .replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+}
 function gmIdentifyDoctor(review,doctors){
  const message=' '+gmNormalize(review.text||review.en)+' ';
  const entries=doctors.map(d=>{const name=typeof d==='string'?d:d.name;const aliases=[name,...(typeof d==='object'&&Array.isArray(d.aliases)?d.aliases:[])].map(gmNormalize).filter(x=>x.split(' ').length>=2);return {name,aliases};});
@@ -742,7 +747,7 @@ function gmDoctorSummary(rr){
  const positive=rr.filter(r=>gmDoctorSentiment(r)==='positive').length,negative=rr.filter(r=>gmDoctorSentiment(r)==='negative').length,mixed=rr.filter(r=>gmDoctorSentiment(r)==='mixed').length;
  return {count,avg,positive,negative,mixed,ratio:count?Math.round(100*positive/count):0};
 }
-function gmMonth(d){return /^\\d{4}-\\d{2}/.test(d||'')?d.slice(0,7):'';}
+function gmMonth(d){return /^\d{4}-\d{2}/.test(d||'')?d.slice(0,7):'';}
 function gmRows(){let rows=GM.demo?GM.samples:[];const q=($('#gmiSearch').value||'').trim().toLowerCase(),b=$('#gmiBranch').value,d=$('#gmiDoctor').value;return rows.filter(r=>(!b||r.branch===b)&&(!d||r.doctor===d)&&(!q||[r.text,r.en,r.doctor,r.branch,...r.topics].join(' ').toLowerCase().includes(q)));}
 function gmSetup(){
  const root=$('#gmiRoot');root.dir=GM.lang==='ar'?'rtl':'ltr';
@@ -796,7 +801,7 @@ function gmRender(){
  $('#gmiContent [data-gmdoctor]').forEach(b=>b.onclick=()=>{$('#gmiDoctor').value=b.dataset.gmdoctor;GM.tab='reviews';gmSetup();});
  $('#gmiContent [data-gmtask]').forEach(b=>b.onclick=()=>{if(!GM.tasks.some(x=>x.id===b.dataset.gmtask))GM.tasks.push({id:b.dataset.gmtask,status:'open'});gmRender();toast(gmT('تم إنشاء مهمة ضمن المعاينة فقط','Demo task created (not saved)'));});
 }
-$('#gmiLanguage').onclick=()=>{GM.lang=GM.lang==='ar'?'en':'ar';gmSetup();};
+$('#gmiLanguage').onclick=()=>apexLanguageSet(apexUiLang==='ar'?'en':'ar');
 ['gmiSearch','gmiBranch','gmiDoctor'].forEach(id=>$('#'+id).addEventListener(id==='gmiSearch'?'input':'change',gmRender));
 
 
@@ -818,7 +823,7 @@ function apexLanguageSet(lang){
  $('#globalLang').textContent=lang==='ar'?'EN':'عربي';
  $('#tabs button[data-tab]').forEach(b=>{const x=apexNames[b.dataset.tab];if(!x)return;const badge=b.querySelector('.badge');b.textContent=x[lang==='ar'?0:1];if(badge)b.appendChild(badge);});
  if(!apexTranslations.length)$('[data-pane] h2,[data-pane] h3,[data-pane] label.f,[data-pane] button.btn').forEach(el=>{if(el.closest('#gmiRoot'))return;apexTranslations.push([el,el.textContent.trim(),el.innerHTML]);});
- apexTranslations.forEach(([el,ar,original])=>{if(!el.isConnected)return;if(lang==='ar'){if(el.dataset.apexTranslated==='yes'){el.innerHTML=original;el.dataset.apexTranslated='no';}}else if(apexLegacy[ar]){el.textContent=apexLegacy[ar];el.dataset.apexTranslated='yes';}});
+ apexTranslations.forEach(([el,ar,original])=>{if(!el.isConnected)return;if(lang==='ar'){if(el.dataset.apexTranslated==='yes'){el.textContent=ar;el.dataset.apexTranslated='no';}}else if(apexLegacy[ar]){el.textContent=apexLegacy[ar];el.dataset.apexTranslated='yes';}});
  if(typeof GM!=='undefined'){GM.lang=lang;if(!$('#gmiRoot').classList.contains('hidden'))gmSetup();}
  const active=$('#tabs button.on')?.dataset.tab||'add';apexPageTitle(active);
 }
