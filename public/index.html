@@ -483,6 +483,39 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 #appView [data-pane] .rev{border-radius:15px}
 #appView [data-pane] .rev.low{border-inline-start:3px solid #d46e57}
 @media(max-width:720px){#appView [data-pane]>.section-head{padding:13px 15px;margin-bottom:12px}#appView [data-pane]>.section-head h2{font-size:19px}#appView [data-pane] .card.pad{padding:15px}#appView [data-pane] th,#appView [data-pane] td{padding:10px 9px}}
+
+/* Apex Care full-page visual finish — 2026 */
+#appView .apex-page-hero{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:19px;padding:22px 26px;border:1px solid #d8ebe5;border-radius:19px;background:linear-gradient(105deg,#e0f4ee 0%,#f6fcfa 54%,#fff 100%);box-shadow:0 8px 25px rgba(13,85,77,.045);overflow:hidden}
+#appView .apex-page-hero::after{content:"";position:absolute;width:205px;height:205px;border-radius:50%;background:radial-gradient(circle,rgba(9,143,127,.09),transparent 68%);inset-inline-end:-50px;top:-80px;z-index:-1}
+#appView .apex-kicker{font-size:10px;font-weight:700;color:#18877b;letter-spacing:1.15px}
+#appView .apex-sep{margin-inline:5px;color:#a7c1ba}
+#appView .apex-page-hero h1{margin:6px 0;font-size:clamp(22px,2.2vw,30px);font-weight:700;line-height:1.35;letter-spacing:-.65px;color:#154740}
+#appView .apex-page-hero p{font-size:12.5px;margin:0;color:#638580}
+#appView .apex-hero-mark{display:grid;place-items:center;flex:none;width:58px;height:58px;border-radius:16px;background:#d2eee6;color:#0c7e71;font-size:28px}
+#appView [data-pane]>.section-head{background:#fff;padding:12px 17px;box-shadow:0 3px 14px rgba(16,80,74,.025)}
+#appView [data-pane]>.section-head h2{font-size:17px}
+#appView .form-shell .section-head{background:#fff!important}
+#appView [data-pane] .card.pad{padding:clamp(15px,2vw,24px)}
+#appView [data-pane] .grid{gap:15px}
+#appView .section-head .btn{min-height:39px}
+#appView .pill{font-size:11px;letter-spacing:0}
+#appView [data-pane] .count-line{display:flex;align-items:center;gap:7px}
+#appView [data-pane] .count-line::before{content:"";width:6px;height:6px;border-radius:50%;background:#17a58d}
+#appView .rev-insight-head{padding:20px 22px}
+#appView .rev-insight-tabs{padding-top:5px;padding-bottom:16px}
+#appView .rev-insight-tabs button{border-radius:25px;padding:10px 17px;transition:background .16s,color .16s}
+#appView .rev-doctor-card{background:#fcfefd;border-color:#dfede9}
+#appView .rev-doctor-card strong{font-variant-numeric:tabular-nums}
+#appView .rev-labels span{font-weight:500}
+#appView .rev-metric{border-top:3px solid #a7dcd1}
+#appView .rev-metric:nth-child(2){border-color:#e6ab8d}
+#appView .rev-metric:nth-child(3){border-color:#e7d28b}
+#appView [data-pane] .tbl-wrap{background:#fff}
+#appView [data-pane] .table-actions,#appView [data-pane] .actions{gap:9px}
+#appView [data-pane] .btn.ghost{border-color:#d8e8e3;color:#236e63}
+#appView [data-pane] .btn.ghost:hover{background:#edf8f5}
+@media(min-width:1100px){#appView [data-pane] .g4{gap:17px}#appView .rev-analysis-columns{gap:17px}}
+@media(max-width:720px){#appView .apex-page-hero{padding:17px;border-radius:14px;margin-bottom:13px}#appView .apex-page-hero h1{font-size:20px}#appView .apex-page-hero p{font-size:11px}#appView .apex-hero-mark{width:40px;height:40px;font-size:20px;border-radius:11px}#appView .apex-kicker{font-size:9px}#appView .rev-insight-head{padding:13px}#appView [data-pane]>.section-head{padding:11px 13px}#appView [data-pane]>.section-head h2{font-size:16px}}
 </style>
 </head>
 <body>
@@ -535,7 +568,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
   </header>
 
   <main class="wrap">
-
+<div class="apex-page-hero" id="apexPageHero" aria-live="polite"><div class="apex-hero-copy"><span class="apex-kicker">APEX CARE <span class="apex-sep">/</span> PATIENT EXPERIENCE</span><h1 id="apexHeroTitle">تسجيل تجربة</h1><p id="apexHeroSub">تجربة موحدة لمتابعة جودة الخدمة ورضا المرضى</p></div><div class="apex-hero-mark" aria-hidden="true">✦</div></div>
     <!-- Record experience -->
     <section data-pane="add" role="tabpanel">
       <div class="form-shell">
@@ -946,6 +979,7 @@ $('#tabs').addEventListener('keydown', e => {
   next.focus(); showTab(next.dataset.tab);
 });
 function showTab(t) {
+  apexUpdateHero(t);
   $$('#tabs button').forEach(b => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
   $$('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t));
   if (t === 'log') loadLog();
@@ -2055,6 +2089,23 @@ function categoryModal(c) {
       await reloadLookups(); loadAdmin();
     });
   };
+}
+
+/* Accessible page hierarchy, synced to existing tab navigation. */
+const apexPages={
+ add:['تسجيل تجربة مريض','تسجيل تجربة واضحة وسريعة / Patient Experience'],
+ cases:['إدارة المتابعة','الحالات والإجراءات اللازمة / Case Follow-up'],
+ calls:['قائمة الاتصال','تنظيم مهام الاتصال / Call Center'],
+ log:['سجل التجارب','تصفح وتصفية السجلات / Experience Log'],
+ complaints:['إدارة الشكاوى','متابعة البلاغات وتصنيفها / Complaints'],
+ reviews:['ذكاء تقييمات Google Maps','تحليل التقييمات ومتابعة الملاحظات / Reviews Intelligence'],
+ kpi:['مؤشرات الأداء','قراءة اتجاهات الجودة / Performance Analytics'],
+ admin:['إدارة النظام','الأطباء والفروع والصلاحيات / Administration']
+};
+function apexUpdateHero(tab){
+ const x=apexPages[tab];if(!x)return;
+ const h=document.getElementById('apexHeroTitle'),s=document.getElementById('apexHeroSub');
+ if(h)h.textContent=x[0];if(s)s.textContent=x[1];
 }
 </script>
 </body>
