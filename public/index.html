@@ -460,6 +460,29 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-insight-controls{display:flex;gap:9px;margin:12px 0}.rev-insight-controls input{flex:2}.rev-insight-controls select{flex:1}
 .rev-labels{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.rev-labels span{font-size:11px;color:#0e756e;background:#e6f5f2;border-radius:20px;padding:4px 9px}
 @media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
+
+/* Clinical design system across all existing operational tabs, without modifying behaviors. */
+#appView [data-pane]>.section-head{padding:19px 22px;background:linear-gradient(110deg,#e2f3ef,#fff);border:1px solid var(--line);border-radius:17px;margin-bottom:18px;align-items:center}
+#appView [data-pane]>.section-head h2{font-size:22px;color:#164d47}
+#appView [data-pane]>.section-head p{color:#64837e;margin-top:5px}
+#appView [data-pane] .card{border-radius:16px;box-shadow:0 5px 20px rgba(16,80,74,.04)}
+#appView [data-pane] .tile{border:1px solid var(--line);background:linear-gradient(155deg,#fff,#fbfefd)}
+#appView [data-pane] .tile .v{font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+#appView [data-pane] .filters{padding-top:4px}
+#appView [data-pane] .field>label,#appView [data-pane] .field>.label{color:#315a55}
+#appView [data-pane] input,#appView [data-pane] select,#appView [data-pane] textarea{border-color:#dce9e6;background:#fff}
+#appView [data-pane] input:focus,#appView [data-pane] select:focus,#appView [data-pane] textarea:focus{border-color:#159386;box-shadow:0 0 0 3px #e4f4f1}
+#appView [data-pane] .tbl-wrap{border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:0 3px 17px rgba(16,80,74,.03)}
+#appView [data-pane] th{background:#edf7f4;color:#326960;font-size:12px;font-weight:700;white-space:nowrap}
+#appView [data-pane] td{padding-block:12px;vertical-align:middle}
+#appView [data-pane] .count-line{color:#688680;font-size:12px;margin-block:14px}
+#appView [data-pane] .step-body{border-color:#e7f0ed}
+#appView [data-pane] .seg{background:#eff6f4;border-color:#d9ebe6}
+#appView [data-pane] .form-shell .section-head{padding:18px 20px;background:linear-gradient(110deg,#e2f3ef,#fff);border:1px solid var(--line);border-radius:16px}
+#appView [data-pane] .form-shell .section-head h2{color:#164d47}
+#appView [data-pane] .rev{border-radius:15px}
+#appView [data-pane] .rev.low{border-inline-start:3px solid #d46e57}
+@media(max-width:720px){#appView [data-pane]>.section-head{padding:13px 15px;margin-bottom:12px}#appView [data-pane]>.section-head h2{font-size:19px}#appView [data-pane] .card.pad{padding:15px}#appView [data-pane] th,#appView [data-pane] td{padding:10px 9px}}
 </style>
 </head>
 <body>
