@@ -1928,13 +1928,13 @@ function revDrawInsight(rows){
  const search=$('#revInsightSearch'),doc=$('#revInsightDoctor');
  if(search)search.oninput=()=>{REV_I.search=search.value;revDrawInsight(S.reviews||[]);const el=$('#revInsightSearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}};
  if(doc)doc.onchange=()=>{REV_I.doctor=doc.value;revDrawInsight(S.reviews||[]);};
- $('#revInsightDashboard [data-dr]').forEach(b=>b.onclick=()=>{REV_I.doctor=b.dataset.dr;REV_I.view='doctors';revDrawInsight(S.reviews||[]);});
+ $$('#revInsightDashboard [data-dr]').forEach(b=>b.onclick=()=>{REV_I.doctor=b.dataset.dr;REV_I.view='doctors';revDrawInsight(S.reviews||[]);});
  const filtered=analysed.filter(x=>(REV_I.view==='all'||REV_I.view==='doctors'||x.analysis.sent===REV_I.view)&&
  (REV_I.view!=='doctors'||!!x.doctorMatch.name)&&(!REV_I.doctor||x.doctorMatch.name===REV_I.doctor)&&(!REV_I.search||revNorm(x.comment+' '+x.doctorMatch.name).includes(revNorm(REV_I.search))));
  $('#revCount').textContent=filtered.length+' تقييم ضمن الفلاتر من آخر '+rows.length+' تقييم محمّل / Loaded reviews';
  $('#revList').innerHTML=filtered.length?filtered.map(x=>'<article class="card rev '+(x.rating<=2?'low':'')+'"><div class="rev-head">'+roStars(x.rating,16)+'<span class="pill p-off">'+esc(x.branch||'—')+'</span>'+revPill(x.status)+'<span class="when ltr num">'+esc(x.createdAt)+'</span></div><p class="txt">'+(x.comment?esc(x.comment):'تقييم بدون نص')+'</p><div class="rev-labels"><span>'+esc(({positive:'إيجابي',negative:'سلبي',mixed:'مختلط',unclassified:'غير مصنف'})[x.analysis.sent])+'</span>'+x.analysis.topics.map(t=>'<span>'+esc(t)+'</span>').join('')+(x.doctorMatch.name?'<span>د. '+esc(x.doctorMatch.name)+'</span>':'')+'</div>'+(x.reply?'<div class="reply"><small>ردّ المجمع</small>'+esc(x.reply)+'</div>':'')+(x.note?'<p class="small muted">'+esc(x.note)+'</p>':'')+(has('handleCases')?'<div class="tools">'+(x.reply?'':'<button class="btn sm" type="button" data-reply="'+esc(x.id)+'">رد على قوقل</button>')+'<button class="btn ghost sm" type="button" data-follow="'+esc(x.id)+'">متابعة</button></div>':'')+'</article>').join(''):'<div class="card pad"><p class="muted">لا توجد تعليقات مطابقة للتصنيف المختار</p></div>';
- $('#revList [data-reply]').forEach(b=>b.onclick=()=>replyModal(S.reviews.find(x=>x.id===b.dataset.reply)));
- $('#revList [data-follow]').forEach(b=>b.onclick=()=>followModal(S.reviews.find(x=>x.id===b.dataset.follow)));
+ $$('#revList [data-reply]').forEach(b=>b.onclick=()=>replyModal(S.reviews.find(x=>x.id===b.dataset.reply)));
+ $$('#revList [data-follow]').forEach(b=>b.onclick=()=>followModal(S.reviews.find(x=>x.id===b.dataset.follow)));
 }
 
 async function loadReviews() {

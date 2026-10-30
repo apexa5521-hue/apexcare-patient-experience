@@ -27,7 +27,7 @@ jobs:
           const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)];
           if (!scripts.length) throw new Error('No client JS found');
           for(const [,code] of scripts) new Function(code);
-          if (html.includes("const buttons=$('#revInsightTabs [data-view]');buttons.forEach")) throw new Error('Review tabs selector must use querySelectorAll');
+          if (/(^|[^$])\$\('[^']*'\)\s*\.forEach/.test(html)) throw new Error('$() returns one element, not a list: use $$() before calling forEach');
           const required=['loginForm','appView','tabs','revMain','revList','caseList','kpiBody'];
           for(const id of required) if(!html.includes('id="'+id+'"')) throw new Error('Required UI element missing: '+id);
           console.log('Client scripts and critical UI elements: OK');
