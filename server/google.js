@@ -18,6 +18,14 @@ const STARS = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };
 // Incremental syncs stop early anyway; the first one may need the whole history.
 const MAX_PAGES_INCREMENTAL = 20;
 const MAX_PAGES_FULL = 1000; // 50 per page → up to 50,000 reviews per location
+// Only recent low reviews open a follow-up case; older ones are stored and analysed but not chased.
+const CASE_WINDOW_DAYS = 30;
+
+/** True when a review was written within the last CASE_WINDOW_DAYS. */
+function isRecent(createdAt, now = Date.now()) {
+  const t = Date.parse(createdAt);
+  return Number.isFinite(t) && now - t <= CASE_WINDOW_DAYS * 24 * 3600 * 1000;
+}
 
 const KEYS = { refresh: 'google_refresh_token', locations: 'google_locations', lastSync: 'google_last_sync' };
 
@@ -165,8 +173,8 @@ async function syncReviews(ctx) {
       if (reviews.length) {
         const rows = reviews.map(x => reviewRow(x, loc));
         await must(ctx.db.from('google_reviews').upsert(rows, { onConflict: 'id' }));
-        // One or two stars open a follow-up case (once per review).
-        await openCases(ctx.db, rows.filter(x => x.rating && x.rating <= 2).map(x => ({
+        // One or two stars from the last 30 days open a follow-up case (once per review).
+        await openCases(ctx.db, rows.filter(x => x.rating && x.rating <= 2 && isRecent(x.created_at)).map(x => ({
           source: 'تقييم قوقل', source_id: x.id, created_at: x.created_at, branch: x.branch,
           summary: x.comment || `تقييم ${x.rating} نجوم بدون تعليق`, severity: x.rating === 1 ? 'عالية' : 'متوسطة'
         })));
@@ -194,6 +202,7 @@ async function status(ctx) {
 }
 
 module.exports = {
+  isRecent, CASE_WINDOW_DAYS,
   KEYS, configured, authUrl, exchangeCode, listGoogleLocations, syncReviews, postReply, status,
   getSetting, setSetting, getLocations
 };

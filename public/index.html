@@ -468,7 +468,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
+.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
 .rev-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .rev-doc{cursor:pointer;padding:16px}.rev-doc:hover{border-color:#8fd0c6}
 .rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
@@ -1914,18 +1914,53 @@ function revSetupHtml(g) {
    Does not mutate backend records, does not assert clinical performance or AI accuracy. */
 const REV_I={view:'all',doctor:'',search:''};
 function revNorm(v){return String(v||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ًٌٍَُِّْـ]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();}
-const REV_POS=['ممتاز','رائع','شكرا','محترم','لطيف','مريح','ممتازه','احتراف','مبدع','افضل','جميل','انصح','perfect','excellent','great','good','kind','professional','recommend'];
+const REV_POS=['ممتاز','رائع','شكرا','محترم','لطيف','مريح','ممتازه','احتراف','مبدع','افضل','جميل','انصح','perfect','excellent','great','good','kind','professional','recommend','ما قصروا','ما قصرو','يعطيهم العافيه','thanks','thank'];
 const REV_NEG=['سيئ','سيء','اسوء','تأخر','انتظار','طويل','ما انصح','غالي','غير محترم','شكوى','الم','مشكله','إهمال','اهمال','poor','bad','worst','rude','late','waiting','expensive'];
-const REV_TOPICS=[['انتظار / Waiting',['انتظار','تأخير','تاخر','موعد','waiting','late']],['استقبال / Reception',['استقبال','موظف','reception']],['أسعار / Prices',['سعر','اسعار','غالي','فاتوره','price','expensive']],['شرح العلاج / Explanation',['شرح','يوضح','توضيح','explain']],['نظافة / Cleanliness',['نظاف','تعقيم','clean','steril']],['تعامل / Care',['تعامل','اخلاق','احترام','اسلوب','rude','kind']]];
+const REV_TOPICS=[
+ ['انتظار / Waiting',['انتظار','انتظرت','انتظرنا','تاخير','تاخر','متاخر','waiting','wait','late','delay']],
+ ['حجز ومواعيد / Booking',['حجز','موعد','مواعيد','booking','appointment']],
+ ['استقبال / Reception',['استقبال','موظف','موظفه','reception','receptionist']],
+ ['أسعار / Prices',['سعر','اسعار','غالي','غاليه','فاتوره','تكلفه','مبلغ','price','expensive','cost']],
+ ['شرح العلاج / Explanation',['شرح','يشرح','توضيح','يوضح','explain','explained']],
+ ['نظافة / Cleanliness',['نظاف','نظيف','تعقيم','clean','steril']],
+ ['تعامل / Attitude',['تعامل','اخلاق','احترام','اسلوب','ابتسام','محترم','rude','kind','friendly']],
+ ['ألم ونتيجة العلاج / Treatment outcome',['الم','وجع','التهاب','نتيجه','خراب','اعاده','pain','hurt']],
+ ['التواصل والرد / Communication',['تواصل','رد','ردت','يرد','يردون','ردوا','اتصال','واتساب','respond','answer']]
+];
+const REV_NEGATIONS=new Set(['ما','لا','مو','مب','ماهو','مافي','مافيه','بدون','ليس','not','no','never']);
+// Words of a normalised text, plus each word without a leading «و/ف/ب/ل/ك» and «ال» (والانتظار → انتظار).
+function revWords(txt){
+ const set=new Set();
+ for(const t of txt.split(' ')){
+   if(!t)continue;
+   set.add(t);
+   const m=t.match(/^(?:[وفبلك])?ال(.{2,})$/)||t.match(/^[وف](.{3,})$/);
+   if(m)set.add(m[1]);
+ }
+ return set;
+}
+// A term matches a whole word; a term of four letters or more also matches words that start with it (نظاف → نظافه).
+function revHit(words,txt,term){
+ const q=revNorm(term);
+ if(!q)return false;
+ if(q.includes(' '))return (' '+txt+' ').includes(' '+q+' ');
+ if(words.has(q))return true;
+ if(q.length>=4)for(const w of words)if(w.startsWith(q))return true;
+ return false;
+}
 function revClassify(x){
  const txt=revNorm(x.comment);
  if(!txt)return {sent:'unclassified',topics:[]};
- // Match words or multiword phrases at token boundaries, avoiding partial-word matches.
- const has=(terms)=>terms.some(w=>{const q=revNorm(w);return q&&(' '+txt+' ').includes(' '+q+' ');});
- const explicitNeg=has(['ما انصح','لا انصح','غير جيد','غير ممتاز','not good','not recommended','not recommend']);
+ const words=revWords(txt);
+ const has=(terms)=>terms.some(w=>revHit(words,txt,w));
+ // A negation right before a topic or praise word («ما ردت»، «ما شرح»، «مو نظيف») is a complaint.
+ // «ما شاء الله» and «ما قصروا» stay positive: the word after «ما» there is neither.
+ const tokens=txt.split(' ');
+ const negated=tokens.some((t,i)=>REV_NEGATIONS.has(t)&&i+1<tokens.length&&(()=>{const nx=revWords(tokens[i+1]);return [...REV_TOPICS.flatMap(x=>x[1]),...REV_POS].some(w=>revHit(nx,tokens[i+1],w));})());
+ const explicitNeg=negated||has(['ما انصح','لا انصح','غير جيد','غير ممتاز','not good','not recommended','not recommend']);
  const positive=has(REV_POS)&&!explicitNeg;
  const negative=has(REV_NEG)||explicitNeg;
- const topics=REV_TOPICS.filter(t=>t[1].some(w=>{const q=revNorm(w);return q&&(' '+txt+' ').includes(' '+q+' ');})).map(t=>t[0]);
+ const topics=REV_TOPICS.filter(t=>has(t[1])).map(t=>t[0]);
  return {sent:positive&&negative?'mixed':positive?'positive':negative?'negative':'unclassified',topics};
 }
 function revDoctors(){return (S.lk&&Array.isArray(S.lk.doctors)?S.lk.doctors:[]).filter(d=>d&&d.name&&d.active!==false);}
@@ -2352,6 +2387,64 @@ async function loadDoctors() {
   }
 }
 
+/* ---------- what are the problems: topics across complaints and negative Google comments ---------- */
+// Groups the text of complaints and of negative Google reviews by topic, so the KPI page says what the problems are
+// even before experiences are recorded. Each item: { src, text, branch, when, rating }.
+function problemTopics(items) {
+  const rows = REV_TOPICS.map(t => ({ topic: t[0], google: [], complaints: [] }));
+  const none = { google: [], complaints: [] };
+  items.forEach(it => {
+    const topics = revClassify({ comment: it.text }).topics;
+    if (!topics.length) { none[it.src].push(it); return; }
+    topics.forEach(tp => rows.find(r => r.topic === tp)[it.src].push(it));
+  });
+  return { rows: rows.filter(r => r.google.length + r.complaints.length).sort((a, b) => (b.google.length + b.complaints.length) - (a.google.length + a.complaints.length)), none };
+}
+function problemItemsModal(title, list) {
+  openModal('<h2 id="modalTitle">' + esc(title) + '</h2><p class="muted small">' + list.length + ' نص' + (list.length > 50 ? ' · يظهر آخر 50' : '') + '</p>' +
+    list.slice(0, 50).map(it => '<article class="card rev"><div class="rev-head">' + (it.src === 'google' ? roStars(it.rating, 14) + '<span class="pill p-off">قوقل</span>' : '<span class="pill p-off">شكوى</span>') +
+      '<span class="pill p-off">' + esc(it.branch || '—') + '</span><span class="when ltr num">' + esc(it.when || '') + '</span></div><p class="txt">' + esc(it.text) + '</p></article>').join('') +
+    '<div class="actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>', { closable: true });
+}
+async function loadKpiProblems(kf, k) {
+  const box = $('#kpiProblems');
+  if (!box) return;
+  box.innerHTML = '<div class="card pad"><div class="skeleton" style="width:40%"></div><div class="skeleton" style="height:60px;margin-top:12px"></div></div>';
+  const range = qs({ from: kf.from, to: kf.to, branch: kf.branch });
+  const [reviews, complaints] = await Promise.all([
+    api('GET', `/reviews${range}`).then(x => x.rows || []).catch(() => []),
+    api('GET', `/complaints${range}`).then(x => x.rows || []).catch(() => [])
+  ]);
+  const items = [
+    ...reviews.filter(x => x.comment && (Number(x.rating) <= 2 || ['negative', 'mixed'].includes(revClassify(x).sent)))
+      .map(x => ({ src: 'google', text: x.comment, branch: x.branch, when: x.createdAt, rating: x.rating })),
+    ...complaints.filter(c => c.description).map(c => ({ src: 'complaints', text: c.description, branch: c.branch, when: c.createdAt }))
+  ];
+  if (!items.length) { box.innerHTML = ''; return; }
+  const { rows, none } = problemTopics(items);
+  const max = Math.max(1, ...rows.map(r => r.google.length + r.complaints.length));
+  const weak = k.serviceRatings.total ? k.serviceRatings.questions.filter(q => q.avg !== null).sort((a, b) => a.avg - b.avg)[0] : null;
+  const noneN = none.google.length + none.complaints.length;
+  box.innerHTML = '<div class="card chart-card"><h3>ما هي المشاكل؟ من كل المصادر</h3>' +
+    '<p class="sub">تصنيف تلقائي لنصوص الشكاوى وتعليقات قوقل السلبية في الفترة المختارة. اضغط على الموضوع لرؤية النصوص.</p>' +
+    '<div class="tbl-wrap"><table><thead><tr><th>الموضوع</th><th class="num">قوقل (سلبي)</th><th class="num">الشكاوى</th><th class="num">المجموع</th><th></th></tr></thead><tbody>' +
+    (rows.length ? rows.map((r, i) => { const n = r.google.length + r.complaints.length;
+      return '<tr class="clickable" data-problem="' + i + '" tabindex="0"><td><b>' + esc(r.topic.split(' / ')[0]) + '</b></td><td class="num">' + n0(r.google.length) + '</td><td class="num">' + n0(r.complaints.length) + '</td><td class="num"><b>' + n0(n) + '</b></td>' +
+        '<td style="min-width:120px"><div class="rev-topic-track"><i style="width:' + (100 * n / max) + '%"></i></div></td></tr>'; }).join('')
+      : '<tr><td colspan="5" class="empty">لم يتطابق أي نص مع المواضيع المعروفة</td></tr>') +
+    '</tbody></table></div>' +
+    (noneN ? '<p class="small muted" style="margin-top:10px">' + n0(noneN) + ' نص بدون موضوع واضح (' + n0(none.google.length) + ' من قوقل · ' + n0(none.complaints.length) + ' شكوى). <button class="btn ghost sm" type="button" id="probNone">عرضها</button></p>' : '') +
+    (weak ? '<p class="small" style="margin-top:6px">أضعف بند في استبيان تقييم الخدمة: <b>' + esc(weak.label || weak.key) + '</b> (' + n1(weak.avg) + ' من 5)</p>' : '') +
+    '</div>';
+  $$('#kpiProblems [data-problem]').forEach(tr => {
+    const r = rows[+tr.dataset.problem];
+    const open = () => problemItemsModal(r.topic.split(' / ')[0], [...r.complaints, ...r.google]);
+    tr.onclick = open;
+    tr.onkeydown = e => { if (e.key === 'Enter') open(); };
+  });
+  if ($('#probNone')) $('#probNone').onclick = () => problemItemsModal('نصوص بدون موضوع واضح', [...none.complaints, ...none.google]);
+}
+
 async function loadKpi() {
   const body = $('#kpiBody');
   body.innerHTML = '<div class="grid g4">' + '<div class="card tile"><div class="skeleton" style="width:60%"></div><div class="skeleton" style="height:30px;margin-top:12px"></div></div>'.repeat(4) + '</div>';
@@ -2375,6 +2468,7 @@ async function loadKpi() {
 
     body.innerHTML = `
       ${sourcesSection(k.sources)}
+      <div id="kpiProblems"></div>
       <div class="grid g4">
         <div class="card tile hero"><div class="l">إجمالي التجارب</div><div class="v">${n0(s.total)}</div>
           <div class="split" aria-hidden="true">${s.total ? `<i style="flex:${s.pos};background:var(--c-single)"></i><i style="flex:${s.neu};background:var(--c-rest)"></i><i style="flex:${s.neg};background:var(--c-neg)"></i>` : ''}</div>
@@ -2456,6 +2550,7 @@ async function loadKpi() {
           <div><div class="small" style="font-weight:600;margin-bottom:6px">الأطباء</div>${spark(k.ratingTrend, 'doctor', 'متوسط تقييم الأطباء')}</div>
         </div>
         ${tvTable(['الشهر', 'الحجز', 'الاستقبال', 'الأطباء'], k.ratingTrend.map(t => [fmtM(t.key), n1(t.booking), n1(t.reception), n1(t.doctor)]))}</div>`;
+    loadKpiProblems(kf, k);
   } catch (e) { if (!e.silent) body.innerHTML = `<div class="card"><div class="empty"><b>تعذّر تحميل المؤشرات</b>${esc(e.message)}</div></div>`; }
 }
 

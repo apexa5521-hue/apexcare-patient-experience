@@ -133,7 +133,8 @@ function caseRoutes() {
     if (f.branch) query = query.eq('branch', f.branch);
     if (f.from) query = query.gte('created_at', localToUtc(f.from, '00:00', config.tz).toISOString());
     if (f.to) query = query.lt('created_at', localToUtc(addDays(f.to, 1), '00:00', config.tz).toISOString());
-    const rows = (await fetchAll(() => query.order('created_at').order('id'))).filter(c => visibleTo(req.user, c));
+    // Old Google reviews closed in bulk («تقييم قديم») were never worked on, so they stay out of the timing stats.
+    const rows = (await fetchAll(() => query.order('created_at').order('id'))).filter(c => visibleTo(req.user, c) && c.close_reason !== 'تقييم قديم');
     const { userById } = await lookupNames(db);
     const avg = (list) => { const v = list.filter(x => x !== null && x >= 0); return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null; };
     const group = (key, labels) => labels.map(k => {

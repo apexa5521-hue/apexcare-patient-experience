@@ -107,3 +107,13 @@ test('the reviews insight panel renders the people section from real comment row
   assert.match(html, /Dr\. Bassem Al-Malhem ✓/);
   assert.match(html, /خدمة العملاء/);
 });
+
+test('topics match words with «و/ال» prefixes and stems, and negation turns a topic into a complaint', () => {
+  const c = (comment) => JSON.parse(JSON.stringify(ctx.revClassify({ comment })));
+  assert.deepEqual(c('والانتظار طويل جداً').topics, ['انتظار / Waiting']);
+  assert.deepEqual(c('النظافة ممتازة'), { sent: 'positive', topics: ['نظافة / Cleanliness'] });
+  assert.equal(c('الدكتور ما شرح لي شي').sent, 'negative');
+  assert.equal(c('المكان مو نظيف').sent, 'negative');
+  assert.equal(c('ما شاء الله الدكتور ممتاز').sent, 'positive', '«ما شاء الله» is not a negation');
+  assert.equal(c('ما قصروا الله يعطيهم العافية').sent, 'positive');
+});

@@ -9,17 +9,19 @@ const { parseDate, parseTime } = require('../server/routes/calls');
 
 /* ---------- Google API mock ---------- */
 
+// Review dates are relative to today: only reviews from the last 30 days open a follow-up case.
+const daysAgo = (d, h = 8) => new Date(Date.now() - d * 86400000 - h * 3600000).toISOString();
 const LOC_B = 'accounts/111/locations/901';
 const LOC_U = 'accounts/111/locations/902';
 const google = {
   calls: [],
   reviews: {
     [LOC_B]: [
-      { reviewId: 'r1', reviewer: { displayName: 'Patient Name One' }, starRating: 'ONE', comment: 'انتظرت ساعة', createTime: '2026-10-20T08:00:00Z', updateTime: '2026-10-20T08:00:00Z' },
-      { reviewId: 'r2', reviewer: { displayName: 'Patient Name Two' }, starRating: 'FIVE', comment: 'خدمة ممتازة', createTime: '2026-10-21T08:00:00Z', updateTime: '2026-10-21T08:00:00Z',
-        reviewReply: { comment: 'شكراً لك', updateTime: '2026-10-21T09:00:00Z' } }
+      { reviewId: 'r1', reviewer: { displayName: 'Patient Name One' }, starRating: 'ONE', comment: 'انتظرت ساعة', createTime: daysAgo(10), updateTime: daysAgo(10) },
+      { reviewId: 'r2', reviewer: { displayName: 'Patient Name Two' }, starRating: 'FIVE', comment: 'خدمة ممتازة', createTime: daysAgo(9), updateTime: daysAgo(9),
+        reviewReply: { comment: 'شكراً لك', updateTime: daysAgo(9, 7) } }
     ],
-    [LOC_U]: [{ reviewId: 'r3', reviewer: { displayName: 'Third' }, starRating: 'FOUR', createTime: '2026-10-22T08:00:00Z', updateTime: '2026-10-22T08:00:00Z' }]
+    [LOC_U]: [{ reviewId: 'r3', reviewer: { displayName: 'Third' }, starRating: 'FOUR', createTime: daysAgo(8), updateTime: daysAgo(8) }]
   },
   quotaZero: false
 };
@@ -313,4 +315,15 @@ test('admins can set the branch and doctor of a sheet complaint that arrived wit
   await t.call('PATCH', `/api/complaints/${c.id}`, { token: adminToken, body: { status: 'جديدة', branch: '', doctorId: '' } });
   assert.equal(c.branch, null);
   assert.equal(c.doctor_id, null);
+});
+
+test('only Google reviews from the last 30 days open a follow-up case', () => {
+  const { isRecent, CASE_WINDOW_DAYS } = require('../server/google');
+  const now = Date.parse('2026-10-31T12:00:00Z');
+  assert.equal(CASE_WINDOW_DAYS, 30);
+  assert.equal(isRecent('2026-10-20T08:00:00Z', now), true);
+  assert.equal(isRecent('2026-10-01T13:00:00Z', now), true, '29.9 days');
+  assert.equal(isRecent('2026-09-30T08:00:00Z', now), false, 'over 30 days');
+  assert.equal(isRecent('2025-01-01T00:00:00Z', now), false);
+  assert.equal(isRecent(undefined, now), false);
 });
