@@ -1241,6 +1241,10 @@ async function enter() {
 }
 
 (async () => {
+  // Links shared from other sites carry tracking tags (e.g. ?utm_source=chatgpt.com); drop them from the address bar.
+  const u = new URL(location.href);
+  const tags = [...u.searchParams.keys()].filter(k => k.startsWith('utm_'));
+  if (tags.length) { tags.forEach(k => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); }
   const t = load('pe_token'); if (!t) { $('#lgUser').focus(); return; }
   S.token = t;
   try { const r = await api('GET', '/auth/me'); S.user = r.user; await enter(); }
