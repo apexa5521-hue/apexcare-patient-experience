@@ -155,7 +155,7 @@ function computeKpis({ experiences = [], complaints = [], doctors = [], tz = 'As
       total: d.total, pos: d.pos, neu: d.neu, neg: d.neg,
       posPct: pct(d.pos, d.total), neuPct: pct(d.neu, d.total), negPct: pct(d.neg, d.total),
       net: netScore(d.pos, d.neg, d.total),
-      avgDoctor: d.doctor.value, planYesPct: d.plan.value,
+      avgDoctor: d.doctor.value, ratedDoctor: d.doctor.n, planYesPct: d.plan.value,
       highSeverity: d.high, complaints: d.complaints,
       avgCloseHours: d.close.value === null ? null : round(d.close.value, 1),
       smallSample: d.total < SMALL_SAMPLE

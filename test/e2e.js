@@ -181,6 +181,13 @@ async function run() {
       await shot('07-kpis');
       await noHScroll('kpis');
 
+      // Night mode: switches, is remembered, and switches back.
+      await page.click('header.top [data-theme-toggle]');
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark');
+      assert.equal(await page.evaluate(() => localStorage.getItem('pe_theme')), 'dark');
+      await page.click('header.top [data-theme-toggle]');
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light');
+
       await page.click('#tabs button[data-tab=admin]');
       await page.waitForSelector('#docTable td:has-text("د. منى السالم")');
       await page.click('#docTable tr:has-text("د. منى السالم") button[data-d]');

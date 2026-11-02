@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#eef9ff">
+<script nonce="__CSP_NONCE__">(function(){try{var t=localStorage.getItem('pe_theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <title>PatieMed | Patient Experience & Satisfaction</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -474,6 +475,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
 .rev-doc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;font-size:12px}.rev-doc-metrics b{display:block;font-size:16px;color:var(--ink);margin:2px 0}
 .rev-doc-metrics small{display:block}
+.rev-doc-score{display:flex;flex-direction:column;gap:3px;padding:10px 12px;margin-bottom:12px;border-radius:12px;background:var(--brand-soft)}.rev-doc-score>div{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.rev-doc-score b{font-size:22px;color:var(--ink)}
 .doc-good{color:#0b7a4b}.doc-bad{color:#b4262e}.rev-person-more>summary{cursor:pointer;color:var(--muted);font-size:12px}
 @media(max-width:750px){.rev-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rev-analysis-columns{grid-template-columns:1fr}.rev-insight-controls{flex-direction:column}.rev-topic{grid-template-columns:110px 1fr 22px}.rev-metric{padding:12px}}
 
@@ -787,6 +789,58 @@ body{background:#f2f9ff}
 #appView [data-pane] .btn:not(.ghost):not(.quiet){background:linear-gradient(120deg,#26b6ed,#087de7)}
 #appView [data-pane] .btn:not(.ghost):not(.quiet):hover{background:#087fda}
 @media(max-width:720px){#appView nav.tabs{padding:6px 8px;gap:5px}#appView nav.tabs button{padding:8px 10px;gap:5px}#appView nav.tabs button::before{width:22px;height:22px;font-size:14px}#appView nav.tabs button[aria-selected=true]{box-shadow:inset 0 -3px #208df2}#appView .apex-page-hero h1{font-size:21px}}
+
+/* ---------- night mode ---------- */
+.theme-btn{min-width:38px;font-size:15px;line-height:1}
+.login-theme{position:fixed;top:14px;inset-inline-start:14px;z-index:40}
+html[data-theme=dark]{color-scheme:dark;
+  --bg:#0d1520;--surface:#142130;--surface-2:#192a3c;--ink:#e4edf7;--ink-2:#b4c4d6;--muted:#8ba0b5;--line:#253a50;--line-2:#1e3145;
+  --brand:#43b3f5;--brand-ink:#86cdfa;--brand-soft:#14324b;--focus:#43b3f5;
+  --pos:#4cc38a;--pos-soft:#123426;--neg:#f08a5d;--neg-soft:#3a2118;--neu:#a6b5c4;--neu-soft:#1f2d3b;
+  --warn:#e7b25c;--warn-soft:#3a2d14;--info:#7fa6ff;--info-soft:#1a2747;--danger:#ff7b72;--danger-soft:#3d1c1c;
+  --star-off:#3a4b5e;--c-grid:#253a50;--c-rest:#4f6478;--c-single:#8aa0b5;--h0:#1a2a3b;
+  --sh:0 4px 18px rgba(0,0,0,.35);--sh-lg:0 12px 40px rgba(0,0,0,.6)}
+html[data-theme=dark] body,html[data-theme=dark] .patiemed-login{background:var(--bg)!important;color:var(--ink)}
+html[data-theme=dark] header.top,html[data-theme=dark] #appView header.top .wrap:has(nav.tabs),
+html[data-theme=dark] .card,html[data-theme=dark] .tile,html[data-theme=dark] .dialog,html[data-theme=dark] #toast,
+html[data-theme=dark] #appView [data-pane]>.section-head,html[data-theme=dark] .patiemed-login .pm-login-card,
+html[data-theme=dark] .rev-insight-head,html[data-theme=dark] .rev-person-role,html[data-theme=dark] .rev-insight-tabs button{
+  background:var(--surface)!important;border-color:var(--line)!important;color:var(--ink)}
+html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:var(--surface-2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme=dark] th,html[data-theme=dark] #appView th{background:var(--surface-2)!important;color:var(--ink-2)!important;border-color:var(--line)!important}
+html[data-theme=dark] td{border-color:var(--line)!important}
+html[data-theme=dark] tbody tr:hover td,html[data-theme=dark] #kpiProblems tr.clickable:hover td{background:var(--surface-2)!important}
+html[data-theme=dark] .rev-person-card,html[data-theme=dark] .rev-doctor-card,html[data-theme=dark] .rev-topic-track,html[data-theme=dark] .skeleton{background:var(--surface-2)!important;border-color:var(--line)!important}
+html[data-theme=dark] .rev-person-card.verified{background:var(--brand-soft)!important}
+html[data-theme=dark] #appView nav.tabs button[aria-selected=true],html[data-theme=dark] .rev-insight-tabs button.on{background:var(--brand-soft)!important;color:var(--brand-ink)!important}
+html[data-theme=dark] h1,html[data-theme=dark] h2,html[data-theme=dark] h3,html[data-theme=dark] b,html[data-theme=dark] strong,
+html[data-theme=dark] .patiemed-login .pm-login-card h1,html[data-theme=dark] #appView [data-pane]>.section-head h2{color:var(--ink)!important}
+html[data-theme=dark] .btn.ghost{background:transparent!important;color:var(--ink-2)!important;border-color:var(--line)!important}
+html[data-theme=dark] .modal{background:rgba(0,0,0,.6)}
+html[data-theme=dark] .doc-good{color:#4cc38a}html[data-theme=dark] .doc-bad{color:#ff7b72}
+html[data-theme=dark] #appView{background:var(--bg)!important;color:var(--ink)!important}
+/* The design rules are scoped under #appView, so the night versions are too. */
+html[data-theme=dark] #appView :is(.card,.tile,.section-head,.tbl-wrap,.rev-insight-head,.rev-person-role){background:var(--surface)!important;border-color:var(--line)!important;color:var(--ink)}
+html[data-theme=dark] #appView [data-pane] .form-shell .section-head,html[data-theme=dark] #appView [data-pane]>.section-head{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme=dark] #appView [data-pane] .tile .v,html[data-theme=dark] #appView [data-pane] .step-title{color:var(--ink)!important}
+html[data-theme=dark] #appView [data-pane] .tile::before{display:none}
+html[data-theme=dark] #appView [data-pane] .step-body{border-color:var(--line)!important}
+html[data-theme=dark] #appView [data-pane] .field>label,html[data-theme=dark] #appView [data-pane] .field>.label{color:var(--ink-2)!important}
+html[data-theme=dark] #appView nav.tabs button::before{background:var(--surface-2)!important;color:var(--brand-ink)!important}
+html[data-theme=dark] .patiemed-login label,html[data-theme=dark] .patiemed-login .pm-showcase span{color:var(--ink-2)!important}
+html[data-theme=dark] #appView .apex-page-hero{background:linear-gradient(108deg,#132a40,var(--surface))!important;border-color:var(--line)!important}
+html[data-theme=dark] #appView :is(input,select,textarea){background:var(--surface-2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme=dark] #appView .seg{background:var(--surface-2)!important;border-color:var(--line)!important}
+html[data-theme=dark] header.top .bar{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme=dark] .apex-page-hero{background:linear-gradient(108deg,#132a40,var(--surface))!important;border-color:var(--line)!important}
+html[data-theme=dark] .section-head,html[data-theme=dark] .tbl-wrap{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme=dark] .seg{background:var(--surface-2)!important;border-color:var(--line)!important}
+html[data-theme=dark] .seg label{color:var(--ink-2)}
+html[data-theme=dark] .seg input:checked+label{background:var(--brand-soft)!important;color:var(--brand-ink)!important}
+html[data-theme=dark] .rev-labels span,html[data-theme=dark] .pm-eyebrow{background:var(--brand-soft)!important;color:var(--brand-ink)!important}
+html[data-theme=dark] .pm-showcase,html[data-theme=dark] .pm-showcase div{background:var(--surface)!important;border-color:var(--line)!important}
+html[data-theme=dark] #caseView button{background:var(--surface)!important;border-color:var(--line)!important;color:var(--ink-2)!important}
+html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] #caseView button.on{background:var(--brand-soft)!important;color:var(--brand-ink)!important}
 </style>
 </head>
 <body>
@@ -800,6 +854,7 @@ body{background:#f2f9ff}
 
 <!-- ===== Login ===== -->
 <section id="loginView" class="login patiemed-login">
+<button class="btn ghost sm theme-btn login-theme" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button>
  <div class="pm-login-layout">
   <aside class="pm-landing" aria-label="نبذة عن باتيميد">
    <div class="pm-logo pm-logo-large"><span class="pm-symbol" aria-hidden="true">P</span><span class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></span></div>
@@ -841,6 +896,7 @@ body{background:#f2f9ff}
       <div class="brand pm-app-brand"><div class="pm-symbol" aria-hidden="true">P</div><div class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></div></div>
       <div class="who">
         <div class="who-name"><b id="whoName"></b><span id="whoRole"></span></div>
+        <button class="btn ghost sm theme-btn" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button>
         <button class="btn ghost sm" id="btnPw" type="button">كلمة المرور</button>
         <button class="btn ghost sm" id="btnOut" type="button">خروج</button>
       </div>
@@ -1239,6 +1295,20 @@ async function enter() {
     else toast('لم يكتمل ربط قوقل. حاول مرة أخرى', true);
   }
 }
+
+
+/* ---------- night mode ---------- */
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $$('[data-theme-toggle]').forEach(b => { b.textContent = t === 'dark' ? '☀' : '☾'; b.setAttribute('aria-label', t === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'); b.title = b.getAttribute('aria-label'); });
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'dark' ? '#0d1520' : '#eef9ff';
+}
+applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+$$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(t);
+  try { localStorage.setItem('pe_theme', t); } catch { /* private mode: the choice lasts this visit only */ }
+}));
 
 (async () => {
   // Links shared from other sites carry tracking tags (e.g. ?utm_source=chatgpt.com); drop them from the address bar.
@@ -2319,10 +2389,21 @@ function docDelta(v, base, higherIsBetter, unit = '') {
   const good = higherIsBetter ? diff > 0 : diff < 0;
   return `<span class="${good ? 'doc-good' : 'doc-bad'} ltr num">${diff > 0 ? '▲' : '▼'} ${Math.abs(diff).toFixed(1)}${unit}</span>`;
 }
+// One score from every way a doctor is rated, on the 1-5 scale: each doctor rating in an experience (call or
+// in-person), each Google review that names the doctor (its stars), and each complaint about the doctor (counts as 1).
+// Service-rating QR answers are anonymous and name no doctor, so they are not part of it.
+const COMBINED_MIN = 10;
+function docCombined(d) {
+  const expN = d.ratedDoctor || 0, expSum = (d.avgDoctor || 0) * expN;
+  const g = d.reviews.filter(x => Number(x.rating) >= 1), gN = g.length, gSum = g.reduce((a, x) => a + Number(x.rating), 0);
+  const cN = d.complaints || 0, n = expN + gN + cN;
+  return { n, expN, gN, cN, gAvg: gN ? gSum / gN : null, score: n ? (expSum + gSum + cN) / n : null };
+}
 function docAgg(list) {
   const total = list.reduce((a, d) => a + d.total, 0), neg = list.reduce((a, d) => a + d.neg, 0);
   const rated = list.filter(d => d.avgDoctor != null);
-  return { total, negPct: total ? (neg / total) * 100 : null, avgDoctor: rated.length ? rated.reduce((a, d) => a + d.avgDoctor, 0) / rated.length : null };
+  const cn = list.reduce((a, d) => a + d.combined.n, 0), cs = list.reduce((a, d) => a + (d.combined.score || 0) * d.combined.n, 0);
+  return { total, negPct: total ? (neg / total) * 100 : null, avgDoctor: rated.length ? rated.reduce((a, d) => a + d.avgDoctor, 0) / rated.length : null, combined: cn ? cs / cn : null };
 }
 function docModal(d) {
   const items = d.reviews;
@@ -2346,36 +2427,43 @@ async function loadDoctors() {
       if (!mentions.has(h.name)) mentions.set(h.name, []);
       mentions.get(h.name).push(x);
     }));
-    const rows = k.doctors.map(d => ({ ...d, ar: (byId.get(d.id) || {}).name_ar || '', reviews: mentions.get(d.name) || [] }));
-    if (!rows.length) { body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات لأطباء في هذه الفترة</b>جرّب فترة أوسع أو امسح الفلاتر.</div></div>'; return; }
+    const all0 = k.doctors.map(d => ({ ...d, ar: (byId.get(d.id) || {}).name_ar || '', reviews: mentions.get(d.name) || [] })).map(d => ({ ...d, combined: docCombined(d) }));
+    // Doctors with nothing in the period are listed by name only, below the cards.
+    const rows = all0.filter(d => d.combined.n || d.total).sort((a, b) => b.combined.n - a.combined.n);
+    const idle = all0.filter(d => !d.combined.n && !d.total);
+    if (!rows.length) { body.innerHTML = '<div class="card"><div class="empty"><b>لا توجد بيانات لأطباء في هذه الفترة</b>لا تجارب ولا شكاوى ولا تعليقات قوقل تذكر طبيباً. جرّب فترة أوسع.</div></div>'; return; }
     const all = docAgg(rows);
-    const reliable = rows.filter(d => !d.smallSample);
-    const best = reliable.filter(d => d.avgDoctor != null).sort((a, b) => b.avgDoctor - a.avgDoctor)[0];
-    const worst = reliable.slice().sort((a, b) => (b.negPct ?? -1) - (a.negPct ?? -1))[0];
+    const reliable = rows.filter(d => d.combined.n >= COMBINED_MIN);
+    const best = reliable.slice().sort((a, b) => b.combined.score - a.combined.score)[0];
+    const worst = reliable.slice().sort((a, b) => a.combined.score - b.combined.score)[0];
     const tile = (label, value, note = '') => '<div class="card tile"><small class="muted">' + label + '</small><div class="v num">' + value + '</div>' + (note ? '<small class="muted">' + note + '</small>' : '') + '</div>';
     const cards = rows.map(d => {
       const peers = docAgg(rows.filter(x => x.branch === d.branch));
-      const gAvg = d.reviews.length ? d.reviews.reduce((a, x) => a + Number(x.rating || 0), 0) / d.reviews.length : null;
+      const c = d.combined, gAvg = c.gAvg;
       return '<article class="card rev-doc" role="button" tabindex="0" data-doc="' + esc(d.name) + '">' +
         '<div class="rev-doc-head"><div><b>' + esc(d.ar || d.name) + '</b><small class="ltr muted">' + esc(d.name) + '</small></div>' +
         (d.specialty ? '<span class="pill p-off">' + esc(d.specialty) + '</span>' : '') + '</div>' +
+        '<div class="rev-doc-score"><div><small class="muted">التقييم الموحد</small><b class="num">' + (c.score == null ? '—' : c.score.toFixed(2) + ' ★') + '</b>' + docDelta(c.score, peers.combined, true) + '</div>' +
+        '<small class="muted">من ' + n0(c.n) + ' تقييم: ' + n0(c.expN) + ' تجربة · ' + n0(c.gN) + ' قوقل · ' + n0(c.cN) + ' شكوى' + (c.n && c.n < COMBINED_MIN ? ' · عينة صغيرة' : '') + '</small></div>' +
         '<div class="rev-doc-metrics">' +
         '<div><small class="muted">الزيارات</small><b class="num">' + n0(d.total) + '</b></div>' +
         '<div><small class="muted">نسبة السلبي</small><b class="num">' + (d.negPct == null ? '—' : pct1(d.negPct)) + '</b>' + docDelta(d.negPct, peers.negPct, false, '٪') + '</div>' +
         '<div><small class="muted">متوسط الطبيب</small><b class="num">' + (d.avgDoctor == null ? '—' : d.avgDoctor.toFixed(2)) + ' ★</b>' + docDelta(d.avgDoctor, peers.avgDoctor, true) + '</div>' +
         '<div><small class="muted">الشكاوى</small><b class="num">' + n0(d.complaints) + '</b></div>' +
         '<div><small class="muted">تعليقات قوقل</small><b class="num">' + (reviews ? n0(d.reviews.length) : '—') + '</b>' + (gAvg == null ? '' : '<small class="muted">متوسط ' + gAvg.toFixed(1) + ' ★</small>') + '</div>' +
-        '</div>' + (d.smallSample ? '<p class="muted small">عينة صغيرة، النتيجة تقريبية</p>' : '') + '</article>';
+        '</div></article>';
     }).join('');
     body.innerHTML =
       '<div class="grid g4">' +
         tile('الأطباء في الفترة', n0(rows.length)) +
         tile('نسبة السلبي للكل', all.negPct == null ? '—' : pct1(all.negPct), 'من ' + n0(all.total) + ' زيارة') +
-        tile('أعلى متوسط طبيب', best ? best.avgDoctor.toFixed(2) + ' ★' : '—', best ? (best.ar || best.name) : 'لا يكفي العدد') +
-        tile('أعلى نسبة سلبي', worst && worst.negPct != null ? pct1(worst.negPct) : '—', worst ? (worst.ar || worst.name) : 'لا يكفي العدد') +
+        tile('أعلى تقييم موحد', best ? best.combined.score.toFixed(2) + ' ★' : '—', best ? (best.ar || best.name) : 'يحتاج ' + COMBINED_MIN + ' تقييمات على الأقل') +
+        tile('أدنى تقييم موحد', worst && worst !== best ? worst.combined.score.toFixed(2) + ' ★' : '—', worst && worst !== best ? (worst.ar || worst.name) : 'يحتاج ' + COMBINED_MIN + ' تقييمات على الأقل') +
       '</div>' +
       (reviews ? '' : '<div class="card pad"><p class="muted small">تعليقات قوقل غير متاحة الآن، وتظهر الأرقام الأخرى.</p></div>') +
-      '<div class="rev-doc-grid">' + cards + '</div>';
+      '<div class="card pad"><p class="muted small">التقييم الموحد يجمع على مقياس 1 إلى 5: تقييم الطبيب في كل تجربة (حضوري أو اتصال)، ونجوم كل تعليق قوقل يذكر الطبيب، وكل شكوى عليه تُحسب نجمة واحدة. نجوم قوقل تخص التعليق كله، وقد يكون الكلام عن غير الطبيب.</p></div>' +
+      '<div class="rev-doc-grid">' + cards + '</div>' +
+      (idle.length ? '<div class="card pad"><p class="muted small">بدون أي تقييم في هذه الفترة: ' + idle.map(d => esc(d.ar || d.name)).join('، ') + '</p></div>' : '');
     $$('#docBody [data-doc]').forEach(c => {
       const d = rows.find(x => x.name === c.dataset.doc);
       const open = () => docModal(d);
@@ -2491,7 +2579,7 @@ async function loadKpi() {
       <div class="card chart-card"><h3>مؤشرات الأطباء</h3>
         <p class="sub">مرتبة حسب صافي التجربة = (الإيجابي − السلبي) ÷ الإجمالي × 100. «عينة صغيرة» تعني أقل من 20 تجربة — فسّرها بحذر.</p>
         <div class="tbl-wrap"><table><thead><tr><th>الطبيب</th><th>التجارب</th><th class="num">إيجابية</th><th class="num">محايدة</th><th class="num">سلبية</th><th>صافي التجربة</th><th>تقييم الطبيب</th><th class="num">وضوح الخطة</th><th class="num">سلبية عالية</th><th class="num">الشكاوى</th><th class="num">زمن الإغلاق (س)</th></tr></thead><tbody>
-        ${k.doctors.length ? k.doctors.map(d => `<tr><td><b>${esc(d.name)}</b> <span class="muted small">${esc(d.specialty)}</span></td>
+        ${k.doctors.length ? k.doctors.map(d => `<tr><td><b>${esc((S.lk.doctors.find(x => x.id === d.id) || {}).name_ar || d.name)}</b> <span class="muted small">${esc(d.specialty)}</span></td>
           <td class="num">${n0(d.total)}${d.total && d.smallSample ? '<span class="tag">عينة صغيرة</span>' : ''}</td>
           <td class="num">${pc(d.posPct)}</td><td class="num">${pc(d.neuPct)}</td><td class="num">${pc(d.negPct)}</td>
           <td>${netCell(d.net)}</td><td><span class="r-chip">${n1(d.avgDoctor)}</span> ${d.avgDoctor === null ? '' : roStars(d.avgDoctor, 12)}</td>
