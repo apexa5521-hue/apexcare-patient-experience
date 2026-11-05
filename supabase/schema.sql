@@ -48,7 +48,7 @@ create table if not exists experiences (
   doctor_id uuid not null references doctors(id),
   branch text not null check (branch in ('بريدة','عنيزة')),
   specialty text not null,
-  visit_type text not null check (visit_type in ('كشف','إجراء','كشف وإجراء')),
+  visit_type text not null check (visit_type in ('كشف','إجراء','كشف وإجراء','متابعة')),
   sentiment text not null check (sentiment in ('إيجابية','سلبية','محايدة')),
   category text,
   severity text check (severity in ('بسيطة','متوسطة','عالية')),

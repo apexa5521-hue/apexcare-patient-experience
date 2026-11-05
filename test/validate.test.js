@@ -88,3 +88,8 @@ test('Supabase URL is accepted with or without /rest/v1', () => {
     assert.equal(normalizeSupabaseUrl(u), 'https://abc.supabase.co', u);
   }
 });
+
+test('«متابعة» is a visit type', () => {
+  const { VISIT_TYPES } = require('../server/validate');
+  assert.deepEqual(VISIT_TYPES, ['كشف', 'إجراء', 'كشف وإجراء', 'متابعة']);
+});
