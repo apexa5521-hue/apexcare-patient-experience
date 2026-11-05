@@ -188,3 +188,49 @@ test('case stats: volume, response and close times, on-time rate, workload', asy
   const bm = (await t.call('GET', '/api/cases/stats', { token: tok.bmU })).body.stats;
   assert.ok(bm.byBranch.every(b => b.key === 'عنيزة' || b.key === ''));
 });
+
+test('editing a recorded experience: who may, and how the follow-up case follows', async () => {
+  const mine = await t.call('POST', '/api/experiences', { token: tok.staffB, body: experience(docB.id, { fileNo: 'ED-1', phone: '0551112222' }) });
+  const id = mine.body.id;
+  const edit = (token, over) => t.call('PATCH', `/api/experiences/${id}`, { token, body: experience(docB.id, { fileNo: 'ED-1', phone: '0551112222', ...over }) });
+
+  // The person who recorded it can fix it; nothing changed means nothing written.
+  assert.deepEqual((await edit(tok.staffB, {})).body.changed, []);
+  const r1 = await edit(tok.staffB, { doctorRating: 3 });
+  assert.equal(r1.status, 200, JSON.stringify(r1.body));
+  assert.deepEqual(r1.body.changed, ['doctor_rating']);
+  assert.ok(t.db._store.tables.audit_log.some(a => a.action === 'update_experience' && a.details.includes('doctor_rating')));
+  const list = (await t.call('GET', '/api/experiences', { token: tok.staffB })).body.rows;
+  assert.equal(list.find(x => x.id === id).canEdit, true);
+
+  // Someone else's: no for another receptionist or a manager of another branch; yes for quality.
+  assert.equal((await edit(tok.officer, { doctorRating: 4 })).status, 403);
+  assert.equal((await edit(tok.bmU, { doctorRating: 4 })).status, 403);
+  assert.equal((await edit(tok.qs, { doctorRating: 4 })).status, 200);
+
+  // Becomes negative: a case opens with the new details.
+  const toNeg = await edit(tok.qs, { sentiment: 'سلبية', category: 'وقت الانتظار', severity: 'متوسطة', generalNote: 'انتظر ساعة' });
+  assert.equal(toNeg.status, 200, JSON.stringify(toNeg.body));
+  let c = caseFor('تجربة سلبية', id);
+  assert.ok(c, 'case opened');
+  assert.equal(c.severity, 'متوسطة');
+  assert.match(c.summary, /انتظر ساعة/);
+
+  // Still negative, now high: the open case takes it and logs the change.
+  await edit(tok.qs, { sentiment: 'سلبية', category: 'وقت الانتظار', severity: 'عالية', generalNote: 'انتظر ساعة' });
+  c = caseFor('تجربة سلبية', id);
+  assert.equal(c.severity, 'عالية');
+  assert.ok(t.db._store.tables.case_events.some(e => e.case_id === c.id && /عُدّلت التجربة/.test(e.body)));
+
+  // No longer negative: the case stays (someone decides), with a note to review it.
+  await edit(tok.qs, { sentiment: 'إيجابية' });
+  assert.equal(caseFor('تجربة سلبية', id).status !== 'مغلقة', true);
+  assert.ok(t.db._store.tables.case_events.some(e => e.case_id === c.id && /راجع الحالة/.test(e.body)));
+  assert.equal(t.db._store.tables.experiences.find(e => e.id === id).follow_up, null);
+
+  // A masked phone in the form is not written back: keepPhone keeps the stored number.
+  const kp = await t.call('PATCH', `/api/experiences/${id}`, { token: tok.staffB, body: { ...experience(docB.id, { fileNo: 'ED-1', sentiment: 'إيجابية' }), phone: '', keepPhone: true } });
+  assert.equal(kp.status, 200, JSON.stringify(kp.body));
+  assert.equal(t.db._store.tables.experiences.find(e => e.id === id).phone, '0551112222');
+  assert.equal((await t.call('PATCH', '/api/experiences/00000000-0000-4000-8000-000000000000', { token: tok.qs, body: experience(docB.id) })).status, 404);
+});

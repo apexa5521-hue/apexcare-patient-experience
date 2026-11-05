@@ -1237,6 +1237,7 @@ function stars(wrap) {
   });
   wrap.addEventListener('change', () => { paint(current(), true); setTimeout(() => paint(current()), 180); });
   wrap._reset = () => { $$('input', wrap).forEach(x => { x.checked = false; }); paint(0); };
+  wrap._set = v => { $$('input', wrap).forEach(x => { x.checked = +x.value === +v; }); paint(current()); };
 }
 
 function roStars(v, size = 14) {
@@ -1464,6 +1465,14 @@ $('#exForm').addEventListener('submit', e => {
     if (d.sentiment !== 'سلبية') delete d.severity;
     if (d.sentiment === 'محايدة') d.category = '';
     validateExperience(form, d);
+    if (S.editId) {
+      if (S.editKeepPhone && !d.phone) d.keepPhone = true;
+      const r = await api('PATCH', `/experiences/${S.editId}`, d);
+      toast(r.changed.length ? 'تم حفظ التعديل' : 'لم يتغير شيء');
+      resetExperienceForm();
+      showTab('log');
+      return;
+    }
     await api('POST', '/experiences', d);
     toast(d.callId ? 'تم حفظ التقييم وإغلاق الاتصال' : 'تم حفظ التجربة');
     resetExperienceForm();
@@ -1476,12 +1485,48 @@ function resetExperienceForm() {
   ['#vtSeg', '#sentSeg', '#sevSeg', '#planSeg'].forEach(s => setSeg($(s), null));
   setSeg($('#chSeg'), lastChannel()); $('#chSeg').classList.remove('locked');
   $('#exCallId').value = ''; $('#callBanner').classList.add('hidden');
+  S.editId = null; S.editKeepPhone = false;
+  $('#exSave').textContent = 'حفظ التجربة'; f.phone.placeholder = '05XXXXXXXX';
   $$('[data-stars]').forEach(w => w._reset && w._reset());
   fillDoctors(); fillPlan(); fillCats(); setNow();
   $('#noteCount').textContent = '0 / 1000';
   $$('.field.invalid', f).forEach(clearErr);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   $('#exFile').focus({ preventScroll: true });
+}
+
+/** Opens a recorded experience in the form; saving updates it instead of adding a new one. */
+function editExperience(x) {
+  showTab('add');
+  resetExperienceForm();
+  const f = $('#exForm');
+  S.editId = x.id;
+  f.fileNo.value = x.fileNo;
+  // Roles without full phones see a masked number: leave the field empty and keep the stored one unless retyped.
+  S.editKeepPhone = !has('fullPhones');
+  f.phone.value = S.editKeepPhone ? '' : x.phone;
+  if (S.editKeepPhone) f.phone.placeholder = 'الرقم محفوظ. اكتب رقماً جديداً لتغييره';
+  $('#exBranch').value = x.branch;
+  fillDoctors();
+  if (!$(`#exDoctor option[value="${x.doctorId}"]`)) $('#exDoctor').insertAdjacentHTML('beforeend', `<option value="${esc(x.doctorId)}">${esc(x.doctor)}</option>`);
+  $('#exDoctor').value = x.doctorId;
+  const [dt, tm] = String(x.visitAt).split(' ');
+  $('#exDate').value = dt; $('#exTime').value = tm;
+  setSeg($('#chSeg'), x.channel);
+  setSeg($('#vtSeg'), x.visitType); fillPlan(); setSeg($('#planSeg'), x.planExplained);
+  [['bookingRating', x.bookingRating], ['receptionRating', x.receptionRating], ['doctorRating', x.doctorRating]]
+    .forEach(([k, v]) => { const w = $(`[data-stars=${k}]`); if (w && w._set) w._set(v); });
+  setSeg($('#sentSeg'), x.sentiment); fillCats();
+  if (x.category) $('#exCat').value = x.category;
+  if (x.severity) setSeg($('#sevSeg'), x.severity);
+  $('#exNote').value = x.generalNote || ''; $('#noteCount').textContent = `${$('#exNote').value.length} / 1000`;
+  $('#exSave').textContent = 'حفظ التعديل';
+  const b = $('#callBanner');
+  b.innerHTML = `<span>تعديل تجربة مسجّلة · ملف <b class="ltr">${esc(x.fileNo)}</b> · ${esc(x.visitAt)}</span>
+    <button type="button" class="btn ghost sm" id="cancelEdit">إلغاء التعديل</button>`;
+  b.classList.remove('hidden');
+  $('#cancelEdit').onclick = () => { resetExperienceForm(); showTab('log'); };
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /** Opens the survey form pre-filled from a call-list entry; saving it closes the call. */
@@ -1572,14 +1617,16 @@ async function loadLog() {
     $('#logScope').textContent = adm ? (S.user.scope ? `تجارب فرع ${S.user.scope}` : 'كل التجارب المسجّلة') : 'التجارب التي سجّلتها أنت فقط';
     $('#logCount').textContent = r.total ? `${n0(r.total)} تجربة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
     $('#logTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th>النوع</th><th>الطريقة</th>
-      <th>الحجز</th><th>الاستقبال</th><th>الطبيب ★</th><th>وضوح الخطة</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}</tr></thead><tbody>` +
+      <th>الحجز</th><th>الاستقبال</th><th>الطبيب ★</th><th>وضوح الخطة</th><th>التجربة</th><th>التصنيف</th><th>الخطورة</th><th>المتابعة</th><th>ملاحظة</th>${adm ? '<th>بواسطة</th>' : ''}<th></th></tr></thead><tbody>` +
       r.rows.map(x => `<tr><td class="num ltr">${esc(x.visitAt)}</td><td class="ltr">${esc(x.fileNo)}</td><td class="ltr num">${esc(x.phone)}</td><td>${esc(x.doctor)}</td><td>${esc(x.branch)}</td><td>${esc(x.visitType)}</td><td>${x.channel === 'اتصال' ? '<span class="pill p-open">اتصال</span>' : '<span class="pill p-off">حضوري</span>'}</td>
         <td>${rChip(x.bookingRating)}</td><td>${rChip(x.receptionRating)}</td><td>${rChip(x.doctorRating)}</td><td>${planPill(x.planExplained)}</td>
         <td>${sentPill(x.sentiment)}</td><td>${esc(x.category)}</td><td>${sevPill(x.severity)}</td>
         <td>${stPill(x.followUp)}${x.caseId && has('viewCases') ? ` <button class="btn quiet sm" type="button" data-case="${esc(x.caseId)}">الحالة</button>` : ''}</td>
-        <td class="wrap-t">${esc(x.generalNote)}</td>${adm ? `<td class="ltr">${esc(x.by)}</td>` : ''}</tr>`).join('') + '</tbody>'
+        <td class="wrap-t">${esc(x.generalNote)}</td>${adm ? `<td class="ltr">${esc(x.by)}</td>` : ''}
+        <td>${x.canEdit ? `<button class="btn ghost sm" type="button" data-edit="${esc(x.id)}">تعديل</button>` : ''}</td></tr>`).join('') + '</tbody>'
       : emptyRow('لا توجد تجارب', 'غيّر الفلاتر أو سجّل تجربة جديدة.');
     $$('#logTable [data-case]').forEach(b => b.onclick = () => caseModal(b.dataset.case));
+    $$('#logTable [data-edit]').forEach(b => b.onclick = () => editExperience(S.ex.find(x => x.id === b.dataset.edit)));
   } catch (e) { if (!e.silent) { $('#logTable').innerHTML = emptyRow('تعذّر تحميل السجل', e.message); } }
 }
 $('#exportEx').onclick = () => csv('experiences',

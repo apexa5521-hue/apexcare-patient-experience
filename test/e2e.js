@@ -160,6 +160,22 @@ async function run() {
       assert.match(await row.innerText(), /وقت الانتظار/);
       await shot('05-log');
 
+      // Edit it from the log: the form opens filled in, the change is saved on the same record.
+      await row.locator('[data-edit]').click();
+      await page.waitForSelector('#cancelEdit');
+      assert.equal(await page.inputValue('#exFile'), fileNo);
+      assert.equal(await page.textContent('#exSave'), 'حفظ التعديل');
+      assert.equal(await page.$eval('[data-stars=doctorRating] input:checked', i => i.value), String(db._store.tables.experiences.find(e => e.file_no === fileNo).doctor_rating), 'stars filled from the record');
+      await page.click('[data-stars=doctorRating] label >> nth=1');
+      await page.fill('#exNote', 'عُدّلت من السجل');
+      await page.click('#exSave');
+      await page.waitForFunction(() => { const t = document.querySelector('#toast.on:not(.err)'); return t && t.textContent.includes('تم حفظ التعديل'); }, { timeout: 10000 });
+      const edited = db._store.tables.experiences.filter(e => e.file_no === fileNo);
+      assert.equal(edited.length, 1, 'edit updates the record, it does not add one');
+      assert.equal(edited[0].doctor_rating, 2);
+      assert.equal(edited[0].general_note, 'عُدّلت من السجل');
+      await page.waitForSelector(`#logTable td:has-text("عُدّلت من السجل")`);
+
       await page.click('#tabs button[data-tab=complaints]');
       await page.waitForSelector('#coTable td:has-text("C-9")');
       assert.equal(await page.locator('#coTable tr.overdue').count(), 1);

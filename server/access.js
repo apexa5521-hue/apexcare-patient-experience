@@ -32,6 +32,7 @@ const PERMS = {
   viewCases: ['case_officer', QS, ...MANAGERS, 'executive'],
   handleCases: ['case_officer', QS, ...MANAGERS],          // contact, note, change status, close (subject to approval)
   assignCases: MANAGERS,
+  editAnyExperience: [QS, ...MANAGERS],                // fix someone else's recorded experience (own ones: anyone who records)
   approveCases: MANAGERS,                               // approve closing high-severity cases
   manageSetup: ['quality', 'admin'],                    // users, doctors, categories, Google connection
   fullPhones: ['case_officer', QS, ...MANAGERS]
