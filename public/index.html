@@ -936,7 +936,7 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
                 <div class="field" data-f="branch"><label for="exBranch">الفرع<span class="req">*</span></label><select id="exBranch" name="branch"></select></div>
               </div>
               <div class="grid g3" style="margin-top:14px">
-                <div class="field" data-f="doctorId"><label for="exDoctor">الطبيب<span class="req">*</span></label><select id="exDoctor" name="doctorId"></select></div>
+                <div class="field" data-f="doctorId"><label for="exDoctor">الطبيب / العيادة<span class="req">*</span></label><select id="exDoctor" name="doctorId"></select></div>
                 <div class="field" data-f="visitDate"><label for="exDate">تاريخ الزيارة<span class="req">*</span></label><input type="date" id="exDate" name="visitDate"></div>
                 <div class="field" data-f="visitTime"><label for="exTime">الوقت<span class="req">*</span></label><input type="time" id="exTime" name="visitTime"></div>
               </div>
@@ -1573,7 +1573,7 @@ function filterForm(sel, fields, onApply) {
     timeFrom: `<div class="field"><label>من الساعة</label><input type="time" data-k="timeFrom"></div>`,
     timeTo: `<div class="field"><label>إلى الساعة</label><input type="time" data-k="timeTo"></div>`,
     branch: `<div class="field"><label>الفرع</label><select data-k="branch">${opt(S.lk.branches, 'الكل')}</select></div>`,
-    doctorId: `<div class="field"><label>الطبيب</label><select data-k="doctorId">${opt(docs, 'الكل')}</select></div>`,
+    doctorId: `<div class="field"><label>الطبيب / العيادة</label><select data-k="doctorId">${opt(docs, 'الكل')}</select></div>`,
     sentiment: `<div class="field"><label>التجربة</label><select data-k="sentiment">${opt(S.lk.sentiments, 'الكل')}</select></div>`,
     visitType: `<div class="field"><label>نوع الزيارة</label><select data-k="visitType">${opt(S.lk.visitTypes, 'الكل')}</select></div>`,
     channel: `<div class="field"><label>طريقة التقييم</label><select data-k="channel">${opt(S.lk.channels, 'الكل')}</select></div>`,
