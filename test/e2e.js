@@ -158,6 +158,7 @@ async function run() {
       const row = page.locator('#logTable tr', { hasText: fileNo });
       assert.match(await row.innerText(), /سلبية/);
       assert.match(await row.innerText(), /وقت الانتظار/);
+      assert.ok(await page.locator('#logTable th', { hasText: 'وقت التسجيل' }).count() === 1, 'recorded-at column');
       await shot('05-log');
 
       // Edit it from the log: the form opens filled in, the change is saved on the same record.

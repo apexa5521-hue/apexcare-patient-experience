@@ -273,3 +273,11 @@ test('roles screen: change who can do what, effective at once; admin keeps every
   assert.equal((await t.call('GET', '/api/kpis', { token: tok.staffB })).status, 403);
   assert.equal((await t.call('GET', '/api/auth/me', { token: tok.bmB })).body.user.scope, 'بريدة');
 });
+
+test('the log shows when each experience was recorded, next to the visit time', async () => {
+  const r = await t.call('POST', '/api/experiences', { token: tok.staffB, body: experience(docB.id, { fileNo: 'REC-1', visitDate: '2026-03-10', visitTime: '10:30' }) });
+  const row = (await t.call('GET', '/api/experiences?fileNo=REC-1', { token: tok.staffB })).body.rows.find(x => x.id === r.body.id);
+  assert.equal(row.visitAt, '2026-03-10 10:30');
+  assert.match(row.recordedAt, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  assert.notEqual(row.recordedAt, row.visitAt, 'recorded now, not at the visit time');
+});

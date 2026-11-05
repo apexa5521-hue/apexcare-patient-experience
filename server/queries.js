@@ -39,6 +39,7 @@ function mapExperience(e, { admin, fullPhone, tz, doctorNames, usernames }) {
   return {
     id: e.id,
     visitAt: formatLocal(e.visit_at, tz),
+    recordedAt: formatLocal(e.created_at, tz),
     fileNo: e.file_no,
     phone: fullPhone ? e.phone || '' : maskPhone(e.phone),
     doctorId: e.doctor_id,
