@@ -210,6 +210,22 @@ async function run() {
       await page.fill('#dNameAr', `منى السالم ${vp.name}`);
       await page.click('#dForm button[type=submit]');
       await page.waitForSelector(`#docTable td:has-text("منى السالم ${vp.name}")`);
+
+      // Roles screen: give reception the analytics, save, check it applies, then back to the defaults.
+      const cb = '#rolesTable input[data-perm-key=analytics][data-role=staff]';
+      await page.waitForSelector(cb);
+      assert.equal(await page.isChecked(cb), false);
+      assert.equal(await page.isDisabled('#rolesTable input[data-perm-key=analytics][data-role=admin]'), true, 'admin column is locked');
+      await page.check(cb);
+      await page.click('#rolesSave');
+      await page.waitForFunction(() => { const t = document.querySelector('#toast.on:not(.err)'); return t && t.textContent.includes('تم حفظ الصلاحيات'); }, { timeout: 10000 });
+      assert.ok(JSON.parse(db._store.tables.app_settings.find(x => x.key === 'role_perms').value).perms.analytics.includes('staff'));
+      assert.equal(await page.isChecked(cb), true);
+      if (vp.name === 'desktop') await page.locator('#rolesTable').scrollIntoViewIfNeeded().then(() => shot('09b-roles'));
+      page.once('dialog', d => d.accept());
+      await page.click('#rolesReset');
+      await page.waitForFunction(() => { const t = document.querySelector('#toast.on:not(.err)'); return t && t.textContent.includes('تمت استعادة'); }, { timeout: 10000 });
+      assert.equal(await page.isChecked(cb), false);
       await page.click('#newUser');
       await page.fill('#uUser', `staff.${vp.name}`);
       await page.fill('#uName', 'موظفة الاستقبال');

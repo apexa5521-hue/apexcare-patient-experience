@@ -234,3 +234,42 @@ test('editing a recorded experience: who may, and how the follow-up case follows
   assert.equal(t.db._store.tables.experiences.find(e => e.id === id).phone, '0551112222');
   assert.equal((await t.call('PATCH', '/api/experiences/00000000-0000-4000-8000-000000000000', { token: tok.qs, body: experience(docB.id) })).status, 404);
 });
+
+test('roles screen: change who can do what, effective at once; admin keeps everything; reset to defaults', async () => {
+  assert.equal((await t.call('GET', '/api/admin/roles', { token: tok.staffB })).status, 403);
+  const g = await t.call('GET', '/api/admin/roles', { token: tok.admin });
+  assert.equal(g.status, 200);
+  assert.ok(g.body.perms.some(p => p.key === 'analytics' && p.label));
+  assert.ok(g.body.roles.find(r => r.key === 'admin').locked);
+  const table = g.body.current;
+
+  // Give reception the analytics; take case handling from the quality specialist; stop limiting branch managers to a branch.
+  assert.equal((await t.call('GET', '/api/kpis', { token: tok.staffB })).status, 403);
+  const next = JSON.parse(JSON.stringify(table));
+  next.perms.analytics.push('staff');
+  next.perms.handleCases = next.perms.handleCases.filter(r => r !== 'quality_specialist');
+  next.perms.manageSetup = ['quality'];
+  next.branchScoped = next.branchScoped.filter(r => r !== 'branch_manager');
+  const put = await t.call('PUT', '/api/admin/roles', { token: tok.quality, body: next });
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  assert.ok(put.body.current.perms.manageSetup.includes('admin'), 'admin always keeps the admin screen');
+  assert.equal((await t.call('GET', '/api/kpis', { token: tok.staffB })).status, 200);
+  const me = (await t.call('GET', '/api/auth/me', { token: tok.qs })).body.user;
+  assert.ok(!me.perms.includes('handleCases'));
+  assert.equal((await t.call('GET', '/api/auth/me', { token: tok.bmB })).body.user.scope, null);
+  assert.ok(t.db._store.tables.audit_log.some(a => a.action === 'update_role_perms'));
+
+  // A quality manager cannot take the admin screen away from their own role.
+  const lock = JSON.parse(JSON.stringify(put.body.current));
+  lock.perms.manageSetup = [];
+  const bad = await t.call('PUT', '/api/admin/roles', { token: tok.quality, body: lock });
+  assert.equal(bad.status, 400);
+  assert.match(bad.body.error, /الإدارة/);
+  assert.equal((await t.call('PUT', '/api/admin/roles', { token: tok.quality, body: { perms: 'x' } })).status, 400);
+
+  // Back to the defaults.
+  const reset = await t.call('POST', '/api/admin/roles/reset', { token: tok.admin });
+  assert.equal(reset.status, 200);
+  assert.equal((await t.call('GET', '/api/kpis', { token: tok.staffB })).status, 403);
+  assert.equal((await t.call('GET', '/api/auth/me', { token: tok.bmB })).body.user.scope, 'بريدة');
+});

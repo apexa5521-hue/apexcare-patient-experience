@@ -469,7 +469,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
+.rev-person-more{margin-top:10px}.roles-matrix td,.roles-matrix th{white-space:nowrap}.roles-matrix td:first-child{white-space:normal;min-width:210px}.roles-matrix td:first-child small{display:block;margin-top:2px}.roles-matrix th:first-child,.roles-matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);z-index:1}.rm-role{text-align:center;font-size:12px}.rm-cell{text-align:center}.rm-cell input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}.rm-cell input:disabled{cursor:not-allowed;opacity:.6}.rm-changed{background:var(--warn-soft)!important}.rm-scope td{border-top:2px solid var(--line)}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
 .rev-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .rev-doc{cursor:pointer;padding:16px}.rev-doc:hover{border-color:#8fd0c6}
 .rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
@@ -1065,6 +1065,11 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
         <div>
           <div class="section-head"><div><h2>المستخدمون</h2><p class="muted small">كلمة المرور المؤقتة تظهر مرة واحدة فقط</p></div><button class="btn sm" id="newUser" type="button">مستخدم جديد</button></div>
           <div class="tbl-wrap"><table id="userTable"></table></div>
+        </div>
+        <div>
+          <div class="section-head"><div><h2>الأدوار والصلاحيات</h2><p class="muted small">ضع علامة على ما يستطيعه كل دور. مدير النظام يملك كل الصلاحيات دائماً. يسري التغيير خلال 30 ثانية، ويرى المستخدم التبويبات الجديدة بعد تحديث صفحته.</p></div>
+            <div class="row"><button class="btn sm ghost" id="rolesReset" type="button">استعادة الافتراضي</button><button class="btn sm" id="rolesSave" type="button">حفظ الصلاحيات</button></div></div>
+          <div class="tbl-wrap"><table id="rolesTable" class="roles-matrix"></table></div>
         </div>
         <div class="grid g2">
           <div>
@@ -2708,7 +2713,46 @@ async function loadAdmin() {
     $$('#docTable [data-d]').forEach(b => b.onclick = () => doctorModal(S.adm.doctors.find(x => x.id === b.dataset.d)));
     $$('#catTable [data-c]').forEach(b => b.onclick = () => categoryModal(S.adm.categories.find(x => x.id === b.dataset.c)));
   } catch (e) { if (!e.silent) toast(e.message, true); }
+  loadRoles();
 }
+/* ---------- roles and permissions ---------- */
+function rolesTableHtml(R) {
+  const on = (k, role) => R.current.perms[k].includes(role);
+  const def = (k, role) => R.defaults.perms[k].includes(role);
+  const cell = (checked, changed, attrs, locked) => `<td class="rm-cell${changed ? ' rm-changed' : ''}"><input type="checkbox" ${attrs} ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}></td>`;
+  return `<thead><tr><th>الصلاحية</th>${R.roles.map(r => `<th class="rm-role">${esc(r.label)}</th>`).join('')}</tr></thead><tbody>` +
+    R.perms.map(p => `<tr><td><b>${esc(p.label)}</b><small class="muted">${esc(p.hint)}</small></td>` +
+      R.roles.map(r => cell(r.locked || on(p.key, r.key), !r.locked && on(p.key, r.key) !== def(p.key, r.key),
+        `data-perm-key="${esc(p.key)}" data-role="${esc(r.key)}" aria-label="${esc(p.label)}: ${esc(r.label)}"`, r.locked)).join('') + '</tr>').join('') +
+    `<tr class="rm-scope"><td><b>مقيّد بفرعه</b><small class="muted">إذا حُدد للمستخدم فرع، يرى بيانات فرعه فقط</small></td>` +
+    R.roles.map(r => cell(!r.locked && R.current.branchScoped.includes(r.key),
+      !r.locked && R.current.branchScoped.includes(r.key) !== R.defaults.branchScoped.includes(r.key),
+      `data-scope-role="${esc(r.key)}" aria-label="مقيّد بفرعه: ${esc(r.label)}"`, r.locked)).join('') + '</tr></tbody>';
+}
+async function afterRolesSaved(R, msg) {
+  $('#rolesTable').innerHTML = rolesTableHtml(R);
+  toast(msg);
+  // The signed-in user's own tabs follow at once; others see theirs after refreshing.
+  const me = await api('GET', '/auth/me');
+  S.user = me.user;
+  $$('[data-perm]').forEach(el => el.classList.toggle('hidden', !has(el.dataset.perm)));
+}
+async function loadRoles() {
+  try {
+    const R = await api('GET', '/admin/roles');
+    $('#rolesTable').innerHTML = rolesTableHtml(R);
+  } catch (e) { if (!e.silent) $('#rolesTable').innerHTML = emptyRow('تعذّر تحميل الصلاحيات', e.message); }
+}
+$('#rolesSave').onclick = e => busy(e.target, async () => {
+  const perms = {}, branchScoped = [];
+  $$('#rolesTable [data-perm-key]').forEach(c => { (perms[c.dataset.permKey] ||= []); if (c.checked) perms[c.dataset.permKey].push(c.dataset.role); });
+  $$('#rolesTable [data-scope-role]').forEach(c => { if (c.checked) branchScoped.push(c.dataset.scopeRole); });
+  await afterRolesSaved(await api('PUT', '/admin/roles', { perms, branchScoped }), 'تم حفظ الصلاحيات');
+});
+$('#rolesReset').onclick = e => {
+  if (!confirm('إرجاع كل الصلاحيات إلى الوضع الافتراضي؟')) return;
+  busy(e.target, async () => { await afterRolesSaved(await api('POST', '/admin/roles/reset'), 'تمت استعادة الصلاحيات الافتراضية'); });
+};
 $('#newUser').onclick = () => userModal(null);
 $('#newDoc').onclick = () => doctorModal(null);
 $('#newCat').onclick = () => categoryModal(null);

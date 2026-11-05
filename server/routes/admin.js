@@ -3,7 +3,10 @@
 const express = require('express');
 const { must, audit } = require('../db');
 const { hashPassword, randomPassword } = require('../auth');
-const { ROLE_LABELS } = require('../access');
+const {
+  ROLES, ROLE_LABELS, PERM_LABELS, DEFAULT_PERMS, DEFAULT_BRANCH_SCOPED, ROLE_PERMS_KEY,
+  normalizeRolePerms, applyRolePerms, currentRolePerms
+} = require('../access');
 const { formatLocal } = require('../time');
 const {
   UserError, UUID_RE, parse, userCreateSchema, userUpdateSchema, doctorSchema, categorySchema
@@ -97,6 +100,36 @@ function adminRoutes() {
 
   lookupTable(r, '/doctors', { table: 'doctors', schema: doctorSchema, label: 'الطبيب', dupMsg: 'يوجد طبيب بنفس الاسم', auditName: 'doctor' });
   lookupTable(r, '/categories', { table: 'categories', schema: categorySchema, label: 'التصنيف', dupMsg: 'يوجد تصنيف بنفس الاسم', auditName: 'category' });
+
+  // Roles and permissions: who can do what. The system admin always has everything.
+  const rolesPayload = () => ({
+    ok: true,
+    roles: ROLES.map(k => ({ key: k, label: ROLE_LABELS[k] || k, locked: k === 'admin' })),
+    perms: Object.keys(DEFAULT_PERMS).map(k => ({ key: k, label: PERM_LABELS[k][0], hint: PERM_LABELS[k][1] })),
+    current: currentRolePerms(),
+    defaults: { perms: DEFAULT_PERMS, branchScoped: DEFAULT_BRANCH_SCOPED }
+  });
+  const saveRolePerms = async (req, table, action) => {
+    const n = normalizeRolePerms(table);
+    // Nobody but the system admin may take the admin screen away from their own role (they would lock themselves out).
+    if (req.user.role !== 'admin' && !n.perms.manageSetup.includes(req.user.role)) {
+      throw new UserError('لا يمكنك إزالة صلاحية «الإدارة» عن دورك');
+    }
+    await must(req.ctx.db.from('app_settings').upsert({ key: ROLE_PERMS_KEY, value: JSON.stringify(n), updated_at: new Date().toISOString() }, { onConflict: 'key' }));
+    applyRolePerms(n);
+    await audit(req.ctx.db, req.user.username, action, JSON.stringify(n).slice(0, 280));
+  };
+  r.get('/roles', (_req, res) => res.json(rolesPayload()));
+  r.put('/roles', async (req, res) => {
+    const b = req.body || {};
+    if (!b.perms || typeof b.perms !== 'object' || !Array.isArray(b.branchScoped)) throw new UserError('بيانات الصلاحيات غير صالحة');
+    await saveRolePerms(req, b, 'update_role_perms');
+    res.json(rolesPayload());
+  });
+  r.post('/roles/reset', async (req, res) => {
+    await saveRolePerms(req, null, 'reset_role_perms');
+    res.json(rolesPayload());
+  });
 
   return r;
 }

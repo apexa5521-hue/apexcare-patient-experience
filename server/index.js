@@ -7,7 +7,7 @@ const express = require('express');
 const helmet = require('helmet');
 const { createSupabase, dbProblem } = require('./db');
 const { authenticate, requirePasswordChanged, LoginLimiter, Revocations } = require('./auth');
-const { requirePerm } = require('./access');
+const { requirePerm, refreshRolePerms } = require('./access');
 const { UserError } = require('./validate');
 const authRoutes = require('./routes/auth');
 const lookupRoutes = require('./routes/lookups');
@@ -72,6 +72,8 @@ function createApp({ db, config, http = fetch }) {
     }
   }));
   app.use(express.json({ limit: '200kb' }));
+  // Who-can-do-what may have been changed from the admin screen: re-read it every 30 seconds at most.
+  app.use('/api', async (_req, _res, next) => { await refreshRolePerms(db); next(); });
 
   // Reports only an error code, never details, so it is safe to leave public.
   app.get('/api/health', async (_req, res) => {
