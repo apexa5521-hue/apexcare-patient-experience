@@ -1384,9 +1384,15 @@ const doctorsFor = b => S.lk.doctors.filter(d => !b || d.branch === b || d.branc
 function fillDoctors() {
   const b = $('#exBranch').value, prev = $('#exDoctor').value;
   const list = doctorsFor(b);
-  $('#exDoctor').innerHTML = (list.length ? `<option value="">${b ? 'اختر الطبيب' : 'اختر الفرع أولاً'}</option>` : '<option value="">لا يوجد أطباء — أضفهم من الإدارة</option>') +
-    list.map(d => `<option value="${esc(d.id)}" ${d.id === prev ? 'selected' : ''}>${esc(d.name)} — ${esc(d.specialty)}</option>`).join('');
+  const option = d => `<option value="${esc(d.id)}" ${d.id === prev ? 'selected' : ''}>${esc(d.name)} — ${esc(d.specialty)}</option>`;
+  // Doctors and clinics share the list; clinics (laser, skin…) are the entries not named «Dr.» / «د.».
+  const doctors = list.filter(isDoctorName), clinics = list.filter(d => !isDoctorName(d));
+  $('#exDoctor').innerHTML = (list.length ? `<option value="">${b ? 'اختر الطبيب أو العيادة' : 'اختر الفرع أولاً'}</option>` : '<option value="">لا يوجد أطباء — أضفهم من الإدارة</option>') +
+    (clinics.length && doctors.length
+      ? `<optgroup label="الأطباء">${doctors.map(option).join('')}</optgroup><optgroup label="العيادات">${clinics.map(option).join('')}</optgroup>`
+      : list.map(option).join(''));
 }
+function isDoctorName(d) { return /^\s*(dr\b|د\s*\.|د\s|دكتور)/i.test(d.name || ''); }
 function fillPlan() {
   const vt = ($('input[name=visitType]:checked') || {}).value;
   const cur = ($('input[name=planExplained]:checked') || {}).value;
