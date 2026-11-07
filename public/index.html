@@ -469,7 +469,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.roles-matrix td,.roles-matrix th{white-space:nowrap}.roles-matrix td:first-child{white-space:normal;min-width:210px}.roles-matrix td:first-child small{display:block;margin-top:2px}.roles-matrix th:first-child,.roles-matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);z-index:1}.rm-role{text-align:center;font-size:12px}.rm-cell{text-align:center}.rm-cell input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}.rm-cell input:disabled{cursor:not-allowed;opacity:.6}.rm-changed{background:var(--warn-soft)!important}.rm-scope td{border-top:2px solid var(--line)}.my-progress{margin-bottom:14px}.mp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mp-bar{height:10px;border-radius:10px;background:var(--line-2);overflow:hidden}.mp-bar i{display:block;height:100%;background:var(--brand);border-radius:10px;transition:width .4s}.my-progress.met .mp-bar i{background:var(--pos)}.mp-done{margin-top:8px;color:var(--pos);font-weight:600;font-size:13px}.crm-groups td{vertical-align:middle}.crm-groups select{min-width:180px}@media(max-width:560px){.crm-groups select{min-width:0;width:100%;max-width:140px}.crm-groups td,.crm-groups th{padding-inline:6px}}.crm-build{align-items:flex-end;gap:12px;margin-top:12px}.crm-build .field{margin:0}.crm-note{margin-top:12px}.crm-warn{border-color:var(--warn)!important;background:var(--warn-soft)!important;margin:10px 0}.crm-h{font-size:14px;margin:16px 0 10px}.crm-h:first-of-type{margin-top:0}.crm-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 14px}.crm-rules{display:flex;flex-wrap:wrap;gap:8px 20px}.file-no{font-variant-numeric:tabular-nums}.q-errs{margin:0;padding-inline-start:18px;font-size:12px}#appView nav.tabs button[data-tab=today]::before{content:"◷"}#appView nav.tabs button[data-tab=quality]::before{content:"✓"}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
+.rev-person-more{margin-top:10px}.roles-matrix td,.roles-matrix th{white-space:nowrap}.roles-matrix td:first-child{white-space:normal;min-width:210px}.roles-matrix td:first-child small{display:block;margin-top:2px}.roles-matrix th:first-child,.roles-matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);z-index:1}.rm-role{text-align:center;font-size:12px}.rm-cell{text-align:center}.rm-cell input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}.rm-cell input:disabled{cursor:not-allowed;opacity:.6}.rm-changed{background:var(--warn-soft)!important}.rm-scope td{border-top:2px solid var(--line)}.my-progress{margin-bottom:14px}.mp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mp-bar{height:10px;border-radius:10px;background:var(--line-2);overflow:hidden}.mp-bar i{display:block;height:100%;background:var(--brand);border-radius:10px;transition:width .4s}.my-progress.met .mp-bar i{background:var(--pos)}.mp-done{margin-top:8px;color:var(--pos);font-weight:600;font-size:13px}.crm-groups td{vertical-align:middle}.crm-groups select{min-width:180px}@media(max-width:560px){.crm-groups select{min-width:0;width:100%;max-width:140px}.crm-groups td,.crm-groups th{padding-inline:6px}}.crm-build{align-items:flex-end;gap:12px;margin-top:12px}.crm-build .field{margin:0}.crm-note{margin-top:12px}#callTable [data-assign]{width:auto;min-width:0;max-width:120px;padding-inline:8px}.crm-assign{margin-top:14px;display:flex;flex-direction:column;gap:6px}.crm-callers{display:flex;flex-wrap:wrap;gap:6px 18px}.crm-warn{border-color:var(--warn)!important;background:var(--warn-soft)!important;margin:10px 0}.crm-h{font-size:14px;margin:16px 0 10px}.crm-h:first-of-type{margin-top:0}.crm-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 14px}.crm-rules{display:flex;flex-wrap:wrap;gap:8px 20px}.file-no{font-variant-numeric:tabular-nums}.q-errs{margin:0;padding-inline-start:18px;font-size:12px}#appView nav.tabs button[data-tab=today]::before{content:"◷"}#appView nav.tabs button[data-tab=quality]::before{content:"✓"}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
 .rev-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .rev-doc{cursor:pointer;padding:16px}.rev-doc:hover{border-color:#8fd0c6}
 .rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
@@ -1396,21 +1396,27 @@ function crmUploadResult(r) {
     ? `<div class="card pad crm-warn">لا يمكن إنشاء قائمة الاتصال: لم أجد هذه الأعمدة في الملف: <b>${r.missingForCalls.map(k => fieldLabel[k] || k).join('، ')}</b>. حدّد أسماءها من الإدارة ← إعدادات ملف CRM.</div>` : '';
   const groups = r.groups.length ? `
     <div class="tbl-wrap"><table class="crm-groups"><thead><tr><th></th><th>الطبيب / العيادة في CRM</th><th class="num">المواعيد</th><th>يقابله في النظام</th></tr></thead><tbody>
-      ${r.groups.map((g, i) => `<tr><td><input type="checkbox" data-pick="${i}" ${g.doctorId ? 'checked' : ''} aria-label="اختيار ${esc(g.crm)}"></td><td>${esc(g.crm || '— بدون طبيب —')}</td><td class="num">${n0(g.count)}</td>
+      ${r.groups.map((g, i) => `<tr><td><input type="checkbox" data-pick="${i}" ${g.picked ? 'checked' : ''} aria-label="اختيار ${esc(g.crm)}"></td><td>${esc(g.crm || '— بدون طبيب —')}</td><td class="num">${n0(g.count)}</td>
         <td><select data-map="${i}" aria-label="ربط ${esc(g.crm)}">${docOpts(g.doctorId)}</select></td></tr>`).join('')}
     </tbody></table></div>
+    <div class="crm-assign"><b>إسناد القائمة إلى</b>
+      ${r.callers.length ? `<div class="crm-callers">${r.callers.map(c => `<label class="check"><input type="checkbox" data-assignee="${esc(c.id)}" ${r.lastAssignees.includes(c.id) ? 'checked' : ''}> ${esc(c.name)}${c.branch ? ` <span class="muted small">${esc(c.branch)}</span>` : ''}</label>`).join('')}</div>
+      <small class="muted">تُوزَّع القائمة بالتساوي على الموظفات المحددات، وتظهر لكل واحدة ملفاتها فقط. بدون تحديد تبقى متاحة للجميع.</small>`
+      : '<small class="muted">لا توجد موظفات لهن صلاحية قائمة الاتصال.</small>'}</div>
     <div class="row crm-build"><div class="field"><label for="crmCount">عدد المرضى في قائمة اليوم</label><input type="number" id="crmCount" min="1" max="1000" value="${Math.min(r.listSize, r.targets)}"></div>
       <button class="btn" type="button" id="crmBuild">إنشاء قائمة اليوم</button></div>
-    <p class="muted small">يُختار العدد عشوائياً من المواعيد المكتملة للأطباء والعيادات المحددة. الربط يُحفظ للمرات القادمة.</p>`
+    <p class="muted small">يُختار العدد عشوائياً من المواعيد المكتملة للأطباء والعيادات المحددة. الاختيارات والربط تُحفظ للرفع القادم.</p>`
     : (r.missingForCalls.length ? '' : `<p class="muted">لا توجد مواعيد مكتملة في ${esc(r.date)}. جرّب يوماً آخر.</p>`);
   $('#crmResult').innerHTML = `<p><b>${n0(r.rows)}</b> صف في الملف · <b>${n0(r.targets)}</b> موعد مكتمل في <span class="ltr num">${esc(r.date)}</span></p>${missing}${groups}${quality}`;
   if ($('#crmSeeQuality')) $('#crmSeeQuality').onclick = () => { closeModal(); showTab('quality'); };
   if ($('#crmBuild')) $('#crmBuild').onclick = e => busy(e.target, async () => {
     const picks = r.groups.map((g, i) => ({ crm: g.crm, doctorId: $(`[data-map="${i}"]`).value || null, on: $(`[data-pick="${i}"]`).checked })).filter(x => x.on);
     if (!picks.length) throw new Error('اختر طبيباً أو عيادة واحدة على الأقل');
-    const out = await api('POST', '/crm/build-list', { token: r.token, picks: picks.map(({ crm, doctorId }) => ({ crm, doctorId })), count: +$('#crmCount').value || r.listSize });
+    const assignees = $$('#crmResult [data-assignee]:checked').map(c => c.dataset.assignee);
+    const out = await api('POST', '/crm/build-list', { token: r.token, picks: picks.map(({ crm, doctorId }) => ({ crm, doctorId })), count: +$('#crmCount').value || r.listSize, assignees });
     closeModal();
-    toast(`أُضيف ${n0(out.inserted)} مريض لقائمة الاتصال${out.duplicates ? ` · ${n0(out.duplicates)} موجود مسبقاً` : ''}${out.errorCount ? ` · ${n0(out.errorCount)} بدون جوال أو رقم ملف صالح` : ''}`, !!out.errorCount && !out.inserted);
+    const split = Object.entries(out.perAssignee || {}).map(([id, n]) => `${(r.callers.find(c => c.id === id) || {}).name || ''}: ${n0(n)}`).join('، ');
+    toast(`أُضيف ${n0(out.inserted)} مريض لقائمة الاتصال${split ? ` (${split})` : ''}${out.duplicates ? ` · ${n0(out.duplicates)} موجود مسبقاً` : ''}${out.errorCount ? ` · ${n0(out.errorCount)} بدون جوال أو رقم ملف صالح` : ''}`, !!out.errorCount && !out.inserted);
     loadCalls(); refreshCallBadge();
   });
 }
@@ -1430,21 +1436,21 @@ async function loadToday() {
         ${tile('تجارب الاتصال', n0(T.done), `الحد الأدنى ${n0(r.target)} لكل موظفة`)}
         ${tile('حققن الحد الأدنى', `<span dir="ltr">${n0(T.staffMet)} / ${n0(T.staff)}</span>`)}
         ${tile('لم يرد', n0(T.noAnswer), 'تبقى في القائمة لمحاولة أخرى')}
-        ${tile('رفض أو رقم خاطئ', n0(T.refused + T.wrongNumber))}
+        ${tile('رفض أو رقم خاطئ', n0(T.refused + T.wrongNumber), T.unassignedOpen ? `${n0(T.unassignedOpen)} زيارة غير مسندة بانتظار الاتصال` : '')}
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th>الموظفة</th><th>التقدم</th><th>الحالة</th><th class="num">سلبية</th><th class="num">متوسط الطبيب</th><th class="num">لم يرد</th><th class="num">رفض</th><th class="num">رقم خاطئ</th></tr></thead><tbody>
+      <div class="tbl-wrap"><table><thead><tr><th>الموظفة</th><th>التقدم</th><th>الحالة</th><th class="num">مسندة لها (مفتوحة)</th><th class="num">سلبية</th><th class="num">متوسط الطبيب</th><th class="num">لم يرد</th><th class="num">رفض</th><th class="num">رقم خاطئ</th></tr></thead><tbody>
       ${r.staff.length ? r.staff.map(x => `<tr><td><b>${esc(x.name)}</b>${x.branch ? ` <span class="muted small">${esc(x.branch)}</span>` : ''}</td>
         <td style="min-width:150px"><div class="rev-topic-track"><i style="width:${x.pct}%"></i></div><small class="num ltr">${n0(x.done)} / ${n0(x.target)}</small></td>
         <td>${x.met ? '<span class="pill p-closed">حققت الحد الأدنى</span>' : `<span class="pill p-prog">باقي ${n0(x.target - x.done)}</span>`}</td>
-        <td class="num">${n0(x.negative)}</td><td class="num">${x.avgDoctor === null ? '—' : n1(x.avgDoctor)}</td>
+        <td class="num">${n0(x.assignedOpen)}</td><td class="num">${n0(x.negative)}</td><td class="num">${x.avgDoctor === null ? '—' : n1(x.avgDoctor)}</td>
         <td class="num">${n0(x.noAnswer)}</td><td class="num">${n0(x.refused)}</td><td class="num">${n0(x.wrongNumber)}</td></tr>`).join('')
-        : '<tr><td colspan="8" class="empty">لا توجد موظفات لهن صلاحية قائمة الاتصال</td></tr>'}
+        : '<tr><td colspan="9" class="empty">لا توجد موظفات لهن صلاحية قائمة الاتصال</td></tr>'}
       </tbody></table></div>`;
   } catch (e) { if (!e.silent) body.innerHTML = `<div class="card"><div class="empty"><b>تعذّر التحميل</b>${esc(e.message)}</div></div>`; }
 }
 $('#todayDate').onchange = loadToday;
-$('#todaySummaryCsv').onclick = () => S.today && csv(`today-${S.today.date}`, ['name', 'branch', 'done', 'target', 'met', 'negative', 'avgDoctor', 'noAnswer', 'refused', 'wrongNumber'],
-  ['الموظفة', 'الفرع', 'التجارب', 'الحد الأدنى', 'حققت', 'سلبية', 'متوسط الطبيب', 'لم يرد', 'رفض', 'رقم خاطئ'], S.today.staff.map(x => ({ ...x, met: x.met ? 'نعم' : 'لا' })));
+$('#todaySummaryCsv').onclick = () => S.today && csv(`today-${S.today.date}`, ['name', 'branch', 'done', 'target', 'met', 'assignedOpen', 'negative', 'avgDoctor', 'noAnswer', 'refused', 'wrongNumber'],
+  ['الموظفة', 'الفرع', 'التجارب', 'الحد الأدنى', 'حققت', 'مسندة لها (مفتوحة)', 'سلبية', 'متوسط الطبيب', 'لم يرد', 'رفض', 'رقم خاطئ'], S.today.staff.map(x => ({ ...x, met: x.met ? 'نعم' : 'لا' })));
 $('#todayCsv').onclick = e => busy(e.target, async () => {
   const d = $('#todayDate').value || riyadhNow().date;
   const r = await api('GET', `/experiences${qs({ from: d, to: d, channel: 'اتصال' })}`);
@@ -1827,6 +1833,7 @@ function filterForm(sel, fields, onApply) {
     sentiment: `<div class="field"><label>التجربة</label><select data-k="sentiment">${opt(S.lk.sentiments, 'الكل')}</select></div>`,
     visitType: `<div class="field"><label>نوع الزيارة</label><select data-k="visitType">${opt(S.lk.visitTypes, 'الكل')}</select></div>`,
     channel: `<div class="field"><label>طريقة التقييم</label><select data-k="channel">${opt(S.lk.channels, 'الكل')}</select></div>`,
+    assignee: `<div class="field"><label>الموظفة</label><select data-k="assignee"><option value="">الكل</option><option value="none">غير مسندة</option></select></div>`,
     callStatus: `<div class="field"><label>الحالة</label><select data-k="status"><option value="open">المفتوحة (بانتظار + لم يرد)</option>${opt(S.lk.callStatuses)}</select></div>`,
     rating: `<div class="field"><label>النجوم</label><select data-k="rating">${opt([5, 4, 3, 2, 1].map(n => [String(n), `${n} ★`]), 'الكل')}</select></div>`,
     replied: `<div class="field"><label>الرد</label><select data-k="replied"><option value="">الكل</option><option value="no">بدون رد</option><option value="yes">تم الرد</option></select></div>`,
@@ -1852,7 +1859,7 @@ function readFilters(sel) {
 function buildFilters() {
   filterForm('#logFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'sentiment', 'visitType', 'channel', 'fileNo'], loadLog);
   filterForm('#caseFilters', ['caseStatus', 'source', ...(S.user.scope ? [] : ['branch']), 'severity', 'from', 'to', 'fileNo'], loadCases);
-  filterForm('#callFilters', ['callStatus', 'from', 'to', 'branch', 'fileNo'], loadCalls);
+  filterForm('#callFilters', ['callStatus', ...(has('importCalls') ? ['assignee'] : []), 'from', 'to', 'branch', 'fileNo'], loadCalls);
   filterForm('#revFilters', ['period', 'from', 'to', 'branch', 'rating', 'replied', 'revStatus'], loadReviews);
   filterForm('#coFilters', ['period', 'from', 'to', 'status', 'branch', 'doctorId', 'fileNo'], loadComplaints);
   filterForm('#kpiFilters', ['period', 'from', 'to', 'timeFrom', 'timeTo', 'branch', 'doctorId', 'visitType', 'sentiment', 'channel'], loadKpi);
@@ -2170,15 +2177,28 @@ async function loadCalls() {
     S.calls = r.rows;
     $('#qPending').textContent = n0(r.summary.pending); $('#qNoAnswer').textContent = n0(r.summary.noAnswer); $('#qDone').textContent = n0(r.summary.done);
     setCallBadge(r.summary.pending + r.summary.noAnswer);
-    $('#callCount').textContent = r.total ? `${n0(r.total)} زيارة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '';
+    $('#callCount').textContent = (r.total ? `${n0(r.total)} زيارة${r.total > r.rows.length ? ` · يُعرض أحدث ${n0(r.rows.length)}` : ''}` : '') + (has('importCalls') ? '' : ' · قائمتك: المسندة لك وغير المسندة');
+    const mgr = has('importCalls');
+    if (mgr) {
+      const sel = $('#callFilters [data-k=assignee]'), cur = sel ? sel.value : '';
+      if (sel) sel.innerHTML = '<option value="">الكل</option><option value="none">غير مسندة</option>' + r.callers.map(c => `<option value="${esc(c.id)}" ${c.id === cur ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+      if (sel && cur === 'none') sel.value = 'none';
+    }
+    const who = x => mgr
+      ? `<select data-assign="${esc(x.id)}" aria-label="إسناد"><option value="">— لأي موظفة —</option>${r.callers.map(c => `<option value="${esc(c.id)}" ${c.id === x.assignedTo ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`
+      : (x.assignedTo ? '<span class="pill p-closed">لك</span>' : '<span class="muted small">لأي موظفة</span>');
     const outcomes = S.lk.callOutcomes;
-    $('#callTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th class="num">المحاولات</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+    $('#callTable').innerHTML = r.rows.length ? `<thead><tr><th>الزيارة</th><th>رقم الملف</th><th>الجوال</th><th>الطبيب</th><th>الفرع</th><th class="num">المحاولات</th><th>الحالة</th><th>المسندة إلى</th><th></th></tr></thead><tbody>` +
       r.rows.map(x => `<tr><td class="num" data-l="الزيارة"><span class="ltr">${esc(x.visitAt || '—')}</span></td><td class="ltr c-file">${esc(x.fileNo)}</td><td class="c-phone"><a class="tel ltr" href="tel:${esc(x.phone)}">${esc(x.phone)}</a></td>
-        <td data-l="الطبيب">${esc(x.doctor || '—')}</td><td data-l="الفرع">${esc(x.branch || '—')}</td><td class="num" data-l="المحاولات">${n0(x.attempts)}${x.lastAttemptAt ? ` <span class="tiny muted ltr">${esc(x.lastAttemptAt.slice(5))}</span>` : ''}</td><td>${callPill(x.status)}</td>
+        <td data-l="الطبيب">${esc(x.doctor || '—')}</td><td data-l="الفرع">${esc(x.branch || '—')}</td><td class="num" data-l="المحاولات">${n0(x.attempts)}${x.lastAttemptAt ? ` <span class="tiny muted ltr">${esc(x.lastAttemptAt.slice(5))}</span>` : ''}</td><td>${callPill(x.status)}</td><td data-l="المسندة إلى">${who(x)}</td>
         <td class="c-act">${x.status === 'تم' ? '' : `<div class="row-actions"><button class="btn sm" type="button" data-start="${esc(x.id)}">ابدأ التقييم</button>
           <select data-out="${esc(x.id)}" aria-label="نتيجة الاتصال"><option value="">نتيجة أخرى…</option>${outcomes.filter(o => o !== x.status).map(o => `<option>${esc(o)}</option>`).join('')}</select></div>`}</td></tr>`).join('') + '</tbody>'
       : emptyRow('لا توجد زيارات هنا', has('importCalls') ? 'استورد زيارات اليوم من Excel أو أضف زيارة.' : 'أضف زيارة أو اطلب من الإدارة استيراد القائمة.');
     $$('#callTable [data-start]').forEach(b => b.onclick = () => startCallSurvey(S.calls.find(c => c.id === b.dataset.start)));
+    $$('#callTable [data-assign]').forEach(sel => sel.onchange = () => busy(sel, async () => {
+      await api('POST', `/calls/${sel.dataset.assign}/assign`, { userId: sel.value || null });
+      toast(sel.value ? `أُسندت إلى ${sel.options[sel.selectedIndex].text}` : 'أصبحت متاحة لأي موظفة');
+    }));
     $$('#callTable [data-out]').forEach(sel => sel.onchange = () => sel.value && busy(sel, async () => {
       await api('PATCH', `/calls/${sel.dataset.out}`, { status: sel.value }); toast(`سُجّلت النتيجة: ${sel.value}`); loadCalls();
     }));

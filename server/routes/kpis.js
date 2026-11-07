@@ -25,16 +25,19 @@ function kpiRoutes() {
     let exq = db.from('experiences').select('id,created_by,branch,sentiment,doctor_rating').eq('channel', 'اتصال').gte('created_at', start).lt('created_at', end);
     let cq = db.from('call_queue').select('id,status,updated_by,branch').in('status', ['لم يرد', 'رفض', 'رقم خاطئ']).gte('last_attempt_at', start).lt('last_attempt_at', end);
     if (scope) { exq = exq.eq('branch', scope); cq = cq.eq('branch', scope); }
-    const [settings, users, experiences, calls] = await Promise.all([
+    let aq = db.from('call_queue').select('id,assigned_to').in('status', ['بانتظار الاتصال', 'لم يرد']);
+    if (scope) aq = aq.eq('branch', scope);
+    const [settings, users, experiences, calls, open] = await Promise.all([
       loadSettings(db),
       must(db.from('app_users').select('id,username,name,role,branch,active')),
       fetchAll(() => exq.order('created_at').order('id')),
-      fetchAll(() => cq.order('id'))
+      fetchAll(() => cq.order('id')),
+      fetchAll(() => aq.order('id'))
     ]);
     const target = settings.dailyMinPerStaff;
     const byUser = new Map();
     const entry = (u) => {
-      if (!byUser.has(u.id)) byUser.set(u.id, { id: u.id, username: u.username, name: u.name, branch: u.branch || '', done: 0, negative: 0, ratingSum: 0, ratingN: 0, noAnswer: 0, refused: 0, wrongNumber: 0 });
+      if (!byUser.has(u.id)) byUser.set(u.id, { id: u.id, username: u.username, name: u.name, branch: u.branch || '', done: 0, negative: 0, ratingSum: 0, ratingN: 0, noAnswer: 0, refused: 0, wrongNumber: 0, assignedOpen: 0 });
       return byUser.get(u.id);
     };
     // Everyone who makes survey calls is listed, even with nothing yet today.
@@ -52,16 +55,18 @@ function kpiRoutes() {
       const x = entry(u);
       if (c.status === 'لم يرد') x.noAnswer++; else if (c.status === 'رفض') x.refused++; else x.wrongNumber++;
     }
+    for (const c of open) { const u = c.assigned_to && byId.get(c.assigned_to); if (u) entry(u).assignedOpen++; }
+    const unassignedOpen = open.filter(c => !c.assigned_to).length;
     const staff = [...byUser.values()].map(x => ({
       id: x.id, username: x.username, name: x.name, branch: x.branch, done: x.done, target, met: x.done >= target,
-      pct: Math.min(100, Math.round((x.done / target) * 100)), negative: x.negative, noAnswer: x.noAnswer, refused: x.refused, wrongNumber: x.wrongNumber,
+      pct: Math.min(100, Math.round((x.done / target) * 100)), negative: x.negative, noAnswer: x.noAnswer, refused: x.refused, wrongNumber: x.wrongNumber, assignedOpen: x.assignedOpen,
       avgDoctor: x.ratingN ? Math.round((x.ratingSum / x.ratingN) * 100) / 100 : null
     })).sort((a, b) => b.done - a.done || a.name.localeCompare(b.name, 'ar'));
     const sum = k => staff.reduce((a, x) => a + x[k], 0);
     res.json({
       ok: true, date, target,
       totals: { done: sum('done'), negative: sum('negative'), noAnswer: sum('noAnswer'), refused: sum('refused'), wrongNumber: sum('wrongNumber'),
-        staff: staff.length, staffMet: staff.filter(x => x.met).length },
+        staff: staff.length, staffMet: staff.filter(x => x.met).length, unassignedOpen },
       staff
     });
   });

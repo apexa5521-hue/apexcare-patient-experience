@@ -69,13 +69,18 @@ function crmRoutes() {
     // 1) Call list: visits whose latest appointment was completed on `date`.
     const missingForCalls = ['fileNo', 'phone', 'apptDate', 'apptStatus'].filter(k => map[k] === undefined);
     const targets = missingForCalls.length ? [] : C.targetVisits(book, map, settings, date);
-    const doctors = await must(db.from('doctors').select('id,name,name_ar,active'));
+    const [doctors, users] = await Promise.all([
+      must(db.from('doctors').select('id,name,name_ar,active')),
+      must(db.from('app_users').select('id,name,role,branch,active'))
+    ]);
+    const callers = users.filter(u => u.active && can(u, 'calls') && u.role !== 'admin').map(u => ({ id: u.id, name: u.name, branch: u.branch || '' }));
     const counts = new Map();
     targets.forEach(t => counts.set(t.doctor, (counts.get(t.doctor) || 0) + 1));
     const groups = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([crm, count]) => {
       const saved = settings.doctorMap[crm];
       const doctorId = saved !== undefined ? saved : C.suggestDoctor(crm, doctors.filter(d => d.active));
-      return { crm, count, doctorId: doctorId || null, remembered: saved !== undefined };
+      return { crm, count, doctorId: doctorId || null, remembered: saved !== undefined,
+        picked: settings.lastPicks.length ? settings.lastPicks.includes(crm) : !!doctorId };
     });
     sweep();
     const token = require('node:crypto').randomUUID();
@@ -95,7 +100,8 @@ function crmRoutes() {
     await audit(db, req.user.username, 'crm_upload', `rows=${book.rows.length} date=${date} targets=${targets.length} quality=${quality ? quality.runId : '-'}`);
     res.json({
       ok: true, token, date, rows: book.rows.length, mapping, missingForCalls,
-      targets: targets.length, groups, listSize: settings.listSize, quality
+      targets: targets.length, groups, listSize: settings.listSize, quality,
+      callers, lastAssignees: settings.lastAssignees.filter(id => callers.some(c => c.id === id))
     });
   });
 
@@ -108,8 +114,13 @@ function crmRoutes() {
     const picks = Array.isArray(req.body?.picks) ? req.body.picks.filter(p => p && typeof p.crm === 'string').slice(0, 200) : [];
     if (!picks.length) throw new UserError('اختر طبيباً أو عيادة واحدة على الأقل');
     const count = Number.isInteger(+req.body?.count) && +req.body.count > 0 ? Math.min(+req.body.count, 1000) : 40;
-    const doctors = await must(db.from('doctors').select('id,branch'));
+    const [doctors, users] = await Promise.all([must(db.from('doctors').select('id,branch')), must(db.from('app_users').select('id,role,active'))]);
     const known = new Map(doctors.map(d => [d.id, d]));
+    // The list is split evenly between the chosen employees (in turn), or left for anyone when none is chosen.
+    const assignees = (Array.isArray(req.body?.assignees) ? req.body.assignees : []).filter(id => typeof id === 'string' && UUID_RE.test(id));
+    const callerIds = new Set(users.filter(u => u.active && can(u, 'calls')).map(u => u.id));
+    const unknown = assignees.filter(id => !callerIds.has(id));
+    if (unknown.length) throw new UserError('اختر موظفات لهن صلاحية قائمة الاتصال');
     const chosen = new Map();
     for (const p of picks) {
       const id = typeof p.doctorId === 'string' && UUID_RE.test(p.doctorId) && known.has(p.doctorId) ? p.doctorId : null;
@@ -120,12 +131,18 @@ function crmRoutes() {
     const settings = await loadSettings(db);
     let mapChanged = false;
     for (const [crm, id] of chosen) if (settings.doctorMap[crm] !== id) { settings.doctorMap[crm] = id; mapChanged = true; }
-    if (mapChanged) await saveSetting(db, C.SETTINGS_KEY, settings);
+    settings.lastPicks = [...chosen.keys()];
+    settings.lastAssignees = [...new Set(assignees)];
+    settings.listSize = count;
+    await saveSetting(db, C.SETTINGS_KEY, C.mergeSettings(settings));
+    void mapChanged;
 
     const pool = up.targets.filter(t => chosen.has(t.doctor));
     const picked = C.sample(pool, count);
     const good = new Map();
     const errors = [];
+    const uniqueAssignees = [...new Set(assignees)];
+    let turn = 0;
     for (const t of picked) {
       try {
         const doctorId = chosen.get(t.doctor);
@@ -137,7 +154,8 @@ function crmRoutes() {
           doctor_name_raw: doctorId ? null : (t.doctor || null),
           branch: t.branch || (d && d.branch !== 'الكل' ? d.branch : null),
           visit_at: localToUtc(t.visitDate, t.visitTime, config.tz).toISOString(),
-          updated_by: req.user.username
+          updated_by: req.user.username,
+          assigned_to: uniqueAssignees.length ? uniqueAssignees[turn++ % uniqueAssignees.length] : null
         };
         good.set(`${item.file_no}|${item.visit_at}`, item);
       } catch (e) {
@@ -151,7 +169,9 @@ function crmRoutes() {
       inserted = out.length;
     }
     await audit(db, req.user.username, 'crm_build_list', `date=${up.date} pool=${pool.length} picked=${picked.length} inserted=${inserted} errors=${errors.length}`);
-    res.json({ ok: true, date: up.date, pool: pool.length, picked: picked.length, inserted, duplicates: good.size - inserted, errors: errors.slice(0, 50), errorCount: errors.length });
+    const perAssignee = {};
+    for (const it of good.values()) if (it.assigned_to) perAssignee[it.assigned_to] = (perAssignee[it.assigned_to] || 0) + 1;
+    res.json({ ok: true, date: up.date, pool: pool.length, picked: picked.length, inserted, duplicates: good.size - inserted, perAssignee, errors: errors.slice(0, 50), errorCount: errors.length });
   });
 
   r.get('/quality/runs', requirePerm('fileQuality'), async (req, res) => {

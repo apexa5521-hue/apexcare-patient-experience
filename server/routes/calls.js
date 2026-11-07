@@ -5,7 +5,7 @@
 
 const express = require('express');
 const { must, countOf, audit } = require('../db');
-const { requirePerm, branchScope } = require('../access');
+const { requirePerm, branchScope, can } = require('../access');
 const { localToUtc, addDays, formatLocal, localParts } = require('../time');
 const { loadSettings } = require('../crm');
 const { doctorKey } = require('./complaints');
@@ -62,7 +62,7 @@ const callSchema = z.object({
   visitTime: z.preprocess(v => v || null, z.string().nullable())
 });
 
-function mapCall(c, { tz, doctorNames }) {
+function mapCall(c, { tz, doctorNames, userNames }) {
   return {
     id: c.id,
     visitAt: formatLocal(c.visit_at, tz),
@@ -75,7 +75,9 @@ function mapCall(c, { tz, doctorNames }) {
     status: c.status,
     attempts: c.attempts,
     lastAttemptAt: formatLocal(c.last_attempt_at, tz),
-    experienceId: c.experience_id
+    experienceId: c.experience_id,
+    assignedTo: c.assigned_to || null,
+    assignee: (c.assigned_to && userNames.get(c.assigned_to)) || ''
   };
 }
 
@@ -96,8 +98,14 @@ function callRoutes() {
     if (from) query = query.gte('visit_at', localToUtc(from, '00:00', config.tz).toISOString());
     if (to) query = query.lt('visit_at', localToUtc(addDays(to, 1), '00:00', config.tz).toISOString());
     if (q.fileNo) query = query.ilike('file_no', `%${String(q.fileNo).replace(/[^A-Za-z0-9/-]/g, '').slice(0, 20)}%`);
+    // Employees who do not build the list see their own calls and the ones left for anyone; managers can filter by employee.
+    const own = !can(req.user, 'importCalls');
+    const mine = (x) => x.or(`assigned_to.is.null,assigned_to.eq.${req.user.id}`);
+    if (own) query = mine(query);
+    else if (q.assignee === 'none') query = query.or('assigned_to.is.null');
+    else if (UUID_RE.test(String(q.assignee || ''))) query = query.eq('assigned_to', q.assignee);
 
-    const head = () => db.from('call_queue').select('id', { count: 'exact', head: true });
+    const head = () => { const h = db.from('call_queue').select('id', { count: 'exact', head: true }); return own ? mine(h) : h; };
     const [{ data, count }, pending, noAnswer, done, doctors] = await Promise.all([
       must(query.order('visit_at', { ascending: false }).order('created_at', { ascending: false }).range(0, LIST_LIMIT - 1)),
       countOf(head().eq('status', 'بانتظار الاتصال')),
@@ -105,12 +113,15 @@ function callRoutes() {
       countOf(head().eq('status', 'تم')),
       must(db.from('doctors').select('id,name'))
     ]);
+    const users = await must(db.from('app_users').select('id,name,role,active'));
     const doctorNames = new Map(doctors.map(d => [d.id, d.name]));
+    const userNames = new Map(users.map(u => [u.id, u.name]));
     res.json({
       ok: true,
       summary: { pending, noAnswer, done },
       total: count ?? data.length,
-      rows: data.map(c => mapCall(c, { tz: config.tz, doctorNames }))
+      rows: data.map(c => mapCall(c, { tz: config.tz, doctorNames, userNames })),
+      callers: own ? [] : users.filter(u => u.active && can(u, 'calls') && u.role !== 'admin').map(u => ({ id: u.id, name: u.name }))
     });
   });
 
@@ -150,6 +161,21 @@ function callRoutes() {
         .lt('created_at', localToUtc(addDays(today, 1), '00:00', config.tz).toISOString()))
     ]);
     res.json({ ok: true, date: today, done, target: settings.dailyMinPerStaff, met: done >= settings.dailyMinPerStaff });
+  });
+
+  // Give a visit to an employee (or back to anyone with userId null).
+  r.post('/:id/assign', requirePerm('importCalls'), async (req, res) => {
+    const { db } = req.ctx;
+    if (!UUID_RE.test(req.params.id)) throw new UserError('سجل الاتصال غير موجود', 404);
+    const userId = req.body?.userId || null;
+    if (userId) {
+      const u = UUID_RE.test(String(userId)) ? await must(db.from('app_users').select('id,role,active').eq('id', String(userId)).maybeSingle()) : null;
+      if (!u || !u.active || !can(u, 'calls')) throw new UserError('اختر موظفة لها صلاحية قائمة الاتصال');
+    }
+    const rows = await must(db.from('call_queue').update({ assigned_to: userId, updated_by: req.user.username }).eq('id', req.params.id).select('id'));
+    if (!rows.length) throw new UserError('سجل الاتصال غير موجود', 404);
+    await audit(db, req.user.username, 'assign_call', `${req.params.id} -> ${userId || '-'}`);
+    res.json({ ok: true });
   });
 
   r.post('/import', requirePerm('importCalls'), async (req, res) => {

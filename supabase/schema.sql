@@ -112,8 +112,11 @@ create table if not exists call_queue (
   attempts smallint not null default 0,
   last_attempt_at timestamptz,
   experience_id uuid references experiences(id),
-  updated_by text
+  updated_by text,
+  assigned_to uuid references app_users(id) on delete set null   -- the employee who makes this call (null: anyone)
 );
+alter table call_queue add column if not exists assigned_to uuid references app_users(id) on delete set null;
+create index if not exists call_queue_assigned_idx on call_queue(assigned_to);
 create index if not exists call_queue_status_idx on call_queue(status);
 create unique index if not exists call_queue_visit_uniq on call_queue(file_no, visit_at);
 

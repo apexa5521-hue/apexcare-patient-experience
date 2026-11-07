@@ -36,7 +36,9 @@ const DEFAULT_SETTINGS = {
   dailyMinPerStaff: 20,                // call-survey experiences each employee should record per day
   listSize: 40,                        // how many targeted visits go into the day's call list
   rules: { nameArQuad: true, nameEnQuad: true, idNumber: true, birthDateOk: true },
-  doctorMap: {}                        // CRM doctor/clinic text -> system doctor id
+  doctorMap: {},                       // CRM doctor/clinic text -> system doctor id
+  lastPicks: [],                       // CRM doctors/clinics chosen last time (ticked again on the next upload)
+  lastAssignees: []                    // employees the last list was split between
 };
 const SETTINGS_KEY = 'crm_settings';
 
@@ -69,8 +71,11 @@ function mergeSettings(saved) {
   if (s.doctorMap && typeof s.doctorMap === 'object') {
     for (const [k, v] of Object.entries(s.doctorMap).slice(0, 500)) if (norm(k) && (v === null || typeof v === 'string')) doctorMap[norm(k).slice(0, 120)] = v;
   }
+  const strings = (v, n) => (Array.isArray(v) ? [...new Set(v.filter(x => typeof x === 'string').map(norm).filter(Boolean))].slice(0, n) : []);
   return {
     columns,
+    lastPicks: strings(s.lastPicks, 200),
+    lastAssignees: strings(s.lastAssignees, 50),
     completedStatuses: statuses.length ? statuses : DEFAULT_SETTINGS.completedStatuses,
     dailyMinPerStaff: int(s.dailyMinPerStaff, DEFAULT_SETTINGS.dailyMinPerStaff, 1, 500),
     listSize: int(s.listSize, DEFAULT_SETTINGS.listSize, 1, 1000),

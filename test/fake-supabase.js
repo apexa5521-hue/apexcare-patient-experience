@@ -46,7 +46,7 @@ const SCHEMA = {
   },
   call_queue: {
     cols: ['id', 'created_at', 'visit_at', 'file_no', 'phone', 'doctor_id', 'doctor_name_raw', 'branch', 'status', 'attempts',
-      'last_attempt_at', 'experience_id', 'updated_by'],
+      'last_attempt_at', 'experience_id', 'updated_by', 'assigned_to'],
     unique: [['file_no', 'visit_at']],
     defaults: () => ({ created_at: new Date().toISOString(), status: 'بانتظار الاتصال', attempts: 0 })
   },
@@ -123,6 +123,11 @@ class Query {
   lte(c, v) { return this._f('lte', c, v); }
   ilike(c, v) { return this._f('ilike', c, v); }
   in(c, v) { return this._f('in', c, v); }
+  // PostgREST or(): only the forms the app uses, «col.is.null» and «col.eq.value», comma-separated.
+  or(expr) {
+    const parts = String(expr).split(',').map(p => { const [col, op, ...rest] = p.split('.'); return { col, op, val: rest.join('.') }; });
+    return this._f('or', parts[0].col, parts);
+  }
 
   order(col, { ascending = true } = {}) { this.orders.push({ col, ascending }); return this; }
   range(a, b) { this.rangeArgs = [a, b]; return this; }
@@ -152,6 +157,7 @@ class Query {
         case 'lt': return v !== null && v !== undefined && v < val;
         case 'lte': return v !== null && v !== undefined && v <= val;
         case 'in': return val.includes(v);
+        case 'or': return val.some(p => (p.op === 'is' && p.val === 'null' ? row[p.col] === null || row[p.col] === undefined : p.op === 'eq' && String(row[p.col]) === p.val));
         case 'ilike': {
           const re = new RegExp('^' + String(val).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*').replace(/_/g, '.') + '$', 'i');
           return v !== null && v !== undefined && re.test(String(v));

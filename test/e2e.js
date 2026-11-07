@@ -263,8 +263,8 @@ async function run() {
       await noHScroll('calls');
       assert.equal((JSON.stringify(db._store.tables)).includes('مريض تجريبي'), false, 'patient name column ignored');
 
-      await page.click(`#callTable tr:has-text("CALL-${tag}2") select`);
-      await page.selectOption(`#callTable tr:has-text("CALL-${tag}2") select`, 'لم يرد');
+      await page.click(`#callTable tr:has-text("CALL-${tag}2") select[data-out]`);
+      await page.selectOption(`#callTable tr:has-text("CALL-${tag}2") select[data-out]`, 'لم يرد');
       await page.waitForSelector(`#callTable tr:has-text("CALL-${tag}2") .pill:has-text("لم يرد")`);
 
       await page.click(`#callTable tr:has-text("CALL-${tag}1") [data-start]`);

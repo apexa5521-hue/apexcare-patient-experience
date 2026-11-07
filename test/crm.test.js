@@ -140,3 +140,45 @@ test('daily minimum per employee: progress, alert threshold and the today report
   assert.equal(today.totals.staffMet >= 1, true);
   assert.equal(today.staff.some(s => s.username === 'u.admin'), false, 'system admin is not a caller');
 });
+
+test('assignment: the list is split between the chosen employees; each sees hers and the unassigned; choices are remembered', async () => {
+  const a = t.addUser({ username: 'u.rawan', name: 'روان', role: 'staff' }), b = t.addUser({ username: 'u.abeer', name: 'عبير', role: 'staff' });
+  const [ta, tb] = [await t.login('u.rawan'), await t.login('u.abeer')];
+  const rows = Array.from({ length: 6 }, (_, i) => ['هند علي محمد السالم', 'Hind Ali Mohammed Alsalem', `20${i}`, `05520000${i}0`, '1012345678', 'صحيح', 'د.عادل الحربي', 'عيادات ايبكس كير | بريدة', '2026-09-01 10:00', 'روان', '2026-09-22 10:30', 'مكتمل']);
+  const up = (await upload(tok.qs, await xlsx(rows), '2026-09-22')).body;
+  assert.ok(up.callers.some(c => c.id === a.id) && up.callers.some(c => c.id === b.id), 'employees to choose from');
+  assert.equal((await t.call('POST', '/api/crm/build-list', { token: tok.qs, body: { token: up.token, picks: [{ crm: 'د.عادل الحربي', doctorId: adel.id }], count: 6, assignees: [a.id, 'x'] } })).status, 200, 'non-ids are ignored');
+  t.db._store.tables.call_queue = t.db._store.tables.call_queue.filter(c => !String(c.file_no).startsWith('20'));
+  const bad = await t.call('POST', '/api/crm/build-list', { token: tok.qs, body: { token: up.token, picks: [{ crm: 'د.عادل الحربي', doctorId: adel.id }], count: 6, assignees: [adel.id] } });
+  assert.equal(bad.status, 400, 'only employees with the call list');
+  const r = await t.call('POST', '/api/crm/build-list', { token: tok.qs, body: { token: up.token, picks: [{ crm: 'د.عادل الحربي', doctorId: adel.id }], count: 6, assignees: [a.id, b.id] } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.deepEqual([r.body.perAssignee[a.id], r.body.perAssignee[b.id]], [3, 3], 'split evenly');
+
+  const mineA = (await t.call('GET', '/api/calls', { token: ta })).body;
+  assert.ok(mineA.rows.filter(x => String(x.fileNo).startsWith('20')).every(x => x.assignedTo === a.id));
+  assert.equal(mineA.rows.filter(x => String(x.fileNo).startsWith('20')).length, 3);
+  assert.ok(mineA.rows.some(x => x.assignedTo === null), 'unassigned visits stay visible to everyone');
+  assert.deepEqual(mineA.callers, [], 'employees do not get the list of colleagues');
+  const all = (await t.call('GET', '/api/calls', { token: tok.qs })).body;
+  assert.equal(all.rows.filter(x => String(x.fileNo).startsWith('20')).length, 6, 'managers see every assignment');
+  assert.equal((await t.call('GET', `/api/calls?assignee=${b.id}`, { token: tok.qs })).body.rows.every(x => x.assignedTo === b.id), true);
+
+  // Reassign one of Rawan's to Abeer; employees cannot reassign.
+  const one = mineA.rows.find(x => String(x.fileNo).startsWith('20'));
+  assert.equal((await t.call('POST', `/api/calls/${one.id}/assign`, { token: ta, body: { userId: b.id } })).status, 403);
+  assert.equal((await t.call('POST', `/api/calls/${one.id}/assign`, { token: tok.qs, body: { userId: adel.id } })).status, 400);
+  assert.equal((await t.call('POST', `/api/calls/${one.id}/assign`, { token: tok.qs, body: { userId: b.id } })).status, 200);
+  assert.equal((await t.call('GET', '/api/calls', { token: tb })).body.rows.filter(x => String(x.fileNo).startsWith('20')).length, 4);
+
+  const s = (await t.call('GET', '/api/crm/settings', { token: tok.qs })).body.settings;
+  assert.deepEqual(s.lastPicks, ['د.عادل الحربي']);
+  assert.deepEqual(s.lastAssignees, [a.id, b.id]);
+  assert.equal(s.listSize, 6, 'the last count becomes the default');
+  const next = (await upload(tok.qs, await xlsx(rows), '2026-09-22')).body;
+  assert.deepEqual(next.lastAssignees, [a.id, b.id]);
+  assert.equal(next.groups.find(g => g.crm === 'د.عادل الحربي').picked, true, 'ticked again on the next upload');
+
+  const today = (await t.call('GET', '/api/kpis/today', { token: tok.qs })).body;
+  assert.equal(today.staff.find(x => x.id === b.id).assignedOpen, 4);
+});
