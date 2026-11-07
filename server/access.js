@@ -37,6 +37,7 @@ const DEFAULT_PERMS = {
   editAnyExperience: [QS, ...MANAGERS],                // fix someone else's recorded experience (own ones: anyone who records)
   approveCases: MANAGERS,                               // approve closing high-severity cases
   manageSetup: ['quality', 'admin'],                    // users, doctors, categories, Google connection, roles
+  fileQuality: [QS, 'branch_manager', 'operations', 'quality', 'admin'], // file-opening quality from CRM uploads
   fullPhones: ['case_officer', QS, ...MANAGERS]
 };
 /** Roles limited to one branch when the user has a branch set. */
@@ -55,6 +56,7 @@ const PERM_LABELS = {
   editAnyExperience: ['تعديل تجارب الآخرين', 'تعديل تجربة سجّلها شخص آخر'],
   approveCases: ['اعتماد الإقفال', 'اعتماد إقفال الحالات عالية الخطورة'],
   manageSetup: ['الإدارة', 'المستخدمون والأطباء والتصنيفات وربط قوقل والصلاحيات'],
+  fileQuality: ['جودة فتح الملفات', 'تبويب جودة الملفات: أداء الموظفات في فتح الملفات من ملف CRM'],
   fullPhones: ['رقم الجوال كاملاً', 'بدون هذه الصلاحية يظهر الرقم مقنّعاً']
 };
 

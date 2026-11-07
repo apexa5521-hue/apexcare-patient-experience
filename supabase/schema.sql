@@ -202,6 +202,22 @@ create table if not exists service_ratings (
 );
 create index if not exists service_ratings_created_idx on service_ratings(created_at);
 
+-- File-opening quality from a CRM patient export: one row per upload. No patient names or ID numbers are kept:
+-- `staff` holds per-employee counts, `errors` holds { fileNo, creator, createdAt, codes } for rows with problems.
+create table if not exists crm_quality_runs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  uploaded_by text,
+  file_name text,
+  total integer not null default 0,
+  complete integer not null default 0,
+  period_from text,
+  period_to text,
+  staff jsonb not null default '[]'::jsonb,
+  errors jsonb not null default '[]'::jsonb
+);
+create index if not exists crm_quality_runs_created_idx on crm_quality_runs(created_at);
+
 -- Lock everything: only the server (service_role) can read/write.
 alter table app_users  enable row level security;
 alter table doctors    enable row level security;
@@ -212,6 +228,7 @@ alter table audit_log  enable row level security;
 alter table call_queue enable row level security;
 alter table google_reviews enable row level security;
 alter table app_settings enable row level security;
+alter table crm_quality_runs enable row level security;
 alter table cases enable row level security;
 alter table case_events enable row level security;
 alter table service_ratings enable row level security;

@@ -6,7 +6,8 @@
 const express = require('express');
 const { must, countOf, audit } = require('../db');
 const { requirePerm, branchScope } = require('../access');
-const { localToUtc, addDays, formatLocal } = require('../time');
+const { localToUtc, addDays, formatLocal, localParts } = require('../time');
+const { loadSettings } = require('../crm');
 const { doctorKey } = require('./complaints');
 const {
   UserError, UUID_RE, BRANCHES, CALL_STATUSES, CALL_OUTCOMES, normalizeFileNo, normalizePhone, normalizeBranch, parse
@@ -137,6 +138,20 @@ function callRoutes() {
   });
 
   /** Bulk import (rows pasted from Excel). Bad rows are reported back by line; duplicates are skipped. */
+  // The signed-in employee's call-survey experiences today, against the daily minimum.
+  r.get('/progress', async (req, res) => {
+    const { db, config } = req.ctx;
+    const today = localParts(new Date(), config.tz).date;
+    const [settings, done] = await Promise.all([
+      loadSettings(db),
+      countOf(db.from('experiences').select('id', { count: 'exact', head: true })
+        .eq('created_by', req.user.id).eq('channel', 'اتصال')
+        .gte('created_at', localToUtc(today, '00:00', config.tz).toISOString())
+        .lt('created_at', localToUtc(addDays(today, 1), '00:00', config.tz).toISOString()))
+    ]);
+    res.json({ ok: true, date: today, done, target: settings.dailyMinPerStaff, met: done >= settings.dailyMinPerStaff });
+  });
+
   r.post('/import', requirePerm('importCalls'), async (req, res) => {
     const { db, config } = req.ctx;
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : null;
@@ -205,3 +220,4 @@ function requirePhone(v) {
 module.exports = callRoutes;
 module.exports.parseDate = parseDate;
 module.exports.parseTime = parseTime;
+module.exports.requirePhone = requirePhone;

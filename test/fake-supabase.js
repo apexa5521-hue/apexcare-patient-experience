@@ -74,6 +74,11 @@ const SCHEMA = {
     unique: ['source_key'],
     defaults: () => ({ created_at: new Date().toISOString() })
   },
+  crm_quality_runs: {
+    cols: ['id', 'created_at', 'uploaded_by', 'file_name', 'total', 'complete', 'period_from', 'period_to', 'staff', 'errors'],
+    unique: [],
+    defaults: () => ({ created_at: new Date().toISOString(), staff: [], errors: [] })
+  },
   app_settings: {
     cols: ['key', 'value', 'updated_at'],
     unique: ['key'],

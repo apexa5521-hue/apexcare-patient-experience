@@ -469,7 +469,7 @@ header.top .bar{max-width:none;padding:11px 24px;min-height:70px}
 .rev-person-card span{display:block;font-size:12px;color:var(--brand);margin-top:3px}
 .rev-person-card small{color:var(--muted);font-size:11px}
 .rev-person-card.verified{border-color:#b8dfd7;background:#f1faf8}
-.rev-person-more{margin-top:10px}.roles-matrix td,.roles-matrix th{white-space:nowrap}.roles-matrix td:first-child{white-space:normal;min-width:210px}.roles-matrix td:first-child small{display:block;margin-top:2px}.roles-matrix th:first-child,.roles-matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);z-index:1}.rm-role{text-align:center;font-size:12px}.rm-cell{text-align:center}.rm-cell input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}.rm-cell input:disabled{cursor:not-allowed;opacity:.6}.rm-changed{background:var(--warn-soft)!important}.rm-scope td{border-top:2px solid var(--line)}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
+.rev-person-more{margin-top:10px}.roles-matrix td,.roles-matrix th{white-space:nowrap}.roles-matrix td:first-child{white-space:normal;min-width:210px}.roles-matrix td:first-child small{display:block;margin-top:2px}.roles-matrix th:first-child,.roles-matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);z-index:1}.rm-role{text-align:center;font-size:12px}.rm-cell{text-align:center}.rm-cell input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}.rm-cell input:disabled{cursor:not-allowed;opacity:.6}.rm-changed{background:var(--warn-soft)!important}.rm-scope td{border-top:2px solid var(--line)}.my-progress{margin-bottom:14px}.mp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mp-bar{height:10px;border-radius:10px;background:var(--line-2);overflow:hidden}.mp-bar i{display:block;height:100%;background:var(--brand);border-radius:10px;transition:width .4s}.my-progress.met .mp-bar i{background:var(--pos)}.mp-done{margin-top:8px;color:var(--pos);font-weight:600;font-size:13px}.crm-groups td{vertical-align:middle}.crm-groups select{min-width:180px}@media(max-width:560px){.crm-groups select{min-width:0;width:100%;max-width:140px}.crm-groups td,.crm-groups th{padding-inline:6px}}.crm-build{align-items:flex-end;gap:12px;margin-top:12px}.crm-build .field{margin:0}.crm-note{margin-top:12px}.crm-warn{border-color:var(--warn)!important;background:var(--warn-soft)!important;margin:10px 0}.crm-h{font-size:14px;margin:16px 0 10px}.crm-h:first-of-type{margin-top:0}.crm-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 14px}.crm-rules{display:flex;flex-wrap:wrap;gap:8px 20px}.file-no{font-variant-numeric:tabular-nums}.q-errs{margin:0;padding-inline-start:18px;font-size:12px}#appView nav.tabs button[data-tab=today]::before{content:"◷"}#appView nav.tabs button[data-tab=quality]::before{content:"✓"}.rev-person-card.clickable{cursor:pointer}#kpiProblems tr.clickable{cursor:pointer}#kpiProblems tr.clickable:hover td{background:#f5fbfa}.rev-person-card.clickable:hover{border-color:#8fd0c6;background:#f5fbfa}
 .rev-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .rev-doc{cursor:pointer;padding:16px}.rev-doc:hover{border-color:#8fd0c6}
 .rev-doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.rev-doc-head b{display:block;font-size:15px}.rev-doc-head small{display:block;font-size:11px}
@@ -911,6 +911,8 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
         <button role="tab" data-tab="reviews" aria-selected="false">تقييمات قوقل</button>
         <button role="tab" data-tab="kpi" aria-selected="false" data-perm="analytics">مؤشرات الأداء</button>
         <button role="tab" data-tab="doctors" aria-selected="false" data-perm="analytics">تقييم الطبيب</button>
+        <button role="tab" data-tab="today" aria-selected="false" data-perm="analytics">تجارب اليوم</button>
+        <button role="tab" data-tab="quality" aria-selected="false" data-perm="fileQuality">جودة الملفات</button>
         <button role="tab" data-tab="admin" aria-selected="false" data-perm="manageSetup">الإدارة</button>
       </nav>
     </div>
@@ -997,7 +999,8 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
     <!-- Call list -->
     <section data-pane="calls" role="tabpanel" class="hidden">
       <div class="section-head"><div><h2>قائمة الاتصال</h2><p class="muted small">زيارات بانتظار استبيان هاتفي. اضغط «ابدأ التقييم» لفتح النموذج جاهزاً.</p></div>
-        <div class="row"><button class="btn ghost sm" id="importCalls" type="button" data-perm="importCalls">استيراد من Excel</button><button class="btn sm" id="newCall" type="button">إضافة زيارة</button></div></div>
+        <div class="row"><button class="btn sm" id="crmUpload" type="button" data-perm="importCalls">رفع ملف CRM</button><button class="btn ghost sm" id="importCalls" type="button" data-perm="importCalls">استيراد من Excel</button><button class="btn sm" id="newCall" type="button">إضافة زيارة</button></div></div>
+      <div id="myProgress" class="card pad my-progress hidden" aria-live="polite"></div>
       <div class="grid g3 tiles-compact" style="margin-bottom:14px">
         <div class="card tile"><div class="l">بانتظار الاتصال</div><div class="v" id="qPending">–</div></div>
         <div class="card tile"><div class="l">لم يرد</div><div class="v" id="qNoAnswer">–</div><div class="s">تبقى في القائمة لمحاولة أخرى</div></div>
@@ -1059,6 +1062,18 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
       <div id="docBody" class="stack" style="margin-top:16px"></div>
     </section>
 
+    <section data-pane="today" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>تجارب اليوم</h2><p class="muted small">ما سجّلته كل موظفة من استبيانات الاتصال في اليوم، مقابل الحد الأدنى اليومي</p></div>
+        <div class="row"><input type="date" id="todayDate" aria-label="اليوم"><button class="btn ghost sm" id="todaySummaryCsv" type="button">تصدير الملخص</button><button class="btn ghost sm" id="todayCsv" type="button">تصدير التجارب</button></div></div>
+      <div id="todayBody" class="stack"></div>
+    </section>
+
+    <section data-pane="quality" role="tabpanel" class="hidden">
+      <div class="section-head"><div><h2>جودة فتح الملفات</h2><p class="muted small">من ملف CRM المرفوع: هل فُتح كل ملف بالبيانات الأساسية الصحيحة. لا يُعرض اسم المريض ولا رقم هويته.</p></div>
+        <div class="row"><select id="qRun" aria-label="التقرير"></select><button class="btn ghost sm" id="qCsv" type="button">تصدير الأخطاء</button></div></div>
+      <div id="qBody" class="stack"></div>
+    </section>
+
     <!-- Admin -->
     <section data-pane="admin" role="tabpanel" class="hidden">
       <div class="stack">
@@ -1070,6 +1085,11 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
           <div class="section-head"><div><h2>الأدوار والصلاحيات</h2><p class="muted small">ضع علامة على ما يستطيعه كل دور. مدير النظام يملك كل الصلاحيات دائماً. يسري التغيير خلال 30 ثانية، ويرى المستخدم التبويبات الجديدة بعد تحديث صفحته.</p></div>
             <div class="row"><button class="btn sm ghost" id="rolesReset" type="button">استعادة الافتراضي</button><button class="btn sm" id="rolesSave" type="button">حفظ الصلاحيات</button></div></div>
           <div class="tbl-wrap"><table id="rolesTable" class="roles-matrix"></table></div>
+        </div>
+        <div>
+          <div class="section-head"><div><h2>إعدادات ملف CRM</h2><p class="muted small">أسماء الأعمدة في ملف المرضى المصدّر من نظام CRM، والحد الأدنى اليومي، وقواعد فحص الملفات. اترك اسم العمود فارغاً ليتعرّف عليه النظام تلقائياً.</p></div>
+            <button class="btn sm" id="crmSave" type="button">حفظ الإعدادات</button></div>
+          <div class="card pad" id="crmSettings"></div>
         </div>
         <div class="grid g2">
           <div>
@@ -1292,7 +1312,7 @@ async function enter() {
   await reloadLookups();
   showTab(has('record') ? 'add' : has('viewCases') ? 'cases' : 'complaints');
   refreshBadge();
-  if (has('calls')) refreshCallBadge();
+  if (has('calls')) { refreshCallBadge(); loadMyProgress(); }
   if (has('viewCases')) refreshCaseBadge();
   const q = new URLSearchParams(location.search);
   if (q.get('google')) {
@@ -1302,6 +1322,227 @@ async function enter() {
   }
 }
 
+
+
+/* ---------- CRM export: call list, daily minimum, file quality ---------- */
+const QCODE_SHORT = { file_empty: 'رقم الملف', creator_empty: 'من فتح الملف', name_ar_empty: 'الاسم العربي', name_ar_short: 'الاسم العربي', name_en_empty: 'الاسم الإنجليزي', name_en_short: 'الاسم الإنجليزي', id_empty: 'رقم الهوية', id_invalid: 'رقم الهوية', birth_unchecked: 'تاريخ الميلاد' };
+function dayBefore(date) { const d = new Date(`${date}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
+function fmtRiyadh(iso) {
+  if (!iso) return '';
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
+}
+async function apiUpload(path, file) {
+  let res;
+  try {
+    res = await fetch(`/api${path}`, { method: 'POST', body: file,
+      headers: { 'Content-Type': 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name), Authorization: `Bearer ${S.token}` } });
+  } catch { throw new Error('تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً'); }
+  const j = await res.json().catch(() => ({ ok: false, error: 'استجابة غير متوقعة من الخادم' }));
+  if (res.status === 401) { logoutLocal('انتهت الجلسة، سجّل الدخول من جديد'); const e = new Error(j.error); e.silent = true; throw e; }
+  if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+  return j;
+}
+const copyFileNo = no => {
+  const text = `#${no}`;
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => toast(`نُسخ ${text}`), () => toast('انسخه يدوياً', true));
+};
+const fileNoBtn = no => no ? `<button class="btn quiet sm file-no" type="button" data-copy="${esc(no)}" title="نسخ رقم الملف"><span dir="ltr">#${esc(no)}</span></button>` : '<span class="muted">—</span>';
+
+/** The signed-in employee's call surveys today against the daily minimum. `announce`: show the alert when it is reached now. */
+async function loadMyProgress(announce = false) {
+  if (!has('calls')) return;
+  let p;
+  try { p = await api('GET', '/calls/progress'); } catch { return; }
+  const el = $('#myProgress');
+  const pct = Math.min(100, Math.round((p.done / p.target) * 100));
+  el.classList.remove('hidden');
+  el.classList.toggle('met', p.met);
+  el.innerHTML = `<div class="mp-head"><b>تجاربك اليوم بالاتصال</b><span class="num ltr">${n0(p.done)} / ${n0(p.target)}</span></div>
+    <div class="mp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${p.target}" aria-valuenow="${p.done}"><i style="width:${pct}%"></i></div>
+    ${p.met ? '<div class="mp-done">✓ لقد استكملت الحد الأدنى لتجارب اليوم. ما تزيده يُحسب لك</div>' : `<small class="muted">باقي ${n0(p.target - p.done)} للحد الأدنى</small>`}`;
+  if (announce && p.met && S.progressMet === false) toast('🎉 لقد استكملت الحد الأدنى لتجارب اليوم');
+  S.progressMet = p.met;
+}
+
+function crmUploadModal() {
+  openModal(`<h2 id="modalTitle">رفع ملف CRM</h2>
+    <p class="muted small">ملف المرضى المصدّر من نظام CRM بصيغة ‎.xlsx. يُستخدم لإنشاء قائمة الاتصال من المواعيد المكتملة، ولفحص جودة فتح الملفات. لا يُحفظ اسم المريض ولا رقم هويته.</p>
+    <form id="crmForm" class="grid" novalidate>
+      <div class="grid g2">
+        <div class="field"><label for="crmDate">يوم المواعيد المكتملة</label><input type="date" id="crmDate" value="${dayBefore(riyadhNow().date)}" max="${riyadhNow().date}"></div>
+        <div class="field"><label for="crmFile">الملف</label><input type="file" id="crmFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+      </div>
+      <div class="actions"><button class="btn" type="submit">رفع وتحليل</button><button type="button" class="btn ghost" data-close>إغلاق</button></div>
+    </form>
+    <div id="crmResult"></div>`, { closable: true });
+  $('#crmForm').onsubmit = e => {
+    e.preventDefault();
+    busy(e.submitter, async () => {
+      const file = $('#crmFile').files[0];
+      if (!file) throw new Error('اختر ملف Excel أولاً');
+      const r = await apiUpload(`/crm/upload?date=${$('#crmDate').value}`, file);
+      crmUploadResult(r);
+    });
+  };
+}
+function crmUploadResult(r) {
+  const fieldLabel = { fileNo: 'رقم الملف', phone: 'رقم الجوال', apptDate: 'تاريخ آخر موعد', apptStatus: 'حالة آخر موعد' };
+  const docOpts = sel => `<option value="">— بدون ربط —</option>` + S.lk.doctors.map(d => `<option value="${esc(d.id)}" ${d.id === sel ? 'selected' : ''}>${esc(d.name_ar || d.name)}</option>`).join('');
+  const quality = r.quality ? `<div class="card pad crm-note"><b>حُفظ فحص جودة فتح الملفات:</b> ${n0(r.quality.total)} ملف، المكتمل منها ${pct1((r.quality.complete / Math.max(1, r.quality.total)) * 100)}
+      ${has('fileQuality') ? '<button class="btn ghost sm" type="button" id="crmSeeQuality">عرض التقرير</button>' : ''}</div>` : '';
+  const missing = r.missingForCalls.length
+    ? `<div class="card pad crm-warn">لا يمكن إنشاء قائمة الاتصال: لم أجد هذه الأعمدة في الملف: <b>${r.missingForCalls.map(k => fieldLabel[k] || k).join('، ')}</b>. حدّد أسماءها من الإدارة ← إعدادات ملف CRM.</div>` : '';
+  const groups = r.groups.length ? `
+    <div class="tbl-wrap"><table class="crm-groups"><thead><tr><th></th><th>الطبيب / العيادة في CRM</th><th class="num">المواعيد</th><th>يقابله في النظام</th></tr></thead><tbody>
+      ${r.groups.map((g, i) => `<tr><td><input type="checkbox" data-pick="${i}" ${g.doctorId ? 'checked' : ''} aria-label="اختيار ${esc(g.crm)}"></td><td>${esc(g.crm || '— بدون طبيب —')}</td><td class="num">${n0(g.count)}</td>
+        <td><select data-map="${i}" aria-label="ربط ${esc(g.crm)}">${docOpts(g.doctorId)}</select></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="row crm-build"><div class="field"><label for="crmCount">عدد المرضى في قائمة اليوم</label><input type="number" id="crmCount" min="1" max="1000" value="${Math.min(r.listSize, r.targets)}"></div>
+      <button class="btn" type="button" id="crmBuild">إنشاء قائمة اليوم</button></div>
+    <p class="muted small">يُختار العدد عشوائياً من المواعيد المكتملة للأطباء والعيادات المحددة. الربط يُحفظ للمرات القادمة.</p>`
+    : (r.missingForCalls.length ? '' : `<p class="muted">لا توجد مواعيد مكتملة في ${esc(r.date)}. جرّب يوماً آخر.</p>`);
+  $('#crmResult').innerHTML = `<p><b>${n0(r.rows)}</b> صف في الملف · <b>${n0(r.targets)}</b> موعد مكتمل في <span class="ltr num">${esc(r.date)}</span></p>${missing}${groups}${quality}`;
+  if ($('#crmSeeQuality')) $('#crmSeeQuality').onclick = () => { closeModal(); showTab('quality'); };
+  if ($('#crmBuild')) $('#crmBuild').onclick = e => busy(e.target, async () => {
+    const picks = r.groups.map((g, i) => ({ crm: g.crm, doctorId: $(`[data-map="${i}"]`).value || null, on: $(`[data-pick="${i}"]`).checked })).filter(x => x.on);
+    if (!picks.length) throw new Error('اختر طبيباً أو عيادة واحدة على الأقل');
+    const out = await api('POST', '/crm/build-list', { token: r.token, picks: picks.map(({ crm, doctorId }) => ({ crm, doctorId })), count: +$('#crmCount').value || r.listSize });
+    closeModal();
+    toast(`أُضيف ${n0(out.inserted)} مريض لقائمة الاتصال${out.duplicates ? ` · ${n0(out.duplicates)} موجود مسبقاً` : ''}${out.errorCount ? ` · ${n0(out.errorCount)} بدون جوال أو رقم ملف صالح` : ''}`, !!out.errorCount && !out.inserted);
+    loadCalls(); refreshCallBadge();
+  });
+}
+
+/* «تجارب اليوم» */
+async function loadToday() {
+  const body = $('#todayBody');
+  if (!$('#todayDate').value) $('#todayDate').value = riyadhNow().date;
+  $('#todayDate').max = riyadhNow().date;
+  body.innerHTML = '<div class="card pad"><div class="skeleton" style="width:40%"></div><div class="skeleton" style="height:60px;margin-top:12px"></div></div>';
+  try {
+    const r = await api('GET', `/kpis/today?date=${$('#todayDate').value}`);
+    S.today = r;
+    const T = r.totals;
+    const tile = (l, v, s = '') => `<div class="card tile"><div class="l">${l}</div><div class="v num">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`;
+    body.innerHTML = `<div class="grid g4">
+        ${tile('تجارب الاتصال', n0(T.done), `الحد الأدنى ${n0(r.target)} لكل موظفة`)}
+        ${tile('حققن الحد الأدنى', `<span dir="ltr">${n0(T.staffMet)} / ${n0(T.staff)}</span>`)}
+        ${tile('لم يرد', n0(T.noAnswer), 'تبقى في القائمة لمحاولة أخرى')}
+        ${tile('رفض أو رقم خاطئ', n0(T.refused + T.wrongNumber))}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>الموظفة</th><th>التقدم</th><th>الحالة</th><th class="num">سلبية</th><th class="num">متوسط الطبيب</th><th class="num">لم يرد</th><th class="num">رفض</th><th class="num">رقم خاطئ</th></tr></thead><tbody>
+      ${r.staff.length ? r.staff.map(x => `<tr><td><b>${esc(x.name)}</b>${x.branch ? ` <span class="muted small">${esc(x.branch)}</span>` : ''}</td>
+        <td style="min-width:150px"><div class="rev-topic-track"><i style="width:${x.pct}%"></i></div><small class="num ltr">${n0(x.done)} / ${n0(x.target)}</small></td>
+        <td>${x.met ? '<span class="pill p-closed">حققت الحد الأدنى</span>' : `<span class="pill p-prog">باقي ${n0(x.target - x.done)}</span>`}</td>
+        <td class="num">${n0(x.negative)}</td><td class="num">${x.avgDoctor === null ? '—' : n1(x.avgDoctor)}</td>
+        <td class="num">${n0(x.noAnswer)}</td><td class="num">${n0(x.refused)}</td><td class="num">${n0(x.wrongNumber)}</td></tr>`).join('')
+        : '<tr><td colspan="8" class="empty">لا توجد موظفات لهن صلاحية قائمة الاتصال</td></tr>'}
+      </tbody></table></div>`;
+  } catch (e) { if (!e.silent) body.innerHTML = `<div class="card"><div class="empty"><b>تعذّر التحميل</b>${esc(e.message)}</div></div>`; }
+}
+$('#todayDate').onchange = loadToday;
+$('#todaySummaryCsv').onclick = () => S.today && csv(`today-${S.today.date}`, ['name', 'branch', 'done', 'target', 'met', 'negative', 'avgDoctor', 'noAnswer', 'refused', 'wrongNumber'],
+  ['الموظفة', 'الفرع', 'التجارب', 'الحد الأدنى', 'حققت', 'سلبية', 'متوسط الطبيب', 'لم يرد', 'رفض', 'رقم خاطئ'], S.today.staff.map(x => ({ ...x, met: x.met ? 'نعم' : 'لا' })));
+$('#todayCsv').onclick = e => busy(e.target, async () => {
+  const d = $('#todayDate').value || riyadhNow().date;
+  const r = await api('GET', `/experiences${qs({ from: d, to: d, channel: 'اتصال' })}`);
+  csv(`call-experiences-${d}`, ['visitAt', 'recordedAt', 'fileNo', 'doctor', 'branch', 'visitType', 'bookingRating', 'receptionRating', 'planExplained', 'doctorRating', 'sentiment', 'category', 'severity', 'generalNote', 'by'],
+    ['الزيارة', 'وقت التسجيل', 'رقم الملف', 'الطبيب', 'الفرع', 'نوع الزيارة', 'تقييم الحجز', 'تقييم الاستقبال', 'وضوح الخطة', 'تقييم الطبيب', 'التجربة', 'التصنيف', 'الخطورة', 'ملاحظة', 'بواسطة'], r.rows);
+});
+
+/* «جودة الملفات» */
+async function loadQuality() {
+  const body = $('#qBody');
+  try {
+    const list = await api('GET', '/crm/quality/runs');
+    if (!list.rows.length) {
+      $('#qRun').innerHTML = ''; S.qRun = null;
+      body.innerHTML = '<div class="card"><div class="empty"><b>لا يوجد تقرير بعد</b>ارفع ملف CRM من قائمة الاتصال ← «رفع ملف CRM».</div></div>';
+      return;
+    }
+    const cur = list.rows.some(x => x.id === $('#qRun').value) ? $('#qRun').value : list.rows[0].id;
+    $('#qRun').innerHTML = list.rows.map(x => `<option value="${esc(x.id)}" ${x.id === cur ? 'selected' : ''}>${esc(fmtRiyadh(x.created_at))} · ${esc(x.uploaded_by || '')} · ${n0(x.total)} ملف</option>`).join('');
+    body.innerHTML = '<div class="card pad"><div class="skeleton" style="height:60px"></div></div>';
+    const { run, errorLabels } = await api('GET', `/crm/quality/runs/${cur}`);
+    S.qRun = run; S.qLabels = errorLabels;
+    const rate = run.total ? (run.complete / run.total) * 100 : null;
+    const topCode = c => { const e = Object.entries(c.codes || {}).sort((a, b) => b[1] - a[1])[0]; return e ? `${QCODE_SHORT[e[0]] || e[0]} (${n0(e[1])})` : '—'; };
+    body.innerHTML = `<div class="grid g4">
+        <div class="card tile"><div class="l">الملفات</div><div class="v num">${n0(run.total)}</div><div class="s">${run.period_from ? `من <span class="ltr num">${esc(run.period_from.slice(0, 10))}</span> إلى <span class="ltr num">${esc((run.period_to || '').slice(0, 10))}</span>` : ''}</div></div>
+        <div class="card tile"><div class="l">مكتملة البيانات</div><div class="v num">${n0(run.complete)}</div></div>
+        <div class="card tile"><div class="l">بها أخطاء</div><div class="v num">${n0(run.total - run.complete)}</div></div>
+        <div class="card tile"><div class="l">نسبة الصحة</div><div class="v num">${rate === null ? '—' : pct1(rate)}</div></div>
+      </div>
+      <div class="card chart-card"><h3>أداء الموظفات في فتح الملفات</h3><p class="sub">مرتبة من الأعلى صحة. «أكثر خطأ» هو الحقل الذي يتكرر فيه الخطأ عند الموظفة.</p>
+        <div class="tbl-wrap"><table><thead><tr><th>الموظفة</th><th class="num">الملفات</th><th class="num">مكتملة</th><th class="num">بها أخطاء</th><th>نسبة الصحة</th><th>أكثر خطأ</th></tr></thead><tbody>
+        ${run.staff.map(c => `<tr><td><b>${esc(c.creator)}</b></td><td class="num">${n0(c.total)}</td><td class="num">${n0(c.complete)}</td><td class="num">${n0(c.incomplete)}</td>
+          <td style="min-width:140px"><div class="rev-topic-track"><i style="width:${c.rate || 0}%"></i></div><small class="num ltr">${c.rate === null ? '—' : pct1(c.rate)}</small></td><td>${esc(topCode(c))}</td></tr>`).join('')}
+        </tbody></table></div></div>
+      <div class="card chart-card"><h3>الملفات التي بها أخطاء</h3>
+        <p class="sub">اضغط رقم الملف لنسخه (مثل <span dir="ltr">#12345</span>) ثم ابحث عنه في نظام CRM وصحّح بياناته.</p>
+        <div class="row" style="margin-bottom:10px"><select id="qCreator" aria-label="الموظفة"><option value="">كل الموظفات</option>${run.staff.filter(c => c.incomplete).map(c => `<option>${esc(c.creator)}</option>`).join('')}</select><span class="muted small" id="qCount"></span></div>
+        <div class="tbl-wrap"><table id="qErrors"></table></div></div>`;
+    $('#qCreator').onchange = drawQualityErrors;
+    drawQualityErrors();
+  } catch (e) { if (!e.silent) body.innerHTML = `<div class="card"><div class="empty"><b>تعذّر التحميل</b>${esc(e.message)}</div></div>`; }
+}
+function qualityRows() { const who = $('#qCreator') ? $('#qCreator').value : ''; return (S.qRun ? S.qRun.errors : []).filter(e => !who || e.creator === who); }
+function drawQualityErrors() {
+  const rows = qualityRows(), shown = rows.slice(0, 300);
+  $('#qCount').textContent = rows.length > shown.length ? `${n0(rows.length)} ملف · يُعرض أول ${n0(shown.length)} (التصدير يشمل الكل)` : `${n0(rows.length)} ملف`;
+  $('#qErrors').innerHTML = `<thead><tr><th>رقم الملف</th><th>فتحته</th><th>تاريخ الفتح</th><th>الملاحظات</th></tr></thead><tbody>` +
+    (shown.length ? shown.map(e => `<tr><td>${fileNoBtn(e.fileNo)}</td><td>${esc(e.creator)}</td><td class="num ltr">${esc(e.createdAt || '')}</td>
+      <td><ul class="q-errs">${e.codes.map(c => `<li>${esc(S.qLabels[c] || c)}</li>`).join('')}</ul></td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty">لا توجد أخطاء</td></tr>') + '</tbody>';
+  $$('#qErrors [data-copy]').forEach(b => b.onclick = () => copyFileNo(b.dataset.copy));
+}
+$('#qRun').onchange = loadQuality;
+$('#qCsv').onclick = () => S.qRun && csv('file-quality', ['fileNo', 'creator', 'createdAt', 'errors'], ['رقم الملف', 'فتحته', 'تاريخ الفتح', 'الملاحظات'],
+  qualityRows().map(e => ({ ...e, fileNo: `#${e.fileNo}`, errors: e.codes.map(c => S.qLabels[c] || c).join(' | ') })));
+
+/* Admin: CRM file settings (each client's CRM may name its columns differently). */
+async function loadCrmSettings() {
+  const box = $('#crmSettings');
+  if (!box) return;
+  try {
+    const r = await api('GET', '/crm/settings');
+    S.crm = r;
+    const st = r.settings;
+    const role = { calls: 'قائمة الاتصال', quality: 'جودة الملفات', both: 'الاثنين' };
+    const docOpts = sel => `<option value="">— بدون ربط —</option>` + r.doctors.filter(d => d.active || d.id === sel).map(d => `<option value="${esc(d.id)}" ${d.id === sel ? 'selected' : ''}>${esc(d.name_ar || d.name)}</option>`).join('');
+    const mapRows = Object.entries(st.doctorMap);
+    box.innerHTML = `<datalist id="crmHeaders">${r.lastHeaders.map(h => `<option value="${esc(h)}">`).join('')}</datalist>
+      <h3 class="crm-h">أعمدة الملف</h3>
+      <div class="crm-cols">${r.fields.map(f => `<div class="field"><label for="crmCol-${f.key}">${esc(f.label)} <span class="muted small">· ${role[f.role]}</span></label>
+        <input id="crmCol-${f.key}" data-col="${esc(f.key)}" list="crmHeaders" value="${esc(st.columns[f.key] || '')}" placeholder="تلقائي: ${esc(f.aliases[0])}"></div>`).join('')}</div>
+      <h3 class="crm-h">قائمة الاتصال</h3>
+      <div class="grid g3">
+        <div class="field"><label for="crmStatuses">حالة الموعد المكتمل</label><input id="crmStatuses" value="${esc(st.completedStatuses.join('، '))}"><small class="muted">أكثر من حالة؟ افصل بينها بفاصلة</small></div>
+        <div class="field"><label for="crmMin">الحد الأدنى اليومي لكل موظفة</label><input id="crmMin" type="number" min="1" max="500" value="${st.dailyMinPerStaff}"></div>
+        <div class="field"><label for="crmList">عدد المرضى في قائمة اليوم</label><input id="crmList" type="number" min="1" max="1000" value="${st.listSize}"></div>
+      </div>
+      <h3 class="crm-h">قواعد فحص الملف</h3>
+      <div class="crm-rules">${[['nameArQuad', 'الاسم العربي رباعي'], ['nameEnQuad', 'الاسم الإنجليزي رباعي'], ['idNumber', 'رقم الهوية صحيح (يبدأ بـ1: 10 أرقام، غيره: 9–14)'], ['birthDateOk', 'تاريخ الميلاد مؤكد «صحيح»']]
+        .map(([k, l]) => `<label class="check"><input type="checkbox" data-rule="${k}" ${st.rules[k] ? 'checked' : ''}> ${l}</label>`).join('')}</div>
+      <h3 class="crm-h">ربط أطباء CRM بأطباء النظام</h3>
+      ${mapRows.length ? `<div class="tbl-wrap"><table><thead><tr><th>الاسم في CRM</th><th>يقابله في النظام</th></tr></thead><tbody>
+        ${mapRows.map(([crm, id], i) => `<tr><td>${esc(crm)}</td><td><select data-dmap="${i}" aria-label="ربط ${esc(crm)}">${docOpts(id)}</select></td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="muted small">يُحفظ الربط تلقائياً عند إنشاء قائمة الاتصال من ملف CRM.</p>'}`;
+  } catch (e) { if (!e.silent) box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+$('#crmSave').onclick = e => busy(e.target, async () => {
+  if (!S.crm) return;
+  const columns = {}; $$('#crmSettings [data-col]').forEach(i => { if (i.value.trim()) columns[i.dataset.col] = i.value.trim(); });
+  const rules = {}; $$('#crmSettings [data-rule]').forEach(c => { rules[c.dataset.rule] = c.checked; });
+  const doctorMap = {}; Object.keys(S.crm.settings.doctorMap).forEach((crm, i) => { const sel = $(`#crmSettings [data-dmap="${i}"]`); doctorMap[crm] = sel ? sel.value || null : S.crm.settings.doctorMap[crm]; });
+  const body = { columns, rules, doctorMap, completedStatuses: $('#crmStatuses').value.split(/[,،]/).map(x => x.trim()).filter(Boolean), dailyMinPerStaff: +$('#crmMin').value, listSize: +$('#crmList').value };
+  await api('PUT', '/crm/settings', body);
+  toast('تم حفظ إعدادات ملف CRM');
+  loadCrmSettings();
+});
+$('#crmUpload').onclick = crmUploadModal;
 
 /* ---------- night mode ---------- */
 function applyTheme(t) {
@@ -1369,6 +1610,8 @@ function showTab(t) {
   if (t === 'complaints') loadComplaints();
   if (t === 'kpi') loadKpi();
   if (t === 'doctors') loadDoctors();
+  if (t === 'today') loadToday();
+  if (t === 'quality') loadQuality();
   if (t === 'admin') loadAdmin();
   if (t === 'add') setTimeout(() => $('#exFile').focus({ preventScroll: true }), 30);
 }
@@ -1488,6 +1731,7 @@ $('#exForm').addEventListener('submit', e => {
     toast(d.callId ? 'تم حفظ التقييم وإغلاق الاتصال' : 'تم حفظ التجربة');
     resetExperienceForm();
     if (d.callId) refreshCallBadge();
+    if (d.callId || d.channel === 'اتصال') loadMyProgress(true);
   });
 });
 function resetExperienceForm() {
@@ -1919,6 +2163,7 @@ const callPill = s => `<span class="pill ${s === 'تم' ? 'p-closed' : s === 'ل
 function setCallBadge(n) { const b = $('#callBadge'); b.textContent = n; b.classList.toggle('hidden', !n); b.setAttribute('aria-label', `${n} بانتظار الاتصال`); }
 async function refreshCallBadge() { try { const r = await api('GET', '/calls'); setCallBadge(r.summary.pending + r.summary.noAnswer); } catch { /* ignore */ } }
 async function loadCalls() {
+  loadMyProgress();
   loadingTable('#callTable');
   try {
     const r = await api('GET', `/calls${qs(readFilters('#callFilters'))}`);
@@ -2720,6 +2965,7 @@ async function loadAdmin() {
     $$('#catTable [data-c]').forEach(b => b.onclick = () => categoryModal(S.adm.categories.find(x => x.id === b.dataset.c)));
   } catch (e) { if (!e.silent) toast(e.message, true); }
   loadRoles();
+  loadCrmSettings();
 }
 /* ---------- roles and permissions ---------- */
 function rolesTableHtml(R) {
@@ -2878,6 +3124,8 @@ const apexPages={
  complaints:['إدارة الشكاوى','متابعة البلاغات وتصنيفها / Complaints'],
  reviews:['ذكاء تقييمات Google Maps','تحليل التقييمات ومتابعة الملاحظات / Reviews Intelligence'],
  doctors:['تقييم الطبيب','مقارنة كل طبيب بمتوسط فرعه / Doctor Evaluation'],
+ today:['تجارب اليوم','الحد الأدنى اليومي لكل موظفة / Today'],
+ quality:['جودة فتح الملفات','صحة البيانات الأساسية لكل موظفة / File Quality'],
  kpi:['مؤشرات الأداء','قراءة اتجاهات الجودة / Performance Analytics'],
  admin:['إدارة النظام','الأطباء والفروع والصلاحيات / Administration']
 };

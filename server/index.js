@@ -16,6 +16,7 @@ const { complaintRoutes, webhookRoutes } = require('./routes/complaints');
 const kpiRoutes = require('./routes/kpis');
 const adminRoutes = require('./routes/admin');
 const callRoutes = require('./routes/calls');
+const crmRoutes = require('./routes/crm');
 const caseRoutes = require('./routes/cases');
 const { reviewRoutes, googleRoutes, googleCallback } = require('./routes/reviews');
 
@@ -91,6 +92,7 @@ function createApp({ db, config, http = fetch }) {
   app.use('/api/kpis', signedIn, requirePerm('analytics'), kpiRoutes());
   app.use('/api/admin', signedIn, requirePerm('manageSetup'), adminRoutes());
   app.use('/api/calls', signedIn, requirePerm('calls'), callRoutes());
+  app.use('/api/crm', signedIn, crmRoutes());
   app.use('/api/cases', signedIn, caseRoutes());
   app.use('/api/reviews', signedIn, reviewRoutes());
   app.use('/api/google', signedIn, requirePerm('manageSetup'), googleRoutes());
