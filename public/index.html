@@ -793,6 +793,10 @@ body{background:#f2f9ff}
 /* ---------- night mode ---------- */
 .theme-btn{min-width:38px;font-size:15px;line-height:1}
 .login-theme{position:fixed;top:14px;inset-inline-start:14px;z-index:40}
+/* animated gradient wave behind the sign-in screen */
+.patiemed-login{position:relative;isolation:isolate;overflow:hidden}
+.gradient-wave{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}
+.patiemed-login .pm-login-layout{position:relative;z-index:1}
 html[data-theme=dark]{color-scheme:dark;
   --bg:#0d1520;--surface:#142130;--surface-2:#192a3c;--ink:#e4edf7;--ink-2:#b4c4d6;--muted:#8ba0b5;--line:#253a50;--line-2:#1e3145;
   --brand:#43b3f5;--brand-ink:#86cdfa;--brand-soft:#14324b;--focus:#43b3f5;
@@ -801,6 +805,7 @@ html[data-theme=dark]{color-scheme:dark;
   --star-off:#3a4b5e;--c-grid:#253a50;--c-rest:#4f6478;--c-single:#8aa0b5;--h0:#1a2a3b;
   --sh:0 4px 18px rgba(0,0,0,.35);--sh-lg:0 12px 40px rgba(0,0,0,.6)}
 html[data-theme=dark] body,html[data-theme=dark] .patiemed-login{background:var(--bg)!important;color:var(--ink)}
+html[data-theme=dark] .patiemed-login .pm-landing{background:transparent!important}
 html[data-theme=dark] header.top,html[data-theme=dark] #appView header.top .wrap:has(nav.tabs),
 html[data-theme=dark] .card,html[data-theme=dark] .tile,html[data-theme=dark] .dialog,html[data-theme=dark] #toast,
 html[data-theme=dark] #appView [data-pane]>.section-head,html[data-theme=dark] .patiemed-login .pm-login-card,
@@ -854,6 +859,7 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
 
 <!-- ===== Login ===== -->
 <section id="loginView" class="login patiemed-login">
+<canvas id="gradientWave" class="gradient-wave" aria-hidden="true"></canvas>
 <button class="btn ghost sm theme-btn login-theme" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button>
  <div class="pm-login-layout">
   <aside class="pm-landing" aria-label="نبذة عن باتيميد">
@@ -1557,10 +1563,64 @@ function applyTheme(t) {
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'dark' ? '#0d1520' : '#eef9ff';
 }
 applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+/* ---------- gradient wave (sign-in background) ---------- */
+const wave = (() => {
+  const cv = $('#gradientWave'), view = $('#loginView');
+  if (!cv || !cv.getContext) return { draw() {} };
+  const ctx = cv.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const palette = {
+    light: { bg: ['#f6fcff', '#e8f6ff'], waves: [['#bfe6fb', '#d9efff'], ['#8fd2f4', '#b9dcff'], ['#5fbde9', '#8cc4f7'], ['#3aa6dc', '#6aa9ef']] },
+    dark: { bg: ['#0b1420', '#0e1b2b'], waves: [['#123049', '#15294a'], ['#164466', '#1a3866'], ['#1b5a86', '#234a86'], ['#2272a6', '#2c5aa6']] }
+  };
+  let w = 0, h = 0, raf = 0, t0 = performance.now();
+  function size() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = cv.clientWidth; h = cv.clientHeight;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function draw(now = performance.now()) {
+    if (!w || !h) size();
+    const c = palette[document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'];
+    const t = (now - t0) / 1000;
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, c.bg[0]); bg.addColorStop(1, c.bg[1]);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+    c.waves.forEach(([a, b], i) => {
+      const base = h * (0.58 + i * 0.1), amp = Math.min(h, 900) * (0.05 + i * 0.012), len = Math.max(w, 900) * (0.9 - i * 0.12), speed = 0.35 + i * 0.12;
+      const g = ctx.createLinearGradient(0, base - amp, w, h);
+      g.addColorStop(0, a); g.addColorStop(1, b);
+      ctx.beginPath(); ctx.moveTo(0, h);
+      for (let x = 0; x <= w + 8; x += 8) {
+        const y = base + Math.sin(x / len * Math.PI * 2 + t * speed + i) * amp + Math.sin(x / (len * 0.47) - t * speed * 0.7) * amp * 0.35;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h); ctx.closePath();
+      ctx.globalAlpha = 0.55 + i * 0.1; ctx.fillStyle = g; ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+  function loop(now) { draw(now); raf = requestAnimationFrame(loop); }
+  function sync() {
+    cancelAnimationFrame(raf); raf = 0;
+    const shown = !view.classList.contains('hidden') && !document.hidden;
+    if (!shown) return;
+    size();
+    if (still.matches) draw(); else raf = requestAnimationFrame(loop);
+  }
+  new MutationObserver(sync).observe(view, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('visibilitychange', sync);
+  addEventListener('resize', () => { size(); draw(); });
+  if (still.addEventListener) still.addEventListener('change', sync);
+  sync();
+  return { draw: () => { if (!view.classList.contains('hidden')) draw(); } };
+})();
 $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
   const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   applyTheme(t);
   try { localStorage.setItem('pe_theme', t); } catch { /* private mode: the choice lasts this visit only */ }
+  wave.draw();
 }));
 
 (async () => {
