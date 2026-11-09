@@ -1142,7 +1142,7 @@ async function api(method, path, body) {
     });
   } catch { throw new Error('تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً'); }
   const j = await res.json().catch(() => ({ ok: false, error: 'استجابة غير متوقعة من الخادم' }));
-  if (res.status === 401 && S.token && !path.startsWith('/auth/login')) {
+  if (res.status === 401 && S.token && !path.startsWith('/auth/login') && !path.startsWith('/auth/sso')) {
     logoutLocal('انتهت الجلسة، سجّل الدخول من جديد');
     const e = new Error(j.error); e.silent = true; throw e;
   }
@@ -1321,6 +1321,16 @@ $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
   const u = new URL(location.href);
   const tags = [...u.searchParams.keys()].filter(k => k.startsWith('utm_'));
   if (tags.length) { tags.forEach(k => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+  // Opened from the staff portal: #sso=<ticket>. Take it out of the address bar first, then trade it for a session.
+  const sso = /^#sso=([\w.-]+)$/.exec(location.hash);
+  if (sso) {
+    history.replaceState(null, '', location.pathname + location.search);
+    try {
+      const r = await api('POST', '/auth/sso', { ticket: sso[1] });
+      S.token = r.token; S.user = r.user; store('pe_token', r.token);
+      return await enter();
+    } catch (e) { logoutLocal(e.message); return; }
+  }
   const t = load('pe_token'); if (!t) { $('#lgUser').focus(); return; }
   S.token = t;
   try { const r = await api('GET', '/auth/me'); S.user = r.user; await enter(); }
