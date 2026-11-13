@@ -8,8 +8,10 @@ const { UserError, parse, passwordChangeSchema } = require('../validate');
 const {
   checkPassword, hashPassword, signToken, publicUser, authenticate
 } = require('../auth');
+const { verifyTicket } = require('../sso');
 
 const BAD_LOGIN = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+const SSO_FAILED = 'تعذّر الدخول من البوابة. ارجع للبوابة وحاول مجدداً، أو سجّل الدخول باسم المستخدم';
 // Compared against when the username doesn't exist, so timing doesn't leak which names are real.
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12);
 
@@ -43,6 +45,28 @@ function authRoutes() {
     loginLimiter.reset(username);
     await must(db.from('app_users').update({ last_login: new Date().toISOString() }).eq('id', user.id));
     await audit(db, user.username, 'login', '');
+    res.json({ ok: true, token: signToken(user, config.jwtSecret), user: publicUser(user) });
+  });
+
+  // Single sign-on from the staff portal: a one-minute, single-use signed ticket instead of a password.
+  r.post('/sso', loginLimit, async (req, res) => {
+    const { db, config, usedTickets } = req.ctx;
+    if (!config.ssoSecret && !config.ssoPublicKey) throw new UserError('الدخول الموحد غير مفعّل في هذا النظام', 404);
+    const claims = verifyTicket(req.body?.ticket, { secret: config.ssoSecret, publicKey: config.ssoPublicKey, appId: config.ssoAppId, used: usedTickets });
+    if (!claims) {
+      await audit(db, '', 'login_sso_failed', 'invalid ticket');
+      throw new UserError(SSO_FAILED, 401);
+    }
+    const username = claims.sub.trim().toLowerCase();
+    const user = /^[a-z0-9._-]{3,30}$/.test(username)
+      ? await must(db.from('app_users').select('*').eq('username', username).maybeSingle())
+      : null;
+    if (!user || !user.active) {
+      await audit(db, username, 'login_sso_failed', user ? 'inactive' : 'no such user');
+      throw new UserError(SSO_FAILED, 401);
+    }
+    await must(db.from('app_users').update({ last_login: new Date().toISOString() }).eq('id', user.id));
+    await audit(db, user.username, 'login_sso', String(claims.email || '').slice(0, 120));
     res.json({ ok: true, token: signToken(user, config.jwtSecret), user: publicUser(user) });
   });
 
