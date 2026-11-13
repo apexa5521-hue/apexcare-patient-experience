@@ -51,8 +51,8 @@ function authRoutes() {
   // Single sign-on from the staff portal: a one-minute, single-use signed ticket instead of a password.
   r.post('/sso', loginLimit, async (req, res) => {
     const { db, config, usedTickets } = req.ctx;
-    if (!config.ssoSecret) throw new UserError('الدخول الموحد غير مفعّل في هذا النظام', 404);
-    const claims = verifyTicket(req.body?.ticket, { secret: config.ssoSecret, appId: config.ssoAppId, used: usedTickets });
+    if (!config.ssoSecret && !config.ssoPublicKey) throw new UserError('الدخول الموحد غير مفعّل في هذا النظام', 404);
+    const claims = verifyTicket(req.body?.ticket, { secret: config.ssoSecret, publicKey: config.ssoPublicKey, appId: config.ssoAppId, used: usedTickets });
     if (!claims) {
       await audit(db, '', 'login_sso_failed', 'invalid ticket');
       throw new UserError(SSO_FAILED, 401);

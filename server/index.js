@@ -9,7 +9,7 @@ const { createSupabase, dbProblem } = require('./db');
 const { authenticate, requirePasswordChanged, LoginLimiter, Revocations } = require('./auth');
 const { requirePerm, refreshRolePerms } = require('./access');
 const { UserError } = require('./validate');
-const { UsedTickets } = require('./sso');
+const { UsedTickets, readPublicKey } = require('./sso');
 const authRoutes = require('./routes/auth');
 const lookupRoutes = require('./routes/lookups');
 const experienceRoutes = require('./routes/experiences');
@@ -37,12 +37,15 @@ function loadConfig(env = process.env) {
     publicUrl: env.PUBLIC_URL || env.RENDER_EXTERNAL_URL || '',
     // Optional: single sign-on from the staff portal. Unset = the feature is off.
     ssoSecret: env.SSO_SECRET || '',
+    // or from the operations platform: its organization's public key (not a secret)
+    ssoPublicKey: readPublicKey(env.SSO_PUBLIC_KEY),
     ssoAppId: env.SSO_APP_ID || 'patient-experience'
   };
   const missing = ['supabaseUrl', 'supabaseKey', 'jwtSecret', 'webhookSecret'].filter(k => !config[k]);
   if (missing.length) throw new Error(`Missing env: ${missing.join(', ')}`);
   if (config.jwtSecret.length < 32) throw new Error('JWT_SECRET must be at least 32 characters');
   if (config.ssoSecret && config.ssoSecret.length < 32) throw new Error('SSO_SECRET must be at least 32 characters');
+  if (env.SSO_PUBLIC_KEY && !config.ssoPublicKey) throw new Error('SSO_PUBLIC_KEY must be a PEM public key');
   if (!Number.isFinite(config.overdueDays) || config.overdueDays < 0) throw new Error('OVERDUE_DAYS must be a number');
   return config;
 }

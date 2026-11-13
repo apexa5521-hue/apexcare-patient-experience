@@ -106,3 +106,43 @@ test('loadConfig: SSO is optional, but a short SSO_SECRET is refused', () => {
   assert.equal(loadConfig({ ...env, SSO_SECRET: 's'.repeat(40) }).ssoAppId, 'patient-experience');
   assert.throws(() => loadConfig({ ...env, SSO_SECRET: 'short' }), /SSO_SECRET/);
 });
+
+/* ---------- tickets from the operations platform (ES256, its organization's public key) ---------- */
+{
+  const { generateKeyPairSync } = crypto;
+  const pair = () => {
+    const k = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+    return { pub: k.publicKey.export({ type: 'spki', format: 'pem' }), priv: k.privateKey.export({ type: 'pkcs8', format: 'pem' }) };
+  };
+  const platform = pair(), stranger = pair();
+  const pTicket = (sub, over = {}, priv = platform.priv) => jwt.sign({ email: `${sub}@apexcare.sa`, org: 'apexcare', ...over },
+    priv, { algorithm: 'ES256', issuer: 'apexcare-platform', audience: 'patient-experience', subject: sub, expiresIn: 60, jwtid: crypto.randomUUID() });
+  let p;
+  test('platform sso: start with only SSO_PUBLIC_KEY (written with \\n escapes)', async () => {
+    p = await startApp({ ssoPublicKey: require('../server/sso').readPublicKey(platform.pub.replace(/\n/g, '\\n')), ssoAppId: 'patient-experience' });
+    p.addUser({ username: 'reem', role: 'staff', branch: 'بريدة' });
+  });
+  test('platform sso: a ticket signed by the platform opens a session, once', async () => {
+    const tk = pTicket('reem');
+    const r = await p.call('POST', '/api/auth/sso', { body: { ticket: tk } });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.user.username, 'reem');
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: tk } })).status, 401, 'single use');
+  });
+  test('platform sso: wrong key, wrong system, old-portal tickets and HS256 forgeries are refused', async () => {
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: pTicket('reem', {}, stranger.priv) } })).status, 401);
+    const other = jwt.sign({}, platform.priv, { algorithm: 'ES256', issuer: 'apexcare-platform', audience: 'masar', subject: 'reem', expiresIn: 60, jwtid: 'x1' });
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: other } })).status, 401);
+    // an HS256 token "signed" with the public key text must not pass (algorithm confusion)
+    const forged = jwt.sign({}, platform.pub, { algorithm: 'HS256', issuer: 'apexcare-platform', audience: 'patient-experience', subject: 'reem', expiresIn: 60, jwtid: 'x2' });
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: forged } })).status, 401);
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: ticket('reem') } })).status, 401, 'no SSO_SECRET here');
+  });
+  test('platform sso: close', async () => { await p.close(); });
+  test('readPublicKey accepts a PEM and refuses anything else', () => {
+    const { readPublicKey } = require('../server/sso');
+    assert.match(readPublicKey(platform.pub), /BEGIN PUBLIC KEY/);
+    assert.equal(readPublicKey('not a key'), '');
+    assert.equal(readPublicKey(''), '');
+  });
+}
