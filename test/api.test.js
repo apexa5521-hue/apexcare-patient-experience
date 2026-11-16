@@ -25,6 +25,13 @@ test('health check is public', async () => {
   assert.equal(r.body.ok, true);
 });
 
+test('only the Apex Care platform may show this system inside its page', async () => {
+  const r = await fetch(t.base + '/');
+  const csp = r.headers.get('content-security-policy');
+  assert.match(csp, /frame-ancestors 'self' https:\/\/apexcare-platform\.onrender\.com(;|$)/);
+  assert.equal(r.headers.get('x-frame-options'), null, 'X-Frame-Options would forbid the platform too');
+});
+
 test('login: wrong password is rejected and audited', async () => {
   const r = await t.call('POST', '/api/auth/login', { body: { username: 'reem', password: 'nope' } });
   assert.equal(r.status, 401);
