@@ -45,6 +45,31 @@ async function checkDoctorAndCategory(db, d, keepDoctorId = null) {
   return { doctor, category, negative };
 }
 
+/**
+ * A phone experience recorded straight from the form (not started from the call list) still
+ * belongs in the call list, as a completed call: the visit is entered once and shows in both.
+ * If the same visit is already waiting in the list, that entry is closed instead of adding another.
+ * Best effort: the experience is already saved, so a problem here is logged and never fails the request.
+ */
+async function logDirectCall(db, username, { fileNo, phone, visitAt, doctorId, branch, experienceId }) {
+  try {
+    const now = new Date().toISOString();
+    const done = { status: 'تم', experience_id: experienceId, last_attempt_at: now, updated_by: username };
+    const waiting = await must(db.from('call_queue').select('id,attempts').eq('file_no', fileNo)
+      .eq('visit_at', visitAt.toISOString()).neq('status', 'تم').limit(1).maybeSingle());
+    if (waiting) {
+      await must(db.from('call_queue').update({ ...done, attempts: (waiting.attempts || 0) + 1 }).eq('id', waiting.id));
+      return;
+    }
+    if (!/^05\d{8}$/.test(phone || '')) return; // the call list needs a mobile number
+    await must(db.from('call_queue').upsert([{
+      file_no: fileNo, phone, visit_at: visitAt.toISOString(), doctor_id: doctorId, branch, attempts: 1, ...done
+    }], { onConflict: 'file_no,visit_at', ignoreDuplicates: true }));
+  } catch (e) {
+    console.error('call list entry for a phone experience failed:', e.message);
+  }
+}
+
 function experienceRoutes() {
   const r = express.Router();
 
@@ -91,6 +116,8 @@ function experienceRoutes() {
       await must(db.from('call_queue').update({
         status: 'تم', experience_id: row.id, last_attempt_at: new Date().toISOString(), updated_by: req.user.username
       }).eq('id', call.id));
+    } else if (d.channel === 'اتصال') {
+      await logDirectCall(db, req.user.username, { fileNo, phone, visitAt, doctorId: doctor.id, branch: d.branch, experienceId: row.id });
     }
     if (negative) {
       await openCases(db, [{

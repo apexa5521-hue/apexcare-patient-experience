@@ -129,6 +129,33 @@ test('call list: add, outcomes, and a phone survey closes the call', async () =>
   assert.ok(done.body.rows.some(r => r.id === row.id));
 });
 
+test('a phone experience recorded from the form shows in the call list as a completed call', async () => {
+  const calls = () => t.db._store.tables.call_queue;
+  // not in the list yet: added once, already done, linked to the experience
+  const a = await t.call('POST', '/api/experiences', { token: staffToken, body: experience(doc.id, { fileNo: 'DC-1', channel: 'اتصال', visitDate: '2026-10-21', visitTime: '09:00' }) });
+  assert.equal(a.status, 201, JSON.stringify(a.body));
+  const rowA = calls().filter(c => c.experience_id === a.body.id);
+  assert.equal(rowA.length, 1);
+  assert.equal(rowA[0].status, 'تم');
+  assert.equal(rowA[0].file_no, 'DC-1');
+  const open = await t.call('GET', '/api/calls', { token: staffToken });
+  assert.ok(!open.body.rows.some(r => r.fileNo === 'DC-1'), 'it does not crowd the open list');
+
+  // already waiting in the list: that entry is closed, no second one is added
+  const add = await t.call('POST', '/api/calls', { token: staffToken, body: { fileNo: 'DC-2', phone: '0501113333', doctorId: doc.id, visitDate: '2026-10-21', visitTime: '11:00' } });
+  const b = await t.call('POST', '/api/experiences', { token: staffToken, body: experience(doc.id, { fileNo: 'DC-2', channel: 'اتصال', visitDate: '2026-10-21', visitTime: '11:00' }) });
+  assert.equal(b.status, 201);
+  const rowsB = calls().filter(c => c.file_no === 'DC-2');
+  assert.equal(rowsB.length, 1);
+  assert.equal(rowsB[0].id, add.body.id);
+  assert.equal(rowsB[0].status, 'تم');
+  assert.equal(rowsB[0].experience_id, b.body.id);
+
+  // in-person experiences stay out of the call list
+  const c = await t.call('POST', '/api/experiences', { token: staffToken, body: experience(doc.id, { fileNo: 'DC-3', channel: 'حضوري' }) });
+  assert.ok(!calls().some(x => x.experience_id === c.body.id));
+});
+
 test('call list import: admin only, reports bad lines, skips duplicates, matches doctors', async () => {
   const rows = [
     { fileNo: 'IM-1', phone: '0551000001', doctor: 'د. Naji Al-Harthi', visitDate: '23/10/2026', visitTime: '4:30 PM' },
