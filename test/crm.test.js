@@ -182,3 +182,25 @@ test('assignment: the list is split between the chosen employees; each sees hers
   const today = (await t.call('GET', '/api/kpis/today', { token: tok.qs })).body;
   assert.equal(today.staff.find(x => x.id === b.id).assignedOpen, 4);
 });
+
+test('file-quality tab upload: quality only, no call list, open to quality roles', async () => {
+  const buf = await xlsx();
+  const before = t.db._store.tables.crm_quality_runs.length;
+  const forQ = (token) => fetch(`${t.base}/api/crm/upload?for=quality`, {
+    method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/octet-stream', 'x-file-name': 'q.xlsx' }, body: buf
+  }).then(async r => ({ status: r.status, body: await r.json() }));
+  const qs = await forQ(tok.qs);
+  assert.equal(qs.status, 200, JSON.stringify(qs.body));
+  assert.ok(qs.body.quality && qs.body.quality.runId);
+  assert.equal(qs.body.targets, 0);
+  assert.deepEqual(qs.body.groups, []);
+  assert.deepEqual(qs.body.callers, []);
+  assert.equal(t.db._store.tables.crm_quality_runs.length, before + 1);
+  const runs = await t.call('GET', '/api/crm/quality/runs', { token: tok.qs });
+  assert.equal(runs.body.rows[0].id, qs.body.quality.runId);
+  // an admin uploading from the quality tab also gets no call list
+  const ad = await forQ(tok.admin);
+  assert.equal(ad.body.targets, 0);
+  // employees without the tab cannot upload
+  assert.equal((await forQ(tok.staff)).status, 403);
+});

@@ -53,7 +53,11 @@ function crmRoutes() {
   });
 
   // Body: the .xlsx file itself. ?date=YYYY-MM-DD picks the visit day (default: yesterday, Riyadh time).
-  r.post('/upload', requirePerm('importCalls'), express.raw({ type: () => true, limit: '15mb' }), async (req, res) => {
+  // ?for=quality (from the file-quality tab) checks file quality only and builds no call list,
+  // so it is open to whoever sees that tab; the call-list part needs importCalls.
+  const uploadAllowed = (req, _res, next) => next(can(req.user, 'importCalls') || can(req.user, 'fileQuality')
+    ? undefined : new UserError('لا تملك صلاحية لهذا الإجراء', 403));
+  r.post('/upload', uploadAllowed, express.raw({ type: () => true, limit: '15mb' }), async (req, res) => {
     const { db, config } = req.ctx;
     const today = localParts(new Date(), config.tz).date;
     const date = DATE_RE.test(String(req.query.date || '')) ? String(req.query.date) : addDays(today, -1);
@@ -67,13 +71,14 @@ function crmRoutes() {
     await saveSetting(db, HEADERS_KEY, book.headers.filter(Boolean).slice(0, 200));
 
     // 1) Call list: visits whose latest appointment was completed on `date`.
-    const missingForCalls = ['fileNo', 'phone', 'apptDate', 'apptStatus'].filter(k => map[k] === undefined);
-    const targets = missingForCalls.length ? [] : C.targetVisits(book, map, settings, date);
+    const forCalls = can(req.user, 'importCalls') && req.query.for !== 'quality';
+    const missingForCalls = forCalls ? ['fileNo', 'phone', 'apptDate', 'apptStatus'].filter(k => map[k] === undefined) : [];
+    const targets = !forCalls || missingForCalls.length ? [] : C.targetVisits(book, map, settings, date);
     const [doctors, users] = await Promise.all([
       must(db.from('doctors').select('id,name,name_ar,active')),
       must(db.from('app_users').select('id,name,role,branch,active'))
     ]);
-    const callers = users.filter(u => u.active && can(u, 'calls') && u.role !== 'admin').map(u => ({ id: u.id, name: u.name, branch: u.branch || '' }));
+    const callers = !forCalls ? [] : users.filter(u => u.active && can(u, 'calls') && u.role !== 'admin').map(u => ({ id: u.id, name: u.name, branch: u.branch || '' }));
     const counts = new Map();
     targets.forEach(t => counts.set(t.doctor, (counts.get(t.doctor) || 0) + 1));
     const groups = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([crm, count]) => {
