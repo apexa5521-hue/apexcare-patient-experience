@@ -209,6 +209,26 @@ function analyzeQuality({ rows }, map, rules) {
   return { total: rows.length, complete, incomplete: rows.length - complete, periodFrom: from, periodTo: to, staff, errors };
 }
 
+/**
+ * Several exports covering one period, as one sheet: each file's rows are put in a common column order
+ * (the FIELDS keys), and a file number seen in more than one file is counted once (the later file wins).
+ * parts: [{ book, map }] from readWorkbook + mapColumns. Returns { book, map } for analyzeQuality.
+ */
+function mergeBooks(parts) {
+  const keys = Object.keys(FIELDS);
+  const present = keys.filter(k => parts.some(p => p.map[k] !== undefined));
+  const map = Object.fromEntries(present.map((k, i) => [k, i]));
+  const byFile = new Map(), noFile = [];
+  for (const { book, map: m } of parts) {
+    for (const row of book.rows) {
+      const out = present.map(k => (m[k] === undefined ? '' : row[m[k]]));
+      const no = map.fileNo !== undefined ? norm(out[map.fileNo]) : '';
+      if (no) { byFile.delete(no); byFile.set(no, out); } else noFile.push(out);
+    }
+  }
+  return { book: { headers: present, rows: [...byFile.values(), ...noFile] }, map };
+}
+
 /** Visits whose latest appointment has a completed status on `date` (YYYY-MM-DD, local). Names are not read. */
 function targetVisits({ rows }, map, settings, date) {
   const done = new Set(settings.completedStatuses.map(norm));
@@ -258,6 +278,7 @@ function sample(list, n, rand = Math.random) {
 }
 
 module.exports = {
+  mergeBooks,
   FIELDS, DEFAULT_SETTINGS, SETTINGS_KEY, ERRORS, MAX_ROWS,
   mergeSettings, loadSettings, mapColumns, readWorkbook, cellText, splitDateTime,
   validId, rowErrors, analyzeQuality, targetVisits, nameKey, suggestDoctor, sample

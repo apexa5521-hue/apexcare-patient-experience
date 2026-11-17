@@ -1396,25 +1396,33 @@ function crmUploadModal() {
 /* upload from the file-quality tab: checks file quality only, builds no call list */
 function qualityUploadModal() {
   openModal(`<h2 id="modalTitle">رفع ملف CRM لفحص الجودة</h2>
-    <p class="muted small">ملف المرضى المصدّر من نظام CRM بصيغة ‎.xlsx. يُفحص كل ملف: الاسم الرباعي عربي وإنجليزي، رقم الهوية، تاريخ الميلاد، ومن فتح الملف. لا يُحفظ اسم المريض ولا رقم هويته.</p>
+    <p class="muted small">ملفات المرضى المصدّرة من نظام CRM بصيغة ‎.xlsx. تقدر تختار أكثر من ملف لنفس الفترة، وتُجمع كلها في تقرير واحد، والملف المكرر بين الملفات يُحسب مرة واحدة. يُفحص كل ملف مريض: الاسم الرباعي عربي وإنجليزي، رقم الهوية، تاريخ الميلاد، ومن فتح الملف. لا يُحفظ اسم المريض ولا رقم هويته.</p>
     <form id="qForm" class="grid" novalidate>
-      <div class="field"><label for="qFile">الملف</label><input type="file" id="qFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+      <div class="field"><label for="qFile">الملفات</label><input type="file" id="qFile" multiple accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><small class="muted" id="qPicked"></small></div>
       <div class="actions"><button class="btn" type="submit">رفع وفحص</button><button type="button" class="btn ghost" data-close>إغلاق</button></div>
     </form>`, { closable: true });
   $('#qForm').onsubmit = e => {
     e.preventDefault();
     busy(e.submitter, async () => {
-      const file = $('#qFile').files[0];
-      if (!file) throw new Error('اختر ملف Excel أولاً');
-      const r = await apiUpload('/crm/upload?for=quality', file);
-      if (!r.quality) throw new Error('لم أجد في الملف أعمدة الاسم أو الهوية أو تاريخ الميلاد أو من فتح الملف. حدّد أسماءها من الإدارة ← إعدادات ملف CRM.');
+      const files = [...$('#qFile').files];
+      if (!files.length) throw new Error('اختر ملف Excel أولاً');
+      let token = '';
+      for (const [i, f] of files.entries()) {
+        $('#qPicked').textContent = `جارٍ رفع ${i + 1} من ${files.length}: ${f.name}`;
+        token = (await apiUpload(`/crm/quality/part${token ? `?token=${encodeURIComponent(token)}` : ''}`, f)).token;
+      }
+      $('#qPicked').textContent = 'جارٍ الفحص…';
+      const r = await api('POST', '/crm/quality/finish', { token });
       closeModal();
-      toast(`تم فحص ${n0(r.quality.total)} ملف، المكتمل منها ${pct1((r.quality.complete / Math.max(1, r.quality.total)) * 100)}`);
+      toast(`تم فحص ${n0(r.quality.total)} ملف مريض من ${n0(r.quality.files)} ${r.quality.files > 1 ? 'ملفات' : 'ملف'}، المكتمل منها ${pct1((r.quality.complete / Math.max(1, r.quality.total)) * 100)}${r.quality.duplicates ? ` · ${n0(r.quality.duplicates)} مكرر حُسب مرة واحدة` : ''}`);
       await loadQuality(r.quality.runId);
     });
   };
 }
-$('#qUpload').onclick = qualityUploadModal;
+$('#qUpload').onclick = () => {
+  qualityUploadModal();
+  $('#qFile').onchange = e => { const n = e.target.files.length; $('#qPicked').textContent = n > 1 ? `${n0(n)} ملفات ستُجمع في تقرير واحد` : ''; };
+};
 function crmUploadResult(r) {
   const fieldLabel = { fileNo: 'رقم الملف', phone: 'رقم الجوال', apptDate: 'تاريخ آخر موعد', apptStatus: 'حالة آخر موعد' };
   const docOpts = sel => `<option value="">— بدون ربط —</option>` + S.lk.doctors.map(d => `<option value="${esc(d.id)}" ${d.id === sel ? 'selected' : ''}>${esc(d.name_ar || d.name)}</option>`).join('');

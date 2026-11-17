@@ -179,6 +179,62 @@ function crmRoutes() {
     res.json({ ok: true, date: up.date, pool: pool.length, picked: picked.length, inserted, duplicates: good.size - inserted, perAssignee, errors: errors.slice(0, 50), errorCount: errors.length });
   });
 
+  // Several files for one period → one report. Each file is sent on its own to /quality/part (kept in
+  // memory under a token for 30 minutes, names and IDs included, never stored), then /quality/finish
+  // merges them, checks them and saves one report without names or IDs.
+  const parts = new Map();
+  const sweepParts = () => { const now = Date.now(); for (const [k, v] of parts) if (v.expires < now) parts.delete(k); };
+  const QUALITY_KEYS = ['nameAr', 'nameEn', 'idNumber', 'birthDateOk', 'createdBy'];
+  const MAX_FILES = 12;
+
+  r.post('/quality/part', uploadAllowed, express.raw({ type: () => true, limit: '15mb' }), async (req, res) => {
+    sweepParts();
+    let fileName = String(req.get('x-file-name') || '');
+    try { fileName = decodeURIComponent(fileName); } catch { /* keep as sent */ }
+    fileName = fileName.slice(0, 120);
+    const book = await C.readWorkbook(req.body);
+    const settings = await loadSettings(req.ctx.db);
+    const map = C.mapColumns(book.headers, settings.columns);
+    if (!QUALITY_KEYS.some(k => map[k] !== undefined)) {
+      throw new UserError(`لم أجد في «${fileName || 'الملف'}» أعمدة الاسم أو الهوية أو تاريخ الميلاد أو من فتح الملف. حدّد أسماءها من الإدارة ← إعدادات ملف CRM.`);
+    }
+    await saveSetting(req.ctx.db, HEADERS_KEY, book.headers.filter(Boolean).slice(0, 200));
+    let token = String(req.query.token || '');
+    let batch = parts.get(token);
+    if (!batch || batch.userId !== req.user.id) {
+      token = require('node:crypto').randomUUID();
+      batch = { userId: req.user.id, files: [], expires: 0 };
+      parts.set(token, batch);
+    }
+    if (batch.files.length >= MAX_FILES) throw new UserError(`الحد ${MAX_FILES} ملفاً في التقرير الواحد`);
+    const rows = batch.files.reduce((a, f) => a + f.book.rows.length, 0) + book.rows.length;
+    if (rows > 200000) throw new UserError('مجموع الصفوف كبير جداً لتقرير واحد');
+    batch.files.push({ name: fileName, book, map });
+    batch.expires = Date.now() + TOKEN_TTL_MS;
+    res.json({ ok: true, token, files: batch.files.length, rows: book.rows.length });
+  });
+
+  r.post('/quality/finish', uploadAllowed, async (req, res) => {
+    sweepParts();
+    const token = String(req.body?.token || '');
+    const batch = parts.get(token);
+    if (!batch || batch.userId !== req.user.id || !batch.files.length) throw new UserError('انتهت مهلة الرفع، ارفع الملفات من جديد');
+    parts.delete(token);
+    const { db } = req.ctx;
+    const settings = await loadSettings(db);
+    const { book, map } = C.mergeBooks(batch.files);
+    const q = C.analyzeQuality(book, map, settings.rules);
+    const names = batch.files.map(f => f.name).filter(Boolean);
+    const fileName = (names.length > 1 ? `${names.length} ملفات: ${names.join('، ')}` : names[0] || '').slice(0, 120) || null;
+    const run = await must(db.from('crm_quality_runs').insert({
+      uploaded_by: req.user.username, file_name: fileName, total: q.total, complete: q.complete,
+      period_from: q.periodFrom, period_to: q.periodTo, staff: q.staff, errors: q.errors
+    }).select('id').single());
+    const sent = batch.files.reduce((a, f) => a + f.book.rows.length, 0);
+    await audit(db, req.user.username, 'crm_quality', `files=${batch.files.length} rows=${sent} unique=${q.total} run=${run.id}`);
+    res.json({ ok: true, quality: { runId: run.id, total: q.total, complete: q.complete, staff: q.staff.length, files: batch.files.length, duplicates: sent - q.total } });
+  });
+
   r.get('/quality/runs', requirePerm('fileQuality'), async (req, res) => {
     const rows = await must(req.ctx.db.from('crm_quality_runs')
       .select('id,created_at,uploaded_by,file_name,total,complete,period_from,period_to')

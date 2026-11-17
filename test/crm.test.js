@@ -204,3 +204,31 @@ test('file-quality tab upload: quality only, no call list, open to quality roles
   // employees without the tab cannot upload
   assert.equal((await forQ(tok.staff)).status, 403);
 });
+
+test('file quality from several files: one report for the period, a file seen twice counted once', async () => {
+  const part = (token, buf, name, q = '') => fetch(`${t.base}/api/crm/quality/part${q}`, {
+    method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/octet-stream', 'x-file-name': encodeURIComponent(name) }, body: buf
+  }).then(async r => ({ status: r.status, body: await r.json() }));
+  // file 1: rows 1-3; file 2: rows 3-6 (row 3 = file 1003 appears in both)
+  const a = await part(tok.qs, await xlsx(ROWS.slice(0, 3)), 'سبتمبر-1.xlsx');
+  assert.equal(a.status, 200, JSON.stringify(a.body));
+  const b = await part(tok.qs, await xlsx(ROWS.slice(2)), 'سبتمبر-2.xlsx', `?token=${a.body.token}`);
+  assert.equal(b.body.token, a.body.token);
+  assert.equal(b.body.files, 2);
+  // someone else cannot finish this batch
+  assert.equal((await t.call('POST', '/api/crm/quality/finish', { token: tok.quality, body: { token: a.body.token } })).status, 400);
+  const fin = await t.call('POST', '/api/crm/quality/finish', { token: tok.qs, body: { token: a.body.token } });
+  assert.equal(fin.status, 200, JSON.stringify(fin.body));
+  assert.equal(fin.body.quality.total, 6, 'six distinct patient files');
+  assert.equal(fin.body.quality.files, 2);
+  assert.equal(fin.body.quality.duplicates, 1);
+  const run = (await t.call('GET', `/api/crm/quality/runs/${fin.body.quality.runId}`, { token: tok.qs })).body.run;
+  assert.match(run.file_name, /2 ملفات/);
+  assert.equal(run.total, 6);
+  assert.equal(run.staff.reduce((s, c) => s + c.total, 0), 6);
+  assert.ok(!JSON.stringify(run).includes('سارة'), 'no patient names stored');
+  assert.ok(!JSON.stringify(run).includes('1012345678'), 'no ID numbers stored');
+  // the batch is used up
+  assert.equal((await t.call('POST', '/api/crm/quality/finish', { token: tok.qs, body: { token: a.body.token } })).status, 400);
+  assert.equal((await part(tok.staff, await xlsx(), 'x.xlsx')).status, 403);
+});
