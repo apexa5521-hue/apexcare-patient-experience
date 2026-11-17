@@ -5,6 +5,13 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const express = require('express');
 const helmet = require('helmet');
+
+const PLATFORM_ORIGIN = 'https://apexcare-platform.onrender.com';
+/** Sites allowed to show this system inside their page: the platform, or FRAME_ANCESTORS (comma-separated https origins). */
+function frameAncestors(list) {
+  const items = String(list || PLATFORM_ORIGIN).split(',').map(s => s.trim()).filter(Boolean);
+  return items.filter(o => /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(o));
+}
 const { createSupabase, dbProblem } = require('./db');
 const { authenticate, requirePasswordChanged, LoginLimiter, Revocations } = require('./auth');
 const { requirePerm, refreshRolePerms } = require('./access');
@@ -76,9 +83,11 @@ function createApp({ db, config, http = fetch }) {
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
-        frameAncestors: ["'self'"]
+        // shown inside the Apex Care platform's tab; no other site may frame it
+        frameAncestors: ["'self'", ...frameAncestors(process.env.FRAME_ANCESTORS)]
       }
-    }
+    },
+    xFrameOptions: false   // superseded by frame-ancestors above (it cannot name another site)
   }));
   app.use(express.json({ limit: '200kb' }));
   // Who-can-do-what may have been changed from the admin screen: re-read it every 30 seconds at most.
