@@ -138,6 +138,30 @@ test('loadConfig: SSO is optional, but a short SSO_SECRET is refused', () => {
     assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: forged } })).status, 401);
     assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: ticket('reem') } })).status, 401, 'no SSO_SECRET here');
   });
+  // the platform does not know the employee's account here yet: it sends their e-mail only
+  const unlinked = (email, priv = platform.priv) => jwt.sign({ email, org: 'apexcare', sub: '' },
+    priv, { algorithm: 'ES256', issuer: 'apexcare-platform', audience: 'patient-experience', expiresIn: 60, jwtid: crypto.randomUUID() });
+  test('platform sso: an employee not linked yet signs in here once, and is linked from then on', async () => {
+    const first = await p.call('POST', '/api/auth/sso', { body: { ticket: unlinked('Noura@ApexCare.sa') } });
+    assert.equal(first.status, 409);
+    assert.match(first.body.link, /^[\w-]{20,}$/);
+    assert.match(first.body.error, /مرة واحدة/);
+    const login = await p.call('POST', '/api/auth/login', { body: { username: 'reem', password: 'password123' } });
+    // a made-up code links nothing
+    assert.equal((await p.call('POST', '/api/auth/sso/link', { token: login.body.token, body: { code: 'nope' } })).status, 400);
+    assert.equal((await p.call('POST', '/api/auth/sso/link', { token: login.body.token, body: { code: first.body.link } })).status, 200);
+    assert.equal((await p.call('POST', '/api/auth/sso/link', { token: login.body.token, body: { code: first.body.link } })).status, 400, 'a code works once');
+    const next = await p.call('POST', '/api/auth/sso', { body: { ticket: unlinked('noura@apexcare.sa') } });
+    assert.equal(next.status, 200);
+    assert.equal(next.body.user.username, 'reem', 'opens directly now');
+    assert.ok(p.db._store.tables.audit_log.some(a => a.action === 'sso_linked' && a.username === 'reem'));
+  });
+  test('platform sso: an e-mail-only ticket must come from the platform, signed by its key', async () => {
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: unlinked('noura@apexcare.sa', stranger.priv) } })).status, 401);
+    // the old portal (HS256) cannot use the e-mail-only form
+    const old = jwt.sign({ iss: 'apex-portal', aud: 'patient-experience', sub: '', email: 'noura@apexcare.sa' }, SECRET, { algorithm: 'HS256', expiresIn: 60, jwtid: crypto.randomUUID() });
+    assert.equal((await p.call('POST', '/api/auth/sso', { body: { ticket: old } })).status, 401);
+  });
   test('platform sso: close', async () => { await p.close(); });
   test('readPublicKey accepts a PEM and refuses anything else', () => {
     const { readPublicKey } = require('../server/sso');

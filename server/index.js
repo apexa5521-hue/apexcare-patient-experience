@@ -16,7 +16,7 @@ const { createSupabase, dbProblem } = require('./db');
 const { authenticate, requirePasswordChanged, LoginLimiter, Revocations } = require('./auth');
 const { requirePerm, refreshRolePerms } = require('./access');
 const { UserError } = require('./validate');
-const { UsedTickets, readPublicKey } = require('./sso');
+const { UsedTickets, LinkCodes, readPublicKey } = require('./sso');
 const authRoutes = require('./routes/auth');
 const lookupRoutes = require('./routes/lookups');
 const experienceRoutes = require('./routes/experiences');
@@ -63,7 +63,7 @@ function createApp({ db, config, http = fetch }) {
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
 
-  const ctx = { db, config, http, loginLimiter: new LoginLimiter(), revocations: new Revocations(), usedTickets: new UsedTickets() };
+  const ctx = { db, config, http, loginLimiter: new LoginLimiter(), revocations: new Revocations(), usedTickets: new UsedTickets(), linkCodes: new LinkCodes() };
 
   app.use((req, res, next) => {
     req.ctx = ctx;

@@ -8,7 +8,7 @@ const { UserError, parse, passwordChangeSchema } = require('../validate');
 const {
   checkPassword, hashPassword, signToken, publicUser, authenticate
 } = require('../auth');
-const { verifyTicket } = require('../sso');
+const { verifyTicket, linkKey } = require('../sso');
 
 const BAD_LOGIN = 'اسم المستخدم أو كلمة المرور غير صحيحة';
 const SSO_FAILED = 'تعذّر الدخول من البوابة. ارجع للبوابة وحاول مجدداً، أو سجّل الدخول باسم المستخدم';
@@ -57,7 +57,17 @@ function authRoutes() {
       await audit(db, '', 'login_sso_failed', 'invalid ticket');
       throw new UserError(SSO_FAILED, 401);
     }
-    const username = claims.sub.trim().toLowerCase();
+    let username = claims.sub.trim().toLowerCase();
+    if (!username) {
+      // the platform does not know this employee's account here yet: perhaps this system already does
+      const row = await must(db.from('app_settings').select('value').eq('key', linkKey(claims.org, claims.email)).maybeSingle());
+      if (row && row.value) username = String(row.value);
+      else {
+        const link = req.ctx.linkCodes.create({ org: claims.org, email: claims.email });
+        await audit(db, '', 'login_sso_link_needed', String(claims.email).slice(0, 120));
+        return res.status(409).json({ ok: false, link, error: 'سجّل دخولك هنا مرة واحدة باسم المستخدم وكلمة المرور، وبعدها يفتح لك النظام مباشرة من المنصة' });
+      }
+    }
     const user = /^[a-z0-9._-]{3,30}$/.test(username)
       ? await must(db.from('app_users').select('*').eq('username', username).maybeSingle())
       : null;
@@ -68,6 +78,17 @@ function authRoutes() {
     await must(db.from('app_users').update({ last_login: new Date().toISOString() }).eq('id', user.id));
     await audit(db, user.username, 'login_sso', String(claims.email || '').slice(0, 120));
     res.json({ ok: true, token: signToken(user, config.jwtSecret), user: publicUser(user) });
+  });
+
+  // The employee signed in here with their own account after the platform asked: remember who they are in the platform.
+  r.post('/sso/link', authenticate, async (req, res) => {
+    const { db, linkCodes } = req.ctx;
+    const who = linkCodes.take(req.body?.code);
+    if (!who) throw new UserError('انتهت مهلة الربط. افتح النظام من المنصة مرة أخرى', 400);
+    const key = linkKey(who.org, who.email);
+    await must(db.from('app_settings').upsert({ key, value: req.user.username, updated_at: new Date().toISOString() }, { onConflict: 'key' }));
+    await audit(db, req.user.username, 'sso_linked', String(who.email).slice(0, 120));
+    res.json({ ok: true });
   });
 
   r.get('/me', authenticate, (req, res) => {

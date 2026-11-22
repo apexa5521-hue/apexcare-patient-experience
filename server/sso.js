@@ -44,11 +44,40 @@ function verifyTicket(ticket, { secret, publicKey, appId, used }) {
     try { claims = jwt.verify(ticket, key, { ...opts, audience: appId, clockTolerance: 30 }); break; } catch { /* try the next way */ }
   }
   if (!claims) return null;
-  if (typeof claims.sub !== 'string' || !claims.sub || typeof claims.jti !== 'string' || !claims.jti) return null;
+  if (typeof claims.sub !== 'string' || typeof claims.jti !== 'string' || !claims.jti) return null;
+  // the platform names the employee's account here (sub) once it knows it; until then it sends their e-mail
+  // and the employee links the two by signing in here once (see LinkCodes)
+  if (!claims.sub && !(claims.iss === PLATFORM_ISSUER && typeof claims.email === 'string' && claims.email.includes('@'))) return null;
   if (!Number.isFinite(claims.iat) || !Number.isFinite(claims.exp) || claims.exp - claims.iat > MAX_TICKET_SECONDS) return null;
   if (!used.claim(claims.jti, claims.exp)) return null;
   return claims;
 }
+
+/**
+ * A platform employee whose account here is not known yet: a short-lived code that remembers their platform
+ * identity while they sign in here once with their own username and password; that sign-in then links them.
+ */
+class LinkCodes {
+  constructor({ now = () => Date.now(), ttlMs = 15 * 60 * 1000 } = {}) { this.codes = new Map(); this.now = now; this.ttlMs = ttlMs; }
+  create(identity) {
+    this.sweep();
+    const code = require('node:crypto').randomBytes(24).toString('base64url');
+    this.codes.set(code, { ...identity, exp: this.now() + this.ttlMs });
+    return code;
+  }
+  /** The identity, once (the code is then gone), or null. */
+  take(code) {
+    this.sweep();
+    const v = this.codes.get(String(code || ''));
+    if (!v) return null;
+    this.codes.delete(String(code));
+    return v;
+  }
+  sweep() { const now = this.now(); for (const [k, v] of this.codes) if (v.exp < now) this.codes.delete(k); }
+}
+
+/** Where a platform employee's account here is remembered (app_settings, no schema change). */
+const linkKey = (org, email) => `platform_link:${String(org || '').toLowerCase()}:${String(email).trim().toLowerCase()}`;
 
 /** A PEM public key pasted into an environment variable: real line breaks, or written as \n. */
 function readPublicKey(value) {
@@ -56,4 +85,4 @@ function readPublicKey(value) {
   return v.includes('BEGIN PUBLIC KEY') ? v : '';
 }
 
-module.exports = { UsedTickets, verifyTicket, readPublicKey, ISSUER, PLATFORM_ISSUER };
+module.exports = { UsedTickets, LinkCodes, linkKey, verifyTicket, readPublicKey, ISSUER, PLATFORM_ISSUER };
