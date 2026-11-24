@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#eef9ff">
 <script nonce="__CSP_NONCE__">(function(){try{var t=localStorage.getItem('pe_theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<script src="/i18n.js?v=1" nonce="__CSP_NONCE__"></script>
 <title>PatieMed | Patient Experience & Satisfaction</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -793,6 +794,15 @@ body{background:#f2f9ff}
 /* ---------- night mode ---------- */
 .theme-btn{min-width:38px;font-size:15px;line-height:1}
 .login-theme{position:fixed;top:14px;inset-inline-start:14px;z-index:40}
+.lang-btn{min-width:38px;font-weight:700;font-size:13px}
+.login-lang{position:fixed;top:14px;inset-inline-start:60px;z-index:40}
+@media(max-width:520px){#appView .who{gap:4px;min-width:0}#appView .who .btn.sm{padding-inline:8px;min-width:0}#appView .who .theme-btn,#appView .who .lang-btn{min-width:32px}#appView header.top .bar{gap:6px}#appView .who-name{display:none}}
+html[dir=ltr] input[type=date],html[dir=ltr] input[type=time]{text-align:left}
+html[dir=ltr] th,html[dir=ltr] td{text-align:left}
+html[dir=ltr] td.num,html[dir=ltr] th.num,html[dir=ltr] .hbar .n,html[dir=ltr] .dist .r .n,html[dir=ltr] #callTable td.c-phone,html[dir=ltr] .case-card .side,html[dir=ltr] .who-name{text-align:right}
+html[dir=ltr] .heat th.d,html[dir=ltr] .case-card{text-align:left}
+html[dir=ltr] .patiemed-login .pm-login-card input{text-align:left;direction:ltr}
+html[dir=ltr] #appView [data-pane] .tile::before{right:auto;left:-15px}
 /* animated gradient wave behind the sign-in screen */
 .patiemed-login{position:relative;isolation:isolate;overflow:hidden}
 .gradient-wave{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}
@@ -861,6 +871,7 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
 <section id="loginView" class="login patiemed-login">
 <canvas id="gradientWave" class="gradient-wave" aria-hidden="true"></canvas>
 <button class="btn ghost sm theme-btn login-theme" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button>
+<button class="btn ghost sm lang-btn login-lang" type="button" data-lang-toggle>EN</button>
  <div class="pm-login-layout">
   <aside class="pm-landing" aria-label="نبذة عن باتيميد">
    <div class="pm-logo pm-logo-large"><span class="pm-symbol" aria-hidden="true">P</span><span class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></span></div>
@@ -902,7 +913,7 @@ html[data-theme=dark] #caseView button[aria-pressed=true],html[data-theme=dark] 
       <div class="brand pm-app-brand"><div class="pm-symbol" aria-hidden="true">P</div><div class="pm-logo-word"><b><em>Patie</em>Med</b><small>Patient Experience &amp; Satisfaction</small></div></div>
       <div class="who">
         <div class="who-name"><b id="whoName"></b><span id="whoRole"></span></div>
-        <button class="btn ghost sm theme-btn" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button>
+        <button class="btn ghost sm theme-btn" type="button" data-theme-toggle aria-label="الوضع الليلي">☾</button><button class="btn ghost sm lang-btn" type="button" data-lang-toggle>EN</button>
         <button class="btn ghost sm" id="btnPw" type="button">كلمة المرور</button>
         <button class="btn ghost sm" id="btnOut" type="button">خروج</button>
       </div>
@@ -1651,6 +1662,15 @@ const wave = (() => {
   sync();
   return { draw: () => { if (!view.classList.contains('hidden')) draw(); } };
 })();
+/* ---------- language: Arabic / English (public/i18n.js translates the page) ---------- */
+$$('[data-lang-toggle]').forEach(b => {
+  const en = window.PE_LANG === 'en';
+  b.setAttribute('data-ugc', '');
+  b.textContent = en ? 'ع' : 'EN';
+  b.title = en ? 'العربية' : 'English';
+  b.setAttribute('aria-label', b.title);
+  b.onclick = () => window.peSetLang(en ? 'ar' : 'en');
+});
 $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => {
   const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   applyTheme(t);
@@ -1734,6 +1754,7 @@ function showTab(t) {
 async function reloadLookups() {
   const r = await api('GET', '/lookups');
   S.lk = r.lookups; S.overdueDays = r.overdueDays;
+  if (window.PE_LANG === 'en') window.peAddNames((S.lk.doctors || []).map(d => [d.name_ar, d.name]));
   buildForm(); buildFilters();
 }
 
@@ -2008,7 +2029,8 @@ function csv(name, keys, heads, rows) {
   if (!rows.length) return toast('لا توجد بيانات للتصدير', true);
   // Leading = + - @ would run as a formula in Excel; prefix them.
   const q = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
-  const body = [heads.map(q).join(','), ...rows.map(r => keys.map(k => q(r[k])).join(','))].join('\r\n');
+  const t = v => (typeof v === 'string' && v.split(/\s+/).length <= 5 ? tr(v) : v);
+  const body = [heads.map(h => q(tr(h))).join(','), ...rows.map(r => keys.map(k => q(t(r[k]))).join(','))].join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }));
   a.download = `${name}-${riyadhNow().date}.csv`;
